@@ -283,6 +283,30 @@ const DB = {
 // muat semula bila tab lain ubah data (cth: buka link penyewa dalam tab lain)
 addEventListener('storage', e => { if (e.key === KEY) { mem = lsGet(KEY) || mem; refresh(); } });
 
+/* ---------- Langganan ProSewa (owner bayar untuk guna app) ----------
+   Tukar harga di sini. Butiran ToyyibPay akan disambung melalui Firebase Cloud Function
+   (secret key TIDAK boleh diletak dalam fail ini). */
+const PLANS = [
+  {id: 'monthly', name: 'Bulanan', months: 1, price: 19.90, tag: ''},
+  {id: 'half', name: '6 Bulan', months: 6, price: 99.00, tag: 'Jimat 17%'},
+  {id: 'yearly', name: 'Setahun', months: 12, price: 179.00, tag: 'Paling jimat'}
+];
+const TRIAL_DAYS = 14;
+const TOYYIBPAY = {
+  createBillUrl: ''   // nanti: URL Cloud Function yang cipta bil ToyyibPay & pulangkan {billCode}
+};
+const addMonthsISO = (iso, n) => { const [y, m, d] = iso.split('-').map(Number); const last = new Date(y, m - 1 + n + 1, 0).getDate(); return localISO(new Date(y, m - 1 + n, Math.min(d, last))); };
+function ensureSub() { if (!mem.subscription) { mem.subscription = {plan: 'trial', start: localISO(), end: addDays(localISO(), TRIAL_DAYS)}; mem.subPayments = mem.subPayments || []; save(); } }
+function subInfo() { const s = mem.subscription; if (!s) return null; const days = Math.round((new Date(s.end + 'T23:59:59') - new Date()) / 864e5); return {...s, days, active: days >= 0, planName: s.plan === 'trial' ? 'Percubaan percuma' : (PLANS.find(p => p.id === s.plan)?.name || s.plan)}; }
+function activateSub(planId, ref) {
+  const pl = PLANS.find(p => p.id === planId), cur = subInfo();
+  const from = cur && cur.active && cur.end > localISO() ? cur.end : localISO();
+  const end = addMonthsISO(from, pl.months);
+  mem.subscription = {plan: pl.id, start: cur && cur.active ? cur.start : localISO(), end};
+  (mem.subPayments = mem.subPayments || []).push({id: genId(), date: nowStr(), plan: pl.id, months: pl.months, amount: pl.price, ref, until: end});
+  save();
+}
+
 /* ---------- Data contoh ---------- */
 async function seedDemo() {
   const cm = curMonth();
@@ -292,7 +316,7 @@ async function seedDemo() {
     {name: 'Lim Wei Jie', phone: '0167788990', address: 'Bilik B, No. 8 Jalan 2/3, Bandar Baru Bangi', rent: 450, deposit: 450, dueDay: 7, startDate: addMonths(cm, -2) + '-01'}
   ];
   mem = {owner: {name: 'Encik Ahmad', email: 'admin@demo.com', pass: await hashPass('1234'), phone: '0131234567', bankName: 'Maybank', bankAcc: '1122 3344 5566', accName: 'Ahmad bin Hassan'},
-    settings: {autoOn: true, autoDays: 3, autoTime: '09:00', overdueOn: true}, tenants: [], payments: [], reminders: []};
+    settings: {autoOn: true, autoDays: 3, autoTime: '09:00', overdueOn: true}, tenants: [], payments: [], reminders: [], subscription: {plan: 'trial', start: localISO(), end: addDays(localISO(), TRIAL_DAYS)}, subPayments: []};
   T.forEach(t => mem.tenants.push({...t, id: genId(), token: genToken(), active: true, notes: '', createdAt: nowStr()}));
   const [a, b, c] = mem.tenants;
   const pay = (t, ym, extra = {}) => mem.payments.push({id: genId(), tenantId: t.id, tenantName: t.name, address: t.address, month: ym, amount: t.rent, paidDate: ym + '-0' + Math.max(1, t.dueDay - 1),
@@ -425,8 +449,10 @@ function renderLogin() {
 function renderOwner() {
   if (S.mode !== 'owner') return;
   const pend = S.payments.filter(p => p.status === 'pending').length;
-  const v = {tenants: oTenants, status: oStatus, report: oReport, settings: oSettings}[S.tab] || oTenants;
-  $('#app').innerHTML = v() + nav([['tenants', '👥', 'Penyewa'], ['status', '💳', 'Status Sewa', pend], ['report', '📊', 'Laporan'], ['settings', '⚙️', 'Tetapan']], S.tab);
+  const v = {tenants: oTenants, status: oStatus, report: oReport, sub: oSub, settings: oSettings}[S.tab] || oTenants;
+  const si = subInfo(), warn = si && si.days <= 5;
+  $('#app').innerHTML = v() + nav([['tenants', '👥', 'Penyewa'], ['status', '💳', 'Status', pend], ['report', '📊', 'Laporan'], ['sub', '💎', 'Langganan', warn ? '!' : 0], ['settings', '⚙️', 'Tetapan']], S.tab);
+  if (si && S.tab !== 'sub' && warn) { const w = $('.wrap'); if (w) w.insertAdjacentHTML('afterbegin', `<div class="al ${si.active ? '' : 'hot'}" data-act="tab" data-id="sub" style="cursor:pointer"><b>${si.active ? `💎 Langganan tamat dalam ${si.days} hari` : '⛔ Langganan ProSewa telah tamat'}</b>${si.active ? 'Perbaharui sekarang supaya tiada gangguan.' : 'Anda tidak boleh tambah penyewa baru. Tekan untuk perbaharui.'}</div>`); }
 }
 const activeT = () => S.tenants.filter(t => t.active !== false);
 const ownerBtns = () => { const pend = S.payments.filter(p => p.status === 'pending').length; return instBtn() + hb('tab', '🔔', 'Bukti bayaran', pend, '', 'status') + hb('tenantForm', '+', 'Tambah penyewa', 0, 'add'); };
@@ -505,6 +531,21 @@ function oReport() {
   return h + `</div>`;
 }
 
+function oSub() {
+  const si = subInfo() || {}, hist = [...(mem.subPayments || [])].reverse();
+  const perMonth = p => RM(p.price / p.months).replace('RM ', 'RM');
+  let h = header('Langganan', 'Pakej ProSewa.', si.active ? `${si.planName} · aktif sehingga ${dateLabel(si.end)}` : `Tamat pada ${dateLabel(si.end)} — sila perbaharui`,
+    {btns: ownerBtns(), stats: [[si.active ? si.days : 0, 'Hari lagi', si.active ? (si.days <= 5 ? 'r' : 'g') : 'r'], [esc(si.planName || '-'), 'Pelan semasa']]}) + `<div class="wrap">`;
+  h += `<div class="al ${si.active ? (si.days <= 5 ? '' : 'ok') : 'hot'}"><b>${si.active ? (si.plan === 'trial' ? '🎁 Percubaan percuma ' + TRIAL_DAYS + ' hari' : '✅ Langganan aktif') : '⛔ Langganan tamat'}</b>${si.active ? `Aktif sehingga <b>${dateLabel(si.end)}</b> (${si.days} hari lagi). Bayaran baru akan disambung selepas tarikh ini.` : 'Pilih pakej di bawah untuk teruskan guna ProSewa.'}</div>`;
+  h += `<div class="sec-h">Pilih pakej</div><div class="tcgrid">${PLANS.map(p => `<div class="tc ${p.id === 'yearly' ? 'warn' : ''}"><div class="t1"><div>${p.tag ? `<span class="chip c-pending">${p.tag}</span>` : '<span class="chip c-unpaid">Asas</span>'}<h4>${p.name}</h4>
+      <div class="big">${RM(p.price)}</div><div class="muted">${p.months > 1 ? `Bersamaan ${perMonth(p)} / bulan · ` : ''}${p.months} bulan akses penuh</div></div><div class="cd"><b>${p.months}</b><small>Bulan</small></div></div>
+      <div class="kvs"><div class="kv"><span>Penyewa</span><b>Tanpa had</b></div><div class="kv"><span>Resit, peringatan & laporan</span><b>✓</b></div></div>
+      <div class="acts"><button class="btn" data-act="buyPlan" data-id="${p.id}">Pilih ${p.name}</button></div></div>`).join('')}</div>
+    <p class="muted" style="margin:4px 0 0;text-align:center">Bayaran selamat melalui <b style="color:var(--ink)">ToyyibPay</b> · FPX online banking · DuitNow</p>`;
+  h += `<div class="sec-h">Sejarah bayaran langganan</div><div class="card">${hist.length ? hist.map(x => `<div class="row"><div class="av">💎</div><div class="grow"><div class="t">${esc(PLANS.find(p => p.id === x.plan)?.name || x.plan)} · ${RM(x.amount)}</div><div class="s">${dtLabel(x.date)} · Ruj: ${esc(x.ref)}</div><div class="s">Aktif sehingga ${dateLabel(x.until)}</div></div><span class="chip c-paid">Berjaya</span></div>`).join('') : '<div class="empty">Belum ada bayaran langganan.</div>'}</div>`;
+  return h + `</div>`;
+}
+
 function oSettings() {
   const o = S.owner, s = S.settings;
   const perm = 'Notification' in window ? Notification.permission : 'unsupported';
@@ -568,6 +609,7 @@ function tHistory(notifs, unread) {
 
 /* ===================== MODAL ===================== */
 function tenantForm(id) {
+  if (!id && S.mode === 'owner' && subInfo() && !subInfo().active) { S.tab = 'sub'; renderOwner(); return toast('Langganan tamat. Sila perbaharui untuk tambah penyewa.', 'err'); }
   const t = S.tenants.find(x => x.id === id) || {dueDay: 5, startDate: localISO().slice(0, 8) + '01', deposit: 0};
   openModal(id ? 'Edit Penyewa' : 'Tambah Penyewa', `<form data-form="tenant">${hid('id', id)}
     ${fld('Nama penyewa', 'name', t.name, 'text', 'required')}${fld('No. telefon (WhatsApp)', 'phone', t.phone, 'tel', 'required placeholder="012-3456789"')}
@@ -668,6 +710,25 @@ setInterval(ownerTick, 30000);
 const ACTIONS = {
   remindNow: id => remindForm(id, true),
   theme: id => { setTheme(id); S.mode === 'owner' ? renderOwner() : S.mode === 'tenant' ? renderTenant() : renderLogin(); },
+  buyPlan: id => {
+    const p = PLANS.find(x => x.id === id), si = subInfo(), from = si && si.active ? si.end : localISO();
+    openModal('Sahkan Pakej', `<div class="card" style="margin:8px 0"><div class="kv"><span>Pakej</span><b>${p.name}</b></div><div class="kv"><span>Tempoh</span><b>${p.months} bulan</b></div>
+      <div class="kv"><span>Aktif sehingga</span><b>${dateLabel(addMonthsISO(from, p.months))}</b></div><div class="kv"><span>Jumlah</span><b style="color:var(--gold);font-size:17px">${RM(p.price)}</b></div></div>
+      <button class="btn wide" data-act="payToyyib" data-id="${p.id}">💳 Bayar ${RM(p.price)} dengan ToyyibPay</button>
+      <p class="muted" style="text-align:center">Anda akan dibawa ke halaman ToyyibPay (FPX / DuitNow).</p>`);
+  },
+  payToyyib: async id => {
+    const p = PLANS.find(x => x.id === id);
+    if (TOYYIBPAY.createBillUrl) {
+      const r = await fetch(TOYYIBPAY.createBillUrl, {method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({plan: p.id, amount: p.price, name: S.owner.name, email: S.owner.email, phone: S.owner.phone, returnUrl: baseDir() + 'index.html'})});
+      const j = await r.json(); if (!j.billCode) throw new Error('Gagal cipta bil ToyyibPay.');
+      location.href = 'https://toyyibpay.com/' + j.billCode; return;
+    }
+    openModal('Mod Demo', `<p style="margin-top:0">ToyyibPay belum disambung. Ini <b>simulasi</b> supaya anda boleh lihat aliran selepas bayaran berjaya.</p>
+      <button class="btn wide" data-act="demoPaid" data-id="${p.id}">✓ Simulasi bayaran berjaya</button>`);
+  },
+  demoPaid: async id => { activateSub(id, 'DEMO-' + genToken().slice(0, 6).toUpperCase()); closeModal(); toast('Langganan diaktifkan ✅'); renderOwner(); },
   closeModal, tenantForm, shareLink, payForm, cashForm, remindForm, rejectForm, viewProof, receipt,
   tab: id => { closeModal(); S.tab = id; renderOwner(); scrollTo(0, 0); },
   ttab: id => { S.tTab = id; renderTenant(); scrollTo(0, 0); },
@@ -727,7 +788,7 @@ const CHANGES = {
 };
 
 /* ===================== BORANG ===================== */
-async function enterOwner() { lsSet('prosewa_session', true); S.mode = 'owner'; S.tab = 'tenants'; await loadOwner(); renderOwner(); ownerTick(); }
+async function enterOwner() { ensureSub(); lsSet('prosewa_session', true); S.mode = 'owner'; S.tab = 'tenants'; await loadOwner(); renderOwner(); ownerTick(); }
 const FORMS = {
   async setup(d) { await DB.setOwner({name: d.name.trim(), phone: d.phone.trim(), email: d.email.trim().toLowerCase(), pass: await hashPass(d.pass), bankName: '', bankAcc: '', accName: d.name.trim()}); await enterOwner(); toast('Akaun dicipta. Isi maklumat bank di Tetapan.'); },
   async login(d) { const o = await DB.getOwner(); if (!o || o.email !== d.email.trim().toLowerCase() || o.pass !== await hashPass(d.pass)) throw new Error('Emel atau kata laluan salah.'); await enterOwner(); },
@@ -785,7 +846,13 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) refr
   const tok = new URLSearchParams(location.search).get('t');
   if (!IS_TENANT_SITE) {
     if (tok) { location.replace(baseDir() + 'penyewa.html?t=' + encodeURIComponent(tok)); return; }   // link lama → website penyewa
-    if (lsGet('prosewa_session', false) && mem.owner) { await enterOwner(); return; }
+    const q = new URLSearchParams(location.search);
+    if (q.has('status_id') && q.has('billcode')) {   // pulang dari ToyyibPay
+      history.replaceState(null, '', baseDir() + 'index.html');
+      setTimeout(() => toast(q.get('status_id') === '1' ? 'Bayaran berjaya ✅ Langganan akan aktif sebentar lagi.' : 'Bayaran tidak berjaya / dibatalkan.', q.get('status_id') === '1' ? '' : 'err'), 600);
+      S.tab = 'sub';
+    }
+    if (lsGet('prosewa_session', false) && mem.owner) { const tab = S.tab; await enterOwner(); if (tab === 'sub') { S.tab = 'sub'; renderOwner(); } return; }
     renderLogin(); return;
   }
   if (tok) lsSet('prosewa_tenant_token', tok);
