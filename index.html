@@ -245,7 +245,7 @@ const instBtn = () => isStandalone() ? '' : `<button class="instb" data-act="ins
 const lsGet = (k, d = null) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } };
 
-function toast(msg, type = '') { const t = $('#toast'); t.textContent = msg; t.className = 'on ' + type; clearTimeout(toast._t); toast._t = setTimeout(() => t.className = '', 2800); }
+function toast(msg, type = '') { const t = $('#toast'); t.textContent = tr(msg); t.className = 'on ' + type; clearTimeout(toast._t); toast._t = setTimeout(() => t.className = '', 2800); }
 function openModal(title, html) { $('#mt').textContent = title; $('#mb').innerHTML = html; $('#modal').classList.add('on'); }
 function closeModal() { $('#modal').classList.remove('on'); $('#mb').innerHTML = ''; }
 async function hashPass(p) {
@@ -263,6 +263,156 @@ function compressImage(file, max = 1100, q = 0.72) {
     img.src = url;
   });
 }
+
+/* ---------- Bahasa BM | EN ----------
+   UI ditulis dalam BM; bila EN dipilih, teks diterjemah automatik guna kamus I18N di bawah. */
+let LANG = lsGet('prosewa_lang', 'bm') === 'en' ? 'en' : 'bm';
+const I18N = {};   // diisi di bawah (BM → EN)
+let _i18nRe = null;
+/* Kamus BM → EN (tambah baris di sini jika ada teks baru) */
+const I18N_RX = [
+  [/(\d+) notifikasi daripada tuan rumah & sistem/g, '$1 notifications from landlord & system'],
+  [/Auto: (\d+) hari sebelum tarikh bayar, jam/g, 'Auto: $1 days before due date, at'],
+  [/Langganan anda tamat pada ([^.]+)\./g, 'Your subscription ended on $1.'],
+  [/Sebelum (\d+) hb setiap bulan/g, 'By day $1 of every month'],
+  [/Sebelum (\d+) hb/g, 'By day $1'],
+  [/(\d+) hari lagi/g, (m, n) => `${n} day${n == 1 ? '' : 's'} left`],
+  [/lepas (\d+) hari/g, '$1 days ago'],
+  [/(\d+) hari sebelum/g, '$1 days before'],
+  [/\+(\d+) hari/g, '+$1 days'],
+  [/(\d+) hari/g, (m, n) => `${n} day${n == 1 ? '' : 's'}`],
+  [/(\d+) bulan akses penuh/g, (m, n) => `${n} month${n == 1 ? '' : 's'} full access`],
+  [/(\d+) Bulan/g, '$1 Months'],
+  [/(\d+) bulan/g, (m, n) => `${n} month${n == 1 ? '' : 's'}`],
+  [/(\d+) penyewa/g, (m, n) => `${n} tenant${n == 1 ? '' : 's'}`],
+  [/(\d+) notifikasi/g, '$1 notifications'],
+  [/(\d+) peringatan/g, '$1 reminder(s)'],
+  [/Tahun (\d{4})/g, 'Year $1'],
+  [/Bayar (\d{4})/g, 'Paid $1'],
+  [/Kutipan (\d+)% daripada jangkaan/g, 'Collected $1% of expected'],
+  [/Link (\S+) disalin/g, "$1's link copied"],
+  [/Ditambah (\d+) hari/g, 'Added $1 days'],
+  [/Salam, /g, 'Hi, ']
+];
+Object.assign(I18N, {
+  'Januari': 'January', 'Februari': 'February', 'Mac': 'Mar', 'Mei': 'May', 'Julai': 'July', 'Ogos': 'August', 'Oktober': 'October', 'Disember': 'December',
+  'Ogo': 'Aug', 'Okt': 'Oct', 'Dis': 'Dec',
+  'Asal': 'Dark', 'Putih': 'Light', 'Bahasa': 'Language', 'Tema': 'Theme', 'Paparan': 'Display',
+  'Pasang': 'Install', 'Pasang app ProSewa Admin': 'Install ProSewa Admin app', 'Pasang app ProSewa Penyewa': 'Install ProSewa Tenant app', 'ProSewa Penyewa': 'ProSewa Tenant',
+  'Buka terus dari skrin utama phone': 'Open straight from your home screen', 'Dapat notifikasi & buka terus dari skrin utama': 'Get notifications & open from your home screen',
+  'Cipta akaun admin (owner)': 'Create admin (owner) account', 'Log masuk admin untuk teruskan': 'Admin sign in to continue',
+  'Nama': 'Name', 'No. telefon': 'Phone no.', 'Emel': 'Email', 'Kata laluan': 'Password', 'Cipta Akaun Admin': 'Create Admin Account', 'Log Masuk': 'Sign In', 'Masuk': 'Enter',
+  'Cuba dengan data contoh': 'Try with sample data', 'Data contoh': 'Sample data', 'Set semula': 'Reset',
+  'Versi percubaan: data disimpan dalam peranti ini. Selepas sambung Firebase, link penyewa boleh dibuka di phone penyewa.': "Trial version: data is stored on this device. After Firebase is connected, tenant links will open on tenants' phones.",
+  'Nama anda': 'Your name', 'Min 4 aksara': 'Min 4 characters', 'cth:': 'e.g.', 'nama@email.com': 'name@email.com', 'Kata laluan anda': 'Your password',
+  'Penyewa': 'Tenants', 'Senarai penyewa.': 'Tenant list.', 'tekan + di atas untuk tambah penyewa.': 'tap + above to add a tenant.', 'Tekan + di atas untuk tambah penyewa baru.': 'Tap + above to add a new tenant.',
+  'Belum ada penyewa.': 'No tenants yet.', 'Tekan': 'Tap', 'di kanan atas untuk tambah.': 'at the top right to add.',
+  'Sudah bayar': 'Paid', 'Tertunggak': 'Overdue', 'Belum bayar': 'Unpaid', 'Menunggu semakan': 'Awaiting review', 'Bayar separa': 'Part paid', 'Semak': 'Review',
+  'Hari lewat': 'Days late', 'Hari lagi': 'Days left', 'Hari ini': 'Today', 'Dibayar': 'Paid',
+  'Alamat': 'Address', 'Sewa': 'Rent', 'bulan': 'month', 'Tarikh bayar': 'Due date', 'Telefon': 'Phone',
+  'Salin link': 'Copy link', 'Kongsi': 'Share', 'Tambah penyewa': 'Add tenant', 'Bukti bayaran': 'Payment proof',
+  'Status': 'Status', 'Laporan': 'Reports', 'Langganan': 'Subscription', 'Tetapan': 'Settings', 'Utama': 'Home', 'Notifikasi': 'Notifications', 'Sejarah': 'History',
+  'Status Sewa': 'Rent Status', 'Kutipan': 'Collected', 'daripada': 'of', 'Perlu semak': 'To review', 'Bulan': 'Month',
+  'Dihantar': 'Sent', 'Lulus & hantar resit': 'Approve & send receipt', 'Tolak': 'Reject', 'Lulus': 'Approve', 'Peringatan': 'Reminder',
+  'akhir': 'due', 'Ingatkan': 'Remind', 'Jadual': 'Schedule', 'Tunai': 'Cash',
+  'Belum ada.': 'None yet.', 'Tiada bukti bayaran baru.': 'No new payment proof.', 'Semua penyewa sudah bayar': 'All tenants have paid',
+  'Peringatan akan dihantar': 'Upcoming reminders', 'Tiada peringatan berjadual.': 'No scheduled reminders.', 'Batal': 'Cancel', 'Ubah': 'Change',
+  'sebelum tarikh bayar, jam': 'before due date, at', 'Peringatan automatik dimatikan.': 'Automatic reminders are off.', 'Resit': 'Receipt',
+  'Diterima': 'Received', 'Tunggakan': 'Arrears', 'Tahun': 'Year', 'Kutipan bulanan': 'Monthly collection',
+  'Jangkaan': 'Expected', 'Baki': 'Balance', 'Jumlah': 'Total', 'Ikut penyewa': 'By tenant', 'Tiada data': 'No data', '(tamat)': '(ended)',
+  'Pakej ProSewa.': 'ProSewa plans.', 'Percubaan percuma': 'Free trial', 'aktif sehingga': 'active until', 'Aktif sehingga': 'Active until', 'Pelan semasa': 'Current plan',
+  'Bayaran baru akan disambung selepas tarikh ini.': 'New payments extend from this date.', 'Pilih pakej': 'Choose a plan', 'Asas': 'Basic',
+  'Bulanan': 'Monthly', 'Setahun': 'Yearly', 'Bersamaan': 'Equals', 'Tanpa had': 'Unlimited', 'Resit, peringatan & laporan': 'Receipts, reminders & reports',
+  'Pilih': 'Choose', 'Jimat': 'Save', 'Paling jimat': 'Best value', 'Bayaran selamat melalui': 'Secure payment via', 'Sejarah bayaran langganan': 'Subscription payment history',
+  'Belum ada bayaran langganan.': 'No subscription payments yet.', 'Berjaya': 'Success', 'Ruj:': 'Ref:', 'Langganan aktif': 'Subscription active', 'Langganan tamat': 'Subscription ended',
+  'Pilih pakej di bawah untuk teruskan guna ProSewa.': 'Choose a plan below to keep using ProSewa.', 'Tamat pada': 'Ended on', 'sila perbaharui': 'please renew',
+  'Sahkan Pakej': 'Confirm Plan', 'Pakej': 'Plan', 'Tempoh': 'Duration', 'Bayar': 'Pay', 'dengan ToyyibPay': 'with ToyyibPay',
+  'Anda akan dibawa ke halaman ToyyibPay (FPX / DuitNow).': 'You will be taken to the ToyyibPay page (FPX / DuitNow).',
+  'Mod Demo': 'Demo Mode', 'ToyyibPay belum disambung. Ini': 'ToyyibPay is not connected yet. This is a', 'simulasi': 'simulation', 'supaya anda boleh lihat aliran selepas bayaran berjaya.': 'so you can see the flow after a successful payment.',
+  'Simulasi bayaran berjaya': 'Simulate successful payment', 'Langganan diaktifkan': 'Subscription activated',
+  'Langganan tamat dalam': 'Subscription ends in', 'Perbaharui sekarang supaya tiada gangguan.': 'Renew now to avoid interruption.', 'Langganan ProSewa telah tamat': 'ProSewa subscription has ended',
+  'Anda tidak boleh tambah penyewa baru. Tekan untuk perbaharui.': 'You cannot add new tenants. Tap to renew.', 'Langganan telah tamat': 'Subscription has ended',
+  'Langganan anda tamat pada': 'Your subscription ended on', 'Sila buat bayaran untuk log masuk semula. Penyewa anda juga tidak dapat membuka app sehingga bayaran dibuat.': 'Please make a payment to sign in again. Your tenants also cannot open the app until payment is made.',
+  'Tetapan.': 'Settings.', 'Profil & maklumat bayaran': 'Profile & payment details', 'No. akaun / DuitNow': 'Account no. / DuitNow', 'Nama pemegang akaun': 'Account holder name',
+  'Maklumat bank dipaparkan kepada penyewa.': 'Bank details are shown to tenants.', 'Simpan profil': 'Save profile', 'Peringatan automatik': 'Automatic reminders',
+  'Notifikasi kepada penyewa sebelum tarikh bayar': 'Notify tenants before due date', 'Berapa hari sebelum': 'Days before', 'Pada jam': 'At time',
+  'Notifikasi tunggakan selepas tarikh bayar': 'Overdue notification after due date', 'Simpan': 'Save', 'Aktifkan notifikasi phone': 'Enable phone notifications', 'Notifikasi phone aktif': 'Phone notifications on',
+  'Install app ProSewa': 'Install ProSewa app', 'Keselamatan': 'Security', 'Kata laluan baru': 'New password', 'Tukar kata laluan': 'Change password', 'Log Keluar': 'Sign Out',
+  'Tambah Penyewa': 'Add Tenant', 'Edit Penyewa': 'Edit Tenant', 'Nama penyewa': 'Tenant name', 'No. telefon (WhatsApp)': 'Phone no. (WhatsApp)', 'Alamat rumah / bilik sewa': 'Rental house / room address',
+  'Harga sewa (RM)': 'Rent (RM)', 'Bayar sebelum hari bulan ke-': 'Pay by day of month', 'Mula sewa': 'Start date', 'Nota (pilihan)': 'Notes (optional)',
+  'Link Penyewa': 'Tenant Link', 'Link khas untuk': 'Private link for', 'Jangan kongsi dengan orang lain.': 'Do not share with others.',
+  'Penyewa cuma buka link ini, tiada login. Boleh terus pasang sebagai app.': 'The tenant just opens this link, no login. They can install it as an app.',
+  'Hantar link via WhatsApp': 'Send link via WhatsApp', 'Lihat paparan penyewa': 'View tenant page', 'Tukar link': 'Change link',
+  'akan matikan link lama (contoh bila link tersebar).': 'disables the old link (e.g. if it was leaked).',
+  'Pasang App': 'Install App', 'Buka link ini dalam': 'Open this link in', 'Tekan menu': 'Tap the menu', 'di kanan atas.': 'at the top right.', 'atau': 'or',
+  'Kalau sudah dipasang, buka dari ikon': 'If already installed, open it from the', 'di skrin utama.': 'icon on your home screen.',
+  'Tekan butang': 'Tap the', 'di bawah.': 'button at the bottom.', 'kemudian tekan': 'then tap',
+  'Bukti Bayaran': 'Payment Proof', 'Rujukan': 'Reference', 'Tolak Bukti Bayaran': 'Reject Payment Proof', 'Sebab': 'Reason', 'Jumlah tidak tepat': 'Incorrect amount',
+  'Gambar tidak jelas': 'Image not clear', 'Bayaran belum diterima dalam akaun': 'Payment not received in account', 'Lain-lain': 'Other', 'Nota tambahan (pilihan)': 'Additional note (optional)',
+  'Hantar Peringatan': 'Send Reminder', 'Peringatan dalam App': 'In-app Reminder', 'Kepada': 'To', 'Semua yang belum bayar': 'Everyone unpaid', 'Bila': 'When', 'Hantar sekarang': 'Send now',
+  'Jadualkan tarikh & masa': 'Schedule date & time', 'Tarikh': 'Date', 'Masa': 'Time', 'Mesej': 'Message',
+  'Mesej akan masuk sebagai notifikasi dalam app penyewa (dan notifikasi phone jika penyewa aktifkan).': 'The message arrives as a notification in the tenant app (and a phone notification if enabled).',
+  'Hantar / Jadualkan': 'Send / Schedule', 'Rekod Bayaran Tunai': 'Record Cash Payment', 'Untuk bulan': 'For month', 'Jumlah (RM)': 'Amount (RM)', 'Tarikh terima': 'Date received',
+  'Kaedah': 'Method', 'Pindahan bank': 'Bank transfer', 'Simpan & jana resit': 'Save & generate receipt',
+  'Resit Bayaran': 'Payment Receipt', 'RESIT SEWA': 'RENT RECEIPT', 'Diterima daripada': 'Received from', 'Sewa bulan': 'Rent for', 'Diluluskan oleh': 'Approved by', 'Tarikh lulus': 'Approved on',
+  'DIBAYAR': 'PAID', 'Dijana oleh ProSewa': 'Generated by ProSewa', 'Simpan PDF': 'Save PDF', 'Bukti': 'Proof', 'Padam': 'Delete',
+  'Sewa saya': 'My rent', 'Sila bayar sebelum': 'Please pay by', 'Muat naik bukti bayaran': 'Upload payment proof', 'Muat naik bukti': 'Upload proof',
+  'Bukti bayaran anda sedang disemak. Resit akan dihantar selepas diluluskan.': 'Your payment proof is being reviewed. A receipt will be sent once approved.',
+  'Terima kasih! Sewa bulan ini sudah dijelaskan.': "Thank you! This month's rent is paid.", 'Cara bayar': 'How to pay', 'No. akaun': 'Account no.', 'salin': 'copy',
+  'Tuan rumah belum isi maklumat bayaran.': 'The landlord has not added payment details yet.', 'Maklumat sewaan': 'Rental details', 'Sewa bulanan': 'Monthly rent', 'Tuan rumah': 'Landlord',
+  'Chat tuan rumah (urgent)': 'Chat landlord (urgent)', 'Muat Naik Bukti Bayaran': 'Upload Payment Proof', 'Pilih screenshot / gambar resit bank': 'Choose screenshot / bank receipt image',
+  'Tukar gambar': 'Change image', 'No. rujukan (pilihan)': 'Reference no. (optional)', 'Tarikh dibayar': 'Payment date', 'Hantar kepada tuan rumah': 'Send to landlord',
+  'Notifikasi.': 'Notifications.', 'notifikasi daripada tuan rumah & sistem': 'notifications from landlord & system', 'Tiada notifikasi.': 'No notifications.', 'Baru': 'New',
+  'Mesej dari tuan rumah': 'Message from landlord', 'Sewa tertunggak': 'Rent overdue', 'Peringatan bayar sewa': 'Rent payment reminder', 'Bayaran diluluskan': 'Payment approved',
+  'Bukti bayaran ditolak': 'Payment proof rejected', 'perlu dibayar sebelum': 'is due by', 'untuk': 'for', 'sedia. Tekan untuk lihat.': 'is ready. Tap to view.', 'Sila hubungi tuan rumah.': 'Please contact your landlord.',
+  'Sejarah bayaran.': 'Payment history.', 'Tekan bayaran yang diluluskan untuk lihat resit.': 'Tap an approved payment to view its receipt.', 'Jumlah dibayar': 'Total paid',
+  'Diluluskan': 'Approved', 'Menunggu': 'Pending', 'Ditolak': 'Rejected', 'dibayar': 'paid', 'Belum ada bayaran.': 'No payments yet.',
+  'Link ini tidak sah atau sewaan telah tamat.': 'This link is invalid or the tenancy has ended.', 'Sila buka link khas yang dihantar oleh tuan rumah anda.': 'Please open the private link sent by your landlord.',
+  'Hubungi tuan rumah untuk dapatkan link baru.': 'Contact your landlord for a new link.',
+  'Sistem tergendala': 'System unavailable', 'Maaf, sistem tidak dapat dibuka buat masa ini. Sila rujuk tuan rumah anda.': 'Sorry, the system cannot be opened right now. Please contact your landlord.',
+  'Panel pemilik sistem ProSewa': 'ProSewa system owner panel', 'Kawalan sistem.': 'System control.', 'Tetapan percubaan & langganan owner': 'Trial & owner subscription settings',
+  'Tempoh percubaan': 'Trial period', 'Hari percubaan percuma': 'Free trial days', 'Berkuat kuasa serta-merta untuk owner yang masih dalam percubaan.': 'Takes effect immediately for owners still on trial.',
+  'Pelan': 'Plan', 'Tamat': 'Ended', 'Aktif': 'Active', '+1 tahun': '+1 year', 'Set semula percubaan': 'Reset trial', 'Tamatkan sekarang': 'End now', 'Kembali ke app': 'Back to app', 'Kembali': 'Back',
+  '(belum daftar)': '(not registered)',
+  'Akaun dicipta. Isi maklumat bank di Tetapan.': 'Account created. Add bank details in Settings.', 'App berjaya dipasang': 'App installed', 'App sedang dipasang': 'Installing app',
+  'Bayaran direkod.': 'Payment recorded.', 'Bukti dihantar! Tunggu tuan rumah luluskan.': 'Proof sent! Wait for landlord approval.', 'Bukti ditolak. Penyewa akan dimaklumkan.': 'Proof rejected. The tenant will be notified.',
+  'Data contoh dimuatkan. Log masuk:': 'Sample data loaded. Sign in:', 'Diluluskan. Resit kini ada dalam app penyewa.': 'Approved. The receipt is now in the tenant app.', 'Dipadam.': 'Deleted.', 'Disalin.': 'Copied.',
+  'Kata laluan ditukar.': 'Password changed.', 'Kebenaran notifikasi ditolak.': 'Notification permission denied.', 'Langganan ditamatkan.': 'Subscription ended.',
+  'Langganan tamat. Sila perbaharui untuk tambah penyewa.': 'Subscription ended. Please renew to add tenants.', 'Link baru dijana.': 'New link generated.', 'Notifikasi diaktifkan.': 'Notifications enabled.',
+  'Notifikasi diaktifkan': 'Notifications enabled', 'Penyewa dibuang.': 'Tenant removed.', 'Penyewa dikemas kini.': 'Tenant updated.', 'Penyewa ditambah. Hantar link kepada penyewa.': 'Tenant added. Send the link to the tenant.',
+  'Percubaan diset semula.': 'Trial reset.', 'Peringatan dibatalkan.': 'Reminder cancelled.', 'Phone/browser ini tidak sokong notifikasi. Install app dahulu.': 'This phone/browser does not support notifications. Install the app first.',
+  'Profil disimpan.': 'Profile saved.', 'Storan peranti penuh. Padam beberapa bukti bayaran lama.': 'Device storage full. Delete some old payment proofs.', 'Tempoh percubaan:': 'Trial period:', 'Tetapan disimpan.': 'Settings saved.',
+  'Peringatan berjadual dihantar kepada': 'Scheduled reminder delivered to', 'Peringatan dihantar': 'Reminder sent', 'Peringatan dihantar ke app': 'Reminder sent to the app of', 'peringatan dijadualkan pada': 'reminder(s) scheduled for',
+  'Emel atau kata laluan salah.': 'Wrong email or password.', 'Gagal cipta bil ToyyibPay.': 'Failed to create ToyyibPay bill.', 'PIN salah.': 'Wrong PIN.', 'Pilih tarikh & masa akan datang.': 'Choose a future date & time.',
+  'Rekod tidak dijumpai.': 'Record not found.', 'Sila pilih gambar bukti bayaran.': 'Please choose a payment proof image.', 'Ralat berlaku.': 'An error occurred.',
+  'Bayaran berjaya': 'Payment successful', 'Langganan akan aktif sebentar lagi.': 'Your subscription will be active shortly.', 'Bayaran tidak berjaya / dibatalkan.': 'Payment failed / cancelled.',
+  'Sila pilih fail gambar (screenshot / foto resit).': 'Please choose an image file (screenshot / receipt photo).', 'Gambar tidak dapat dibaca.': 'Image could not be read.',
+  'Padam SEMUA data dalam peranti ini?': 'Delete ALL data on this device?', 'Link penyewa akan dimatikan. Rekod bayaran lama kekal dalam laporan.': 'The tenant link will be disabled. Old payment records stay in reports.',
+  'Tukar link? Link lama tidak boleh digunakan lagi.': 'Change link? The old link will stop working.', 'Padam rekod bayaran ini?': 'Delete this payment record?',
+  'Tamatkan langganan owner sekarang? (untuk uji)': 'End the owner subscription now? (for testing)'
+});
+const _cf = window.confirm.bind(window); window.confirm = m => _cf(tr(m));
+const _pr = window.prompt.bind(window); window.prompt = (m, d) => _pr(tr(m), d);
+
+function i18nRe() {
+  if (_i18nRe) return _i18nRe;
+  const keys = Object.keys(I18N).sort((a, b) => b.length - a.length).map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  return _i18nRe = new RegExp(`(?<![\\p{L}\\d])(${keys.join('|')})(?![\\p{L}\\d])`, 'gu');
+}
+function tr(str) { if (LANG !== 'en' || !str) return str; let o = String(str); for (const [re, to] of I18N_RX) o = o.replace(re, to); return o.replace(i18nRe(), m => I18N[m]); }
+function trNode(root) {
+  if (LANG !== 'en' || !root) return;
+  if (root.nodeType === 3) { const v = tr(root.nodeValue); if (v !== root.nodeValue) root.nodeValue = v; return; }
+  if (root.nodeType !== 1 || root.closest?.('[data-raw]')) return;
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {acceptNode: n => n.parentElement?.closest('[data-raw],script,style') ? 2 : 1});
+  const list = []; while (w.nextNode()) list.push(w.currentNode);
+  list.forEach(n => { const v = tr(n.nodeValue); if (v !== n.nodeValue) n.nodeValue = v; });
+  [root, ...root.querySelectorAll('[placeholder],[aria-label],[title]')].forEach(el => ['placeholder', 'aria-label', 'title'].forEach(a => { if (el.hasAttribute?.(a)) { const v = tr(el.getAttribute(a)); if (v !== el.getAttribute(a)) el.setAttribute(a, v); } }));
+}
+const _obs = new MutationObserver(ms => { if (LANG !== 'en') return; _obs.disconnect(); ms.forEach(m => m.addedNodes.forEach(trNode)); _obs.observe(document.body, {childList: true, subtree: true}); });
+function setLang(l) { LANG = l === 'en' ? 'en' : 'bm'; lsSet('prosewa_lang', LANG); document.documentElement.lang = LANG === 'en' ? 'en' : 'ms'; }
+const langSeg = () => `<div class="lang" style="margin-right:6px"><button class="${LANG === 'bm' ? 'on' : ''}" data-act="lang" data-id="bm">BM</button><button class="${LANG === 'en' ? 'on' : ''}" data-act="lang" data-id="en">EN</button></div>`;
+document.documentElement.lang = LANG === 'en' ? 'en' : 'ms'; _obs.observe(document.body, {childList: true, subtree: true});
 
 /* ---------- Lapisan data (localStorage) — tukar ke Firebase kemudian ---------- */
 const KEY = 'prosewa_data_v2';
@@ -291,13 +441,20 @@ const PLANS = [
   {id: 'half', name: '6 Bulan', months: 6, price: 99.00, tag: 'Jimat 17%'},
   {id: 'yearly', name: 'Setahun', months: 12, price: 179.00, tag: 'Paling jimat'}
 ];
-const TRIAL_DAYS = 14;
+const TRIAL_DAYS = 14;        // tempoh percubaan asal (hari) — boleh diubah juga di panel Super Admin (#super)
+const SUPER_PIN = '2580';     // PIN panel Super Admin: buka .../ProSewa/#super  (TUKAR PIN INI)
+const trialDays = () => +(mem.config && mem.config.trialDays) || TRIAL_DAYS;
 const TOYYIBPAY = {
   createBillUrl: ''   // nanti: URL Cloud Function yang cipta bil ToyyibPay & pulangkan {billCode}
 };
 const addMonthsISO = (iso, n) => { const [y, m, d] = iso.split('-').map(Number); const last = new Date(y, m - 1 + n + 1, 0).getDate(); return localISO(new Date(y, m - 1 + n, Math.min(d, last))); };
-function ensureSub() { if (!mem.subscription) { mem.subscription = {plan: 'trial', start: localISO(), end: addDays(localISO(), TRIAL_DAYS)}; mem.subPayments = mem.subPayments || []; save(); } }
-function subInfo() { const s = mem.subscription; if (!s) return null; const days = Math.round((new Date(s.end + 'T23:59:59') - new Date()) / 864e5); return {...s, days, active: days >= 0, planName: s.plan === 'trial' ? 'Percubaan percuma' : (PLANS.find(p => p.id === s.plan)?.name || s.plan)}; }
+function ensureSub() { if (!mem.subscription) { mem.subscription = {plan: 'trial', start: localISO(), end: ''}; mem.subPayments = mem.subPayments || []; save(); } }
+function subInfo() {
+  const s = mem.subscription; if (!s) return null;
+  const end = s.plan === 'trial' ? addDays(s.start, trialDays()) : s.end;   // percubaan ikut tetapan hari semasa
+  const days = Math.round((new Date(end + 'T23:59:59') - new Date()) / 864e5);
+  return {...s, end, days, active: days >= 0, planName: s.plan === 'trial' ? 'Percubaan percuma' : (PLANS.find(p => p.id === s.plan)?.name || s.plan)};
+}
 function activateSub(planId, ref) {
   const pl = PLANS.find(p => p.id === planId), cur = subInfo();
   const from = cur && cur.active && cur.end > localISO() ? cur.end : localISO();
@@ -316,7 +473,7 @@ async function seedDemo() {
     {name: 'Lim Wei Jie', phone: '0167788990', address: 'Bilik B, No. 8 Jalan 2/3, Bandar Baru Bangi', rent: 450, deposit: 450, dueDay: 7, startDate: addMonths(cm, -2) + '-01'}
   ];
   mem = {owner: {name: 'Encik Ahmad', email: 'admin@demo.com', pass: await hashPass('1234'), phone: '0131234567', bankName: 'Maybank', bankAcc: '1122 3344 5566', accName: 'Ahmad bin Hassan'},
-    settings: {autoOn: true, autoDays: 3, autoTime: '09:00', overdueOn: true}, tenants: [], payments: [], reminders: [], subscription: {plan: 'trial', start: localISO(), end: addDays(localISO(), TRIAL_DAYS)}, subPayments: []};
+    settings: {autoOn: true, autoDays: 3, autoTime: '09:00', overdueOn: true}, tenants: [], payments: [], reminders: [], subscription: {plan: 'trial', start: localISO(), end: ''}, subPayments: [], config: mem.config || {}};
   T.forEach(t => mem.tenants.push({...t, id: genId(), token: genToken(), active: true, notes: '', createdAt: nowStr()}));
   const [a, b, c] = mem.tenants;
   const pay = (t, ym, extra = {}) => mem.payments.push({id: genId(), tenantId: t.id, tenantName: t.name, address: t.address, month: ym, amount: t.rent, paidDate: ym + '-0' + Math.max(1, t.dueDay - 1),
@@ -364,7 +521,9 @@ function arrears(t, payments) {
 const chip = s => `<span class="chip c-${s.code}">${esc(s.label)}</span>`;
 const payChip = p => ({confirmed: '<span class="chip c-paid">Diluluskan</span>', pending: '<span class="chip c-pending">Menunggu</span>', rejected: '<span class="chip c-rejected">Ditolak</span>'}[p.status] || '');
 const bankText = o => o?.bankAcc ? `Bayaran ke ${o.bankName || ''} ${o.bankAcc} (${o.accName || o.name || ''}).` : '';
-const reminderMsg = (t, ym, o) => `Salam ${t.name}, peringatan mesra: sewa ${monthLabel(ym)} sebanyak ${RM(t.rent)} perlu dibayar sebelum ${dateLabel(dueDate(t, ym))}. ${bankText(o)} Selepas bayar, sila muat naik bukti bayaran dalam app ini. Terima kasih — ${o?.name || ''}`;
+const reminderMsg = (t, ym, o) => LANG === 'en'
+  ? `Hi ${t.name}, a friendly reminder: rent for ${monthLabel(ym)} of ${RM(t.rent)} is due by ${dateLabel(dueDate(t, ym))}. ${o?.bankAcc ? `Pay to ${o.bankName || ''} ${o.bankAcc} (${o.accName || o.name || ''}).` : ''} After paying, please upload your payment proof in this app. Thank you — ${o?.name || ''}`
+  : `Salam ${t.name}, peringatan mesra: sewa ${monthLabel(ym)} sebanyak ${RM(t.rent)} perlu dibayar sebelum ${dateLabel(dueDate(t, ym))}. ${bankText(o)} Selepas bayar, sila muat naik bukti bayaran dalam app ini. Terima kasih — ${o?.name || ''}`;
 
 /* ---------- Notifikasi penyewa (dikira) ---------- */
 function tenantNotifs(t, payments, reminders, settings) {
@@ -375,7 +534,7 @@ function tenantNotifs(t, payments, reminders, settings) {
     if (now >= at) out.push({id: `due-${cm}`, at, ic: '🔔', title: 'Peringatan bayar sewa', body: `Sewa ${monthLabel(cm)} ${RM(t.rent)} perlu dibayar sebelum ${dateLabel(s.due)}.`});
   }
   if (settings.overdueOn) { const a = arrears(t, payments); if (a.sum > 0) out.push({id: `arr-${a.months.join('_')}`, at: `${addDays(dueDate(t, a.months[a.months.length - 1]), 1)}T${settings.autoTime || '09:00'}`, ic: '⚠️', title: 'Sewa tertunggak', body: `Tunggakan ${RM(a.sum)} (${a.months.map(monthLabel).join(', ')}).`}); }
-  reminders.filter(r => r.tenantId === t.id && r.at <= now).forEach(r => out.push({id: 'r-' + r.id, at: r.at, ic: '📩', title: 'Mesej dari tuan rumah', body: r.message}));
+  reminders.filter(r => r.tenantId === t.id && r.at <= now).forEach(r => out.push({id: 'r-' + r.id, at: r.at, ic: '📩', title: 'Mesej dari tuan rumah', body: r.message, raw: true}));
   payments.filter(p => p.tenantId === t.id).forEach(p => {
     if (p.status === 'confirmed' && p.confirmedAt) out.push({id: 'ok-' + p.id, at: p.confirmedAt, ic: '✅', title: 'Bayaran diluluskan', body: `Resit ${p.receiptNo} untuk ${monthLabel(p.month)} sedia. Tekan untuk lihat.`, pay: p.id});
     if (p.status === 'rejected') out.push({id: 'no-' + p.id, at: p.rejectedAt || p.submittedAt, ic: '❌', title: 'Bukti bayaran ditolak', body: `${monthLabel(p.month)}: ${p.rejectReason || 'Sila hubungi tuan rumah.'}`});
@@ -411,6 +570,7 @@ const METHODS = ['DuitNow', 'Pindahan bank', "Touch 'n Go", 'Tunai', 'Lain-lain'
 const nav = (items, cur) => `<div class="nav"><div class="in">${items.map(([id, ic, lb, badge]) => `<button class="${cur === id ? 'on' : ''}" data-act="${S.mode === 'owner' ? 'tab' : 'ttab'}" data-id="${id}"><i>${ic}</i>${lb}${badge ? `<em>${badge}</em>` : ''}</button>`).join('')}</div></div>`;
 
 /* ===================== TEMA & HEADER ===================== */
+function rerender() { ({owner: renderOwner, tenant: renderTenant, locked: renderLocked, super: renderSuper}[S.mode] || renderLogin)(); }
 function setTheme(t) { try { localStorage.setItem('prosewa_theme', t); } catch (e) {} if (t === 'light') document.documentElement.dataset.theme = 'light'; else delete document.documentElement.dataset.theme; $('meta[name="theme-color"]').content = t === 'light' ? '#ffffff' : '#0a1210'; }
 const curTheme = () => document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
 const themeSeg = () => `<div class="lang"><button class="${curTheme() === 'dark' ? 'on' : ''}" data-act="theme" data-id="dark">🌙 Asal</button><button class="${curTheme() === 'light' ? 'on' : ''}" data-act="theme" data-id="light">☀️ Putih</button></div>`;
@@ -440,9 +600,44 @@ function renderLogin() {
     : `<form data-form="setup">${fld('Nama', 'name', '', 'text', 'required placeholder="Nama anda"')}${fld('No. telefon', 'phone', '', 'tel', 'required placeholder="012-3456789"')}${fld('Emel', 'email', '', 'email', 'required autocomplete="username" placeholder="cth: nama@email.com"')}${fld('Kata laluan', 'pass', '', 'password', 'required minlength="4" autocomplete="new-password" placeholder="Min 4 aksara"')}
        <button class="btn wide" style="margin-top:14px">Cipta Akaun Admin</button></form>
        <button class="btn wide ghost" style="margin-top:8px" data-act="useDemo">✨ Cuba dengan data contoh</button>`;
-  $('#app').innerHTML = `<div class="login"><div class="lbox">${themeSeg()}<br>${isStandalone() ? '' : `<div class="instbig"><div><b>Pasang app ProSewa Admin</b><span class="muted">Buka terus dari skrin utama phone</span></div><button class="btn sm" data-act="install">⬇ Pasang</button></div>`}<img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa</h2>
+  $('#app').innerHTML = `<div class="login"><div class="lbox">${langSeg()}${themeSeg()}<br>${isStandalone() ? '' : `<div class="instbig"><div><b>Pasang app ProSewa Admin</b><span class="muted">Buka terus dari skrin utama phone</span></div><button class="btn sm" data-act="install">⬇ Pasang</button></div>`}<img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa</h2>
     <p class="muted" style="margin:0 0 6px">${has ? 'Log masuk admin untuk teruskan' : 'Cipta akaun admin (owner)'}</p>${body}
     <div class="hint">Versi percubaan: data disimpan dalam peranti ini. Selepas sambung Firebase, link penyewa boleh dibuka di phone penyewa.</div></div></div>`;
+}
+
+/* ===================== LANGGANAN TAMAT (owner dikunci) ===================== */
+function renderLocked() {
+  S.mode = 'locked';
+  const si = subInfo();
+  $('#app').innerHTML = `<div class="login"><div class="lbox">${langSeg()}${themeSeg()}<br><img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa</h2>
+    <div class="al hot" style="text-align:left"><b>⛔ Langganan telah tamat</b>Langganan anda tamat pada ${dateLabel(si.end)}. Sila buat bayaran untuk log masuk semula. Penyewa anda juga tidak dapat membuka app sehingga bayaran dibuat.</div>
+    <div style="text-align:left">${PLANS.map(p => `<div class="instbig" style="margin-bottom:8px"><div><b>${p.name}${p.tag ? ` · <span style="font-weight:600">${p.tag}</span>` : ''}</b><span class="muted">${p.months} bulan · ${RM(p.price)}</span></div><button class="btn sm" data-act="buyPlan" data-id="${p.id}">Bayar</button></div>`).join('')}</div>
+    <button class="btn wide ghost" style="margin-top:6px" data-act="logout">Log Keluar</button></div></div>`;
+}
+
+/* ===================== SUPER ADMIN (#super) — untuk pemilik sistem ===================== */
+function renderSuper() {
+  S.mode = 'super';
+  if (!S.superOk) {
+    $('#app').innerHTML = `<div class="login"><div class="lbox">${langSeg()}<br><img src="icon-192.png" alt="" class="llogo"><h2 class="lh">Super Admin</h2><p class="muted">Panel pemilik sistem ProSewa</p>
+      <form data-form="superpin">${fld('PIN', 'pin', '', 'password', 'required inputmode="numeric" autocomplete="off"')}<button class="btn wide" style="margin-top:14px">Masuk</button></form>
+      <button class="btn wide ghost" style="margin-top:8px" data-act="exitSuper">‹ Kembali</button></div></div>`;
+    return;
+  }
+  ensureSub(); const si = subInfo(), o = mem.owner;
+  $('#app').innerHTML = header('Super Admin', 'Kawalan sistem.', 'Tetapan percubaan & langganan owner', {btns: '<span style="margin-left:auto"></span>' + langSeg()}) + `<div class="wrap">
+    <div class="sec-h">Tempoh percubaan</div><form class="card" data-form="trial">${fld('Hari percubaan percuma', 'days', trialDays(), 'number', 'min="0" max="365" required')}
+      <p class="muted">Berkuat kuasa serta-merta untuk owner yang masih dalam percubaan.</p><button class="btn wide">Simpan</button></form>
+    <div class="sec-h">Owner</div><div class="card"><div class="kv"><span>Owner</span><b>${esc(o?.name || '(belum daftar)')}</b></div><div class="kv"><span>Emel</span><b>${esc(o?.email || '-')}</b></div>
+      <div class="kv"><span>Pelan</span><b>${esc(si.planName)}</b></div><div class="kv"><span>Tamat</span><b>${dateLabel(si.end)}</b></div>
+      <div class="kv"><span>Status</span><b>${si.active ? `<span class="chip c-paid">Aktif · ${si.days} hari lagi</span>` : '<span class="chip c-overdue">Tamat</span>'}</b></div>
+      <div class="acts"><button class="btn sm" data-act="superAdd" data-id="30">+30 hari</button><button class="btn sm ghost" data-act="superAdd" data-id="365">+1 tahun</button></div>
+      <div class="acts"><button class="btn sm ghost" data-act="superTrial">Set semula percubaan</button><button class="btn sm red" data-act="superExpire">Tamatkan sekarang</button></div></div>
+    <button class="btn wide ghost" data-act="exitSuper">‹ Kembali ke app</button></div>`;
+}
+function tenantDown() {
+  $('#app').innerHTML = `<div class="login"><div class="lbox">${langSeg()}<br><img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa</h2>
+    <div class="al hot" style="text-align:left"><b>⚠️ Sistem tergendala</b>Maaf, sistem tidak dapat dibuka buat masa ini. Sila rujuk tuan rumah anda.</div></div></div>`;
 }
 
 /* ===================== OWNER ===================== */
@@ -501,7 +696,7 @@ function oStatus() {
       return `<div class="row" data-act="receipt" data-id="${p.id}" style="cursor:pointer"><div class="av">${initials(t.name)}</div><div class="grow"><div class="t">${esc(t.name)}</div><div class="s">${RM(p.amount)} · ${dateLabel(p.paidDate)} · ${esc(p.receiptNo)}</div></div><span class="chip c-paid">Resit ›</span></div>`; }).join('')}</div>`
     : '<div class="empty">Belum ada.</div>';
 
-  h += `<div class="sec-h">⏰ Peringatan akan dihantar (${upcoming.length})</div><div class="card">${upcoming.length ? upcoming.map(r => `<div class="row"><div class="grow"><div class="t">${esc(tn(r.tenantId))}</div><div class="s">📅 ${dtLabel(r.at)}</div><div class="s">${esc(r.message).slice(0, 110)}${r.message.length > 110 ? '…' : ''}</div></div><button class="btn sm red fx" data-act="delReminder" data-id="${r.id}">Batal</button></div>`).join('') : '<div class="empty">Tiada peringatan berjadual.</div>'}
+  h += `<div class="sec-h">⏰ Peringatan akan dihantar (${upcoming.length})</div><div class="card">${upcoming.length ? upcoming.map(r => `<div class="row"><div class="grow"><div class="t">${esc(tn(r.tenantId))}</div><div class="s">📅 ${dtLabel(r.at)}</div><div class="s"><span data-raw>${esc(r.message).slice(0, 110)}</span>${r.message.length > 110 ? '…' : ''}</div></div><button class="btn sm red fx" data-act="delReminder" data-id="${r.id}">Batal</button></div>`).join('') : '<div class="empty">Tiada peringatan berjadual.</div>'}
     <p class="muted" style="margin:8px 0 0">${S.settings.autoOn ? `Auto: ${S.settings.autoDays} hari sebelum tarikh bayar, jam ${S.settings.autoTime}.` : 'Peringatan automatik dimatikan.'} <button class="link" data-act="tab" data-id="settings">Ubah</button></p></div>`;
   return h + `</div>`;
 }
@@ -536,7 +731,7 @@ function oSub() {
   const perMonth = p => RM(p.price / p.months).replace('RM ', 'RM');
   let h = header('Langganan', 'Pakej ProSewa.', si.active ? `${si.planName} · aktif sehingga ${dateLabel(si.end)}` : `Tamat pada ${dateLabel(si.end)} — sila perbaharui`,
     {btns: ownerBtns(), stats: [[si.active ? si.days : 0, 'Hari lagi', si.active ? (si.days <= 5 ? 'r' : 'g') : 'r'], [esc(si.planName || '-'), 'Pelan semasa']]}) + `<div class="wrap">`;
-  h += `<div class="al ${si.active ? (si.days <= 5 ? '' : 'ok') : 'hot'}"><b>${si.active ? (si.plan === 'trial' ? '🎁 Percubaan percuma ' + TRIAL_DAYS + ' hari' : '✅ Langganan aktif') : '⛔ Langganan tamat'}</b>${si.active ? `Aktif sehingga <b>${dateLabel(si.end)}</b> (${si.days} hari lagi). Bayaran baru akan disambung selepas tarikh ini.` : 'Pilih pakej di bawah untuk teruskan guna ProSewa.'}</div>`;
+  h += `<div class="al ${si.active ? (si.days <= 5 ? '' : 'ok') : 'hot'}"><b>${si.active ? (si.plan === 'trial' ? '🎁 Percubaan percuma ' + trialDays() + ' hari' : '✅ Langganan aktif') : '⛔ Langganan tamat'}</b>${si.active ? `Aktif sehingga <b>${dateLabel(si.end)}</b> (${si.days} hari lagi). Bayaran baru akan disambung selepas tarikh ini.` : 'Pilih pakej di bawah untuk teruskan guna ProSewa.'}</div>`;
   h += `<div class="sec-h">Pilih pakej</div><div class="tcgrid">${PLANS.map(p => `<div class="tc ${p.id === 'yearly' ? 'warn' : ''}"><div class="t1"><div>${p.tag ? `<span class="chip c-pending">${p.tag}</span>` : '<span class="chip c-unpaid">Asas</span>'}<h4>${p.name}</h4>
       <div class="big">${RM(p.price)}</div><div class="muted">${p.months > 1 ? `Bersamaan ${perMonth(p)} / bulan · ` : ''}${p.months} bulan akses penuh</div></div><div class="cd"><b>${p.months}</b><small>Bulan</small></div></div>
       <div class="kvs"><div class="kv"><span>Penyewa</span><b>Tanpa had</b></div><div class="kv"><span>Resit, peringatan & laporan</span><b>✓</b></div></div>
@@ -550,7 +745,7 @@ function oSettings() {
   const o = S.owner, s = S.settings;
   const perm = 'Notification' in window ? Notification.permission : 'unsupported';
   return header('Tetapan', 'Tetapan.', o.email, {btns: ownerBtns()}) + `<div class="wrap">
-    <div class="sec-h">Paparan</div><div class="card"><div class="switch">Tema ${themeSeg()}</div></div>
+    <div class="sec-h">Paparan</div><div class="card"><div class="switch">Bahasa ${langSeg()}</div><div class="switch">Tema ${themeSeg()}</div></div>
     <div class="sec-h">Profil & maklumat bayaran</div><form class="card" data-form="profile">${fld('Nama', 'name', o.name, 'text', 'required')}${fld('No. telefon', 'phone', o.phone, 'tel')}
       ${fld('Bank / e-wallet', 'bankName', o.bankName, 'text', 'placeholder="cth: Maybank"')}${fld('No. akaun / DuitNow', 'bankAcc', o.bankAcc)}${fld('Nama pemegang akaun', 'accName', o.accName)}
       <p class="muted">Maklumat bank dipaparkan kepada penyewa.</p><button class="btn wide">Simpan profil</button></form>
@@ -567,8 +762,9 @@ function oSettings() {
 /* ===================== PENYEWA ===================== */
 function renderTenant() {
   if (S.mode !== 'tenant') return;
+  if (mem.owner && subInfo() && !subInfo().active) return tenantDown();
   if (!S.t || S.t.active === false) {
-    $('#app').innerHTML = `<div class="login"><div class="lbox">${themeSeg()}<br><img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa Penyewa</h2>
+    $('#app').innerHTML = `<div class="login"><div class="lbox">${langSeg()}${themeSeg()}<br><img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa Penyewa</h2>
       <p class="muted">${S.token ? 'Link ini tidak sah atau sewaan telah tamat.' : 'Sila buka link khas yang dihantar oleh tuan rumah anda.'}<br>Hubungi tuan rumah untuk dapatkan link baru.</p></div></div>`;
     return;
   }
@@ -580,13 +776,13 @@ function renderTenant() {
   $('#app').innerHTML = v(notifs, unread, seenBefore) + nav([['home', '🏠', 'Utama'], ['notif', '🔔', 'Notifikasi', unread], ['history', '🧾', 'Sejarah']], S.tTab);
   pushNewTenantNotifs(notifs);
 }
-const tenantBtns = unread => instBtn() + hb('theme', curTheme() === 'dark' ? '☀️' : '🌙', 'Tema', 0, '', curTheme() === 'dark' ? 'light' : 'dark') + hb('ttab', '🔔', 'Notifikasi', unread, '', 'notif');
+const tenantBtns = unread => instBtn() + hb('lang', LANG === 'en' ? 'BM' : 'EN', 'Bahasa', 0, '', LANG === 'en' ? 'bm' : 'en') + hb('theme', curTheme() === 'dark' ? '☀️' : '🌙', 'Tema', 0, '', curTheme() === 'dark' ? 'light' : 'dark') + hb('ttab', '🔔', 'Notifikasi', unread, '', 'notif');
 function tHome(notifs, unread) {
   const t = S.t, o = S.owner || {}, cm = curMonth(), s = monthStatus(t, cm, S.payments), a = arrears(t, S.payments);
   const canPay = !['paid', 'pending'].includes(s.code);
   let h = header('Sewa saya', `Salam, ${t.name.split(' ')[0]}.`, t.address, {btns: tenantBtns(unread)}) + `<div class="wrap">`;
   if (!isStandalone()) h += `<div class="instbig"><div><b>Pasang app ProSewa Penyewa</b><span class="muted">Dapat notifikasi & buka terus dari skrin utama</span></div><button class="btn sm" data-act="install">⬇ Pasang</button></div>`;
-  if (notifs[0] && unread) h += `<div class="al" data-act="ttab" data-id="notif" style="cursor:pointer"><b>${notifs[0].ic} ${esc(notifs[0].title)}</b>${esc(notifs[0].body)}</div>`;
+  if (notifs[0] && unread) h += `<div class="al" data-act="ttab" data-id="notif" style="cursor:pointer"><b>${notifs[0].ic} ${esc(notifs[0].title)}</b>${(notifs[0].raw ? `<span data-raw>${esc(notifs[0].body)}</span>` : esc(notifs[0].body))}</div>`;
   h += `<div class="tc ${tcCls(s)}"><div class="t1"><div>${chip(s)}<h4>Sewa ${monthLabel(cm)}</h4><div class="big">${RM(t.rent)}</div><div class="muted">Sila bayar sebelum <b style="color:var(--ink)">${dateLabel(s.due)}</b></div></div>${cdBox(s)}</div>
     ${canPay ? `<button class="btn wide" style="margin-top:14px" data-act="payForm">📤 Muat naik bukti bayaran</button>` : s.code === 'pending' ? '<div class="al" style="margin:14px 0 0">⏳ Bukti bayaran anda sedang disemak. Resit akan dihantar selepas diluluskan.</div>' : '<div class="al ok" style="margin:14px 0 0">✅ Terima kasih! Sewa bulan ini sudah dijelaskan.</div>'}</div>`;
   if (a.sum > 0) h += `<div class="al hot"><b>⚠️ Tunggakan ${RM(a.sum)}</b>${a.months.map(monthLabel).join(', ')}<div style="margin-top:8px"><button class="btn sm" data-act="payForm">Muat naik bukti</button></div></div>`;
@@ -597,7 +793,7 @@ function tHome(notifs, unread) {
   return h + `</div>`;
 }
 function tNotif(notifs, unread, seen) {
-  return header('Notifikasi', 'Notifikasi.', `${notifs.length} notifikasi daripada tuan rumah & sistem`, {btns: tenantBtns(0)}) + `<div class="wrap">${notifs.length ? `<div class="card">${notifs.map(n => `<div class="notif ${seen.includes(n.id) ? '' : 'new'}" ${n.pay ? `data-act="receipt" data-id="${n.pay}" style="cursor:pointer"` : ''}><div class="ic">${n.ic}</div><div class="grow"><div class="nt" style="font-weight:700">${esc(n.title)}</div><div class="muted">${esc(n.body)}</div><div class="muted" style="font-size:11px;margin-top:2px">${dtLabel(n.at)}</div></div></div>`).join('')}</div>` : '<div class="empty">Tiada notifikasi.</div>'}</div>`;
+  return header('Notifikasi', 'Notifikasi.', `${notifs.length} notifikasi daripada tuan rumah & sistem`, {btns: tenantBtns(0)}) + `<div class="wrap">${notifs.length ? `<div class="card">${notifs.map(n => `<div class="notif ${seen.includes(n.id) ? '' : 'new'}" ${n.pay ? `data-act="receipt" data-id="${n.pay}" style="cursor:pointer"` : ''}><div class="ic">${n.ic}</div><div class="grow"><div class="nt" style="font-weight:700">${esc(n.title)}</div><div class="muted">${(n.raw ? `<span data-raw>${esc(n.body)}</span>` : esc(n.body))}</div><div class="muted" style="font-size:11px;margin-top:2px">${dtLabel(n.at)}</div></div></div>`).join('')}</div>` : '<div class="empty">Tiada notifikasi.</div>'}</div>`;
 }
 function tHistory(notifs, unread) {
   const list = [...S.payments].sort((a, b) => (b.month + b.submittedAt).localeCompare(a.month + a.submittedAt));
@@ -632,7 +828,7 @@ function payForm() {
   openModal('Muat Naik Bukti Bayaran', `<form data-form="tpay">
     <label class="filebtn" id="filebtn"><input type="file" name="file" accept="image/*" data-chg="proofPick" required>📷 Pilih screenshot / gambar resit bank</label><div id="preview"></div>
     <div class="grid2" style="margin-top:10px">${sel('Untuk bulan', 'month', opts.map(m => [m, monthLabel(m)]), a.months[0] || (s.code === 'paid' ? addMonths(cm, 1) : cm))}${money('Jumlah (RM)', 'amount', t.rent)}</div>
-    <div class="grid2">${fld('Tarikh bayar', 'paidDate', localISO(), 'date', 'required')}${sel('Kaedah', 'method', METHODS, 'DuitNow')}</div>
+    <div class="grid2">${fld('Tarikh dibayar', 'paidDate', localISO(), 'date', 'required')}${sel('Kaedah', 'method', METHODS, 'DuitNow')}</div>
     ${fld('No. rujukan (pilihan)', 'ref', '')}<button class="btn wide">📤 Hantar kepada tuan rumah</button></form>`);
 }
 function cashForm(id) {
@@ -649,7 +845,7 @@ function remindForm(id, now = false) {
     ${sel('Kepada', 'tenantId', [...(un.length > 1 ? [['__all', `Semua yang belum bayar (${un.length})`]] : []), ...activeT().map(x => [x.id, x.name])], t?.id, 'data-chg="remindWho"')}
     ${sel('Bila', 'when', [['now', 'Hantar sekarang'], ['later', 'Jadualkan tarikh & masa']], now ? 'now' : 'later', 'data-chg="remindWhen"')}
     <div class="grid2" id="whenBox" style="${now ? 'display:none' : ''}">${fld('Tarikh', 'date', localISO(tm), 'date')}${fld('Masa', 'time', `${pad(tm.getHours())}:00`, 'time')}</div>
-    ${area('Mesej', 'message', t ? reminderMsg(t, S.month, S.owner) : '', 'rows="5" required')}
+    ${area('Mesej', 'message', t ? reminderMsg(t, S.month, S.owner) : '', 'rows="5" required data-raw')}
     <p class="muted" style="margin-top:0">Mesej akan masuk sebagai notifikasi dalam app penyewa (dan notifikasi phone jika penyewa aktifkan).</p>
     <button class="btn wide">🔔 Hantar / Jadualkan</button></form>`);
 }
@@ -709,7 +905,8 @@ setInterval(ownerTick, 30000);
 /* ===================== TINDAKAN ===================== */
 const ACTIONS = {
   remindNow: id => remindForm(id, true),
-  theme: id => { setTheme(id); S.mode === 'owner' ? renderOwner() : S.mode === 'tenant' ? renderTenant() : renderLogin(); },
+  theme: id => { setTheme(id); rerender(); },
+  lang: id => { setLang(id); rerender(); },
   buyPlan: id => {
     const p = PLANS.find(x => x.id === id), si = subInfo(), from = si && si.active ? si.end : localISO();
     openModal('Sahkan Pakej', `<div class="card" style="margin:8px 0"><div class="kv"><span>Pakej</span><b>${p.name}</b></div><div class="kv"><span>Tempoh</span><b>${p.months} bulan</b></div>
@@ -728,7 +925,11 @@ const ACTIONS = {
     openModal('Mod Demo', `<p style="margin-top:0">ToyyibPay belum disambung. Ini <b>simulasi</b> supaya anda boleh lihat aliran selepas bayaran berjaya.</p>
       <button class="btn wide" data-act="demoPaid" data-id="${p.id}">✓ Simulasi bayaran berjaya</button>`);
   },
-  demoPaid: async id => { activateSub(id, 'DEMO-' + genToken().slice(0, 6).toUpperCase()); closeModal(); toast('Langganan diaktifkan ✅'); renderOwner(); },
+  demoPaid: async id => { activateSub(id, 'DEMO-' + genToken().slice(0, 6).toUpperCase()); closeModal(); toast('Langganan diaktifkan ✅'); if (S.mode === 'locked') { await enterOwner(); } else renderOwner(); },
+  exitSuper: () => { S.superOk = false; history.replaceState(null, '', baseDir() + 'index.html'); S.mode = null; lsGet('prosewa_session', false) && mem.owner ? enterOwner() : renderLogin(); },
+  superAdd: async n => { ensureSub(); const si = subInfo(); const from = si.active ? si.end : localISO(); mem.subscription = {plan: si.plan === 'trial' ? 'monthly' : si.plan, start: si.start, end: addDays(from, +n)}; (mem.subPayments = mem.subPayments || []).push({id: genId(), date: nowStr(), plan: 'manual', months: 0, amount: 0, ref: `SUPER +${n} hari`, until: mem.subscription.end}); save(); toast(`Ditambah ${n} hari.`); renderSuper(); },
+  superTrial: () => { mem.subscription = {plan: 'trial', start: localISO(), end: ''}; save(); toast('Percubaan diset semula.'); renderSuper(); },
+  superExpire: () => { if (!confirm('Tamatkan langganan owner sekarang? (untuk uji)')) return; mem.subscription = {plan: mem.subscription?.plan === 'trial' ? 'monthly' : (mem.subscription?.plan || 'monthly'), start: mem.subscription?.start || localISO(), end: addDays(localISO(), -1)}; save(); toast('Langganan ditamatkan.'); renderSuper(); },
   closeModal, tenantForm, shareLink, payForm, cashForm, remindForm, rejectForm, viewProof, receipt,
   tab: id => { closeModal(); S.tab = id; renderOwner(); scrollTo(0, 0); },
   ttab: id => { S.tTab = id; renderTenant(); scrollTo(0, 0); },
@@ -779,7 +980,7 @@ const CHANGES = {
   month: el => { S.month = el.value; renderOwner(); },
   year: el => { S.year = +el.value; renderOwner(); },
   remindWho: el => { const t = S.tenants.find(x => x.id === el.value); const m = el.form.message;
-    m.value = t ? reminderMsg(t, S.month, S.owner) : `Salam, peringatan mesra: sewa ${monthLabel(S.month)} perlu dibayar sebelum tarikh akhir. ${bankText(S.owner)} Selepas bayar, sila muat naik resit di link penyewa anda. Terima kasih — ${S.owner.name}`; },
+    m.value = t ? reminderMsg(t, S.month, S.owner) : (LANG === 'en' ? `Hi, a friendly reminder: rent for ${monthLabel(S.month)} is due soon. After paying, please upload your payment proof in the app. Thank you — ${S.owner.name}` : `Salam, peringatan mesra: sewa ${monthLabel(S.month)} perlu dibayar sebelum tarikh akhir. ${bankText(S.owner)} Selepas bayar, sila muat naik resit di link penyewa anda. Terima kasih — ${S.owner.name}`); },
   proofPick: async el => {
     const f = el.files[0]; if (!f) return;
     try { const d = await compressImage(f); el.form.dataset.proof = d; $('#preview').innerHTML = `<img class="proofbig" src="${d}" alt="">`; $('#filebtn').lastChild.textContent = ' Tukar gambar'; }
@@ -788,8 +989,10 @@ const CHANGES = {
 };
 
 /* ===================== BORANG ===================== */
-async function enterOwner() { ensureSub(); lsSet('prosewa_session', true); S.mode = 'owner'; S.tab = 'tenants'; await loadOwner(); renderOwner(); ownerTick(); }
+async function enterOwner() { ensureSub(); lsSet('prosewa_session', true); if (!subInfo().active) { S.mode = 'locked'; await loadOwner(); renderLocked(); return; } S.mode = 'owner'; S.tab = 'tenants'; await loadOwner(); renderOwner(); ownerTick(); }
 const FORMS = {
+  async superpin(d) { if (String(d.pin) !== SUPER_PIN) throw new Error('PIN salah.'); S.superOk = true; renderSuper(); },
+  async trial(d) { mem.config = {...(mem.config || {}), trialDays: Math.max(0, Math.min(365, +d.days || 0))}; save(); toast('Tempoh percubaan: ' + trialDays() + ' hari.'); renderSuper(); },
   async setup(d) { await DB.setOwner({name: d.name.trim(), phone: d.phone.trim(), email: d.email.trim().toLowerCase(), pass: await hashPass(d.pass), bankName: '', bankAcc: '', accName: d.name.trim()}); await enterOwner(); toast('Akaun dicipta. Isi maklumat bank di Tetapan.'); },
   async login(d) { const o = await DB.getOwner(); if (!o || o.email !== d.email.trim().toLowerCase() || o.pass !== await hashPass(d.pass)) throw new Error('Emel atau kata laluan salah.'); await enterOwner(); },
   async password(d) { await DB.setOwner({...S.owner, pass: await hashPass(d.pass)}); toast('Kata laluan ditukar.'); await refresh(); },
@@ -816,7 +1019,7 @@ const FORMS = {
     const isNow = d.when === 'now', at = isNow ? nowStr() : `${d.date}T${d.time}`;
     if (!isNow && (!d.date || !d.time || at <= nowStr())) throw new Error('Pilih tarikh & masa akan datang.');
     const targets = d.tenantId === '__all' ? activeT().filter(t => monthStatus(t, S.month, S.payments).code !== 'paid') : [S.tenants.find(x => x.id === d.tenantId)];
-    for (const t of targets) await DB.add('reminders', {tenantId: t.id, at, message: d.tenantId === '__all' ? d.message.replace(/^Salam,/, `Salam ${t.name},`) : d.message, createdAt: nowStr(), ownerNotified: isNow});
+    for (const t of targets) await DB.add('reminders', {tenantId: t.id, at, message: d.tenantId === '__all' ? d.message.replace(/^(Salam|Hi),/, (m0, w) => `${w} ${t.name},`) : d.message, createdAt: nowStr(), ownerNotified: isNow});
     closeModal(); toast(isNow ? `Peringatan dihantar ke app ${targets.length} penyewa.` : `${targets.length} peringatan dijadualkan pada ${dtLabel(at)}.`); await refresh();
   },
   async reject(d) { await DB.update('payments', d.id, {status: 'rejected', rejectReason: d.reason + (d.note ? ' — ' + d.note : ''), rejectedAt: nowStr()}); closeModal(); toast('Bukti ditolak. Penyewa akan dimaklumkan.'); await refresh(); }
@@ -839,12 +1042,14 @@ document.addEventListener('submit', async e => {
   catch (err) { console.error(err); toast(err.message || 'Ralat berlaku.', 'err'); }
   finally { if (btn && document.body.contains(btn)) btn.disabled = false; }
 });
+addEventListener('hashchange', () => { if (location.hash === '#super' && !IS_TENANT_SITE) renderSuper(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
 
 /* ===================== MULA ===================== */
 (async function boot() {
   const tok = new URLSearchParams(location.search).get('t');
   if (!IS_TENANT_SITE) {
+    if (location.hash === '#super') { renderSuper(); return; }
     if (tok) { location.replace(baseDir() + 'penyewa.html?t=' + encodeURIComponent(tok)); return; }   // link lama → website penyewa
     const q = new URLSearchParams(location.search);
     if (q.has('status_id') && q.has('billcode')) {   // pulang dari ToyyibPay

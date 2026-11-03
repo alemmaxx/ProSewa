@@ -44,3 +44,15 @@ Upload **semua 5 fail** ke folder yang sama (contoh repo GitHub `ProSewa` → Se
 3. Penyewa akses melalui token link (rules Firestore semak token).
 4. Bukti bayaran simpan di Firebase Storage.
 5. Cloud Function berjadual: hantar push notification (FCM) ke phone penyewa ikut tarikh dan masa, walaupun app tertutup.
+
+## Langganan & Super Admin
+- Owner baru dapat **percubaan percuma** (asal 14 hari).
+- **Ubah hari percubaan / uji tamat:** buka `https://alemmaxx.github.io/ProSewa/#super` dan masukkan PIN (tukar `SUPER_PIN` dalam `index.html`).
+- Bila langganan **tamat**:
+  - owner tak boleh masuk, dan keluar skrin "Langganan telah tamat" dengan butang Bayar;
+  - semua link penyewa di bawah owner tu tunjuk "Sistem tergendala, sila rujuk tuan rumah".
+- Selepas bayar, semuanya terus dibuka semula.
+
+## Bahasa
+- Togol **BM | EN** ada di skrin login, Tetapan (owner) dan header penyewa.
+- Teks baru: tambah terjemahan dalam kamus `I18N` (cari "Kamus BM → EN" dalam `index.html`).
