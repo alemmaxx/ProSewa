@@ -100,6 +100,7 @@ header .ttl{margin-right:auto}
 /* nav */
 .nav{position:fixed;bottom:0;left:0;right:0;background:var(--navbg);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;justify-content:center;z-index:6;padding-bottom:env(safe-area-inset-bottom)}
 .nav .in{display:flex;max-width:760px;width:100%}
+.navbrand{display:none}
 .nav button{flex:1;border:0;background:none;color:var(--muted);padding:9px 2px 10px;font:500 11px var(--f);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;position:relative}
 .nav button i{font-style:normal;font-size:20px;line-height:1;filter:grayscale(1);opacity:.7}
 .nav button.on{color:var(--ink);font-weight:700}
@@ -197,9 +198,46 @@ table.rep tr.tot td{font-weight:800;border-bottom:0;color:var(--gold)}
 :root[data-theme="light"] .lang button.on{background:#000;color:#fff}
 :root[data-theme="light"] #toast{background:#000;color:#fff}
 @media (min-width:700px){
+  #app{max-width:1100px}
+  header{padding-left:20px;padding-right:20px}
+  .hero{padding-left:20px;padding-right:20px}
+  .hero h2{font-size:56px}
+  .wrap{padding:0 20px}
   #modal{align-items:center}
   #modal .sheet{max-width:620px;border-radius:18px;max-height:88vh;border:1px solid var(--line)}
-  .tcgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.tcgrid .tc{margin:0}
+  .tcgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:12px}
+  .tcgrid .tc{margin:0;display:flex;flex-direction:column}
+  .tcgrid .tc .acts{margin-top:auto;padding-top:12px}
+  .cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px;align-items:start}
+  .stats{gap:28px}
+  .login .lbox{max-width:420px}
+}
+@media (min-width:1000px){
+  body:has(.nav){padding-left:232px}
+  body:has(.nav) #modal{left:232px}
+  .nav{top:0;bottom:0;right:auto;width:232px;border-top:0;border-right:1px solid var(--line);background:var(--card);padding:18px 12px;justify-content:flex-start}
+  .nav .in{flex-direction:column;gap:4px}
+  .navbrand{display:flex!important;align-items:center;gap:10px;padding:4px 8px 22px}
+  .navbrand img{width:40px;height:40px;border-radius:10px}
+  .navbrand b{display:block;font-size:20px;font-weight:800;letter-spacing:-.4px;line-height:1.1}
+  .navbrand small{color:var(--muted);font-size:12px}
+  .nav button{flex:none;flex-direction:row;justify-content:flex-start;gap:12px;padding:12px 14px;border-radius:12px;font-size:15px;font-weight:600}
+  .nav button.on{background:var(--soft2)}
+  .nav button:hover{background:var(--soft)}
+  .nav button em{position:static;margin-left:auto;font-size:11px;min-width:22px;height:22px;line-height:22px;text-align:center}
+  header .mark,header .ttl{display:none}
+  header{padding:18px 28px 10px}
+  header>.instb,header>.hb:first-of-type{margin-left:auto}
+  #app{max-width:1320px;padding-bottom:40px}
+  .hero{margin-top:-68px;padding:84px 28px 20px}
+  .hero h2{font-size:64px}
+  .wrap{padding:0 28px}
+  .tcgrid{grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+  .cols{grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:0 16px}
+  .tc{transition:transform .15s,box-shadow .15s}
+  .tc:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.18)}
+  #toast{bottom:28px}
+  .btn.lo{max-width:420px}
 }
 @media print{body *{visibility:hidden!important}#receipt,#receipt *{visibility:visible!important}#receipt{position:absolute;left:0;top:0;width:100%;border:0;background:#fff;color:#000}#modal{background:none}}
 </style>
@@ -567,7 +605,7 @@ const sel = (label, name, opts, val, extra = '') => `<label class="fld"><span>${
 const area = (label, name, val = '', extra = '') => `<label class="fld"><span>${label}</span><textarea name="${name}" rows="3" ${extra}>${esc(val)}</textarea></label>`;
 const hid = (name, val) => `<input type="hidden" name="${name}" value="${esc(val ?? '')}">`;
 const METHODS = ['DuitNow', 'Pindahan bank', "Touch 'n Go", 'Tunai', 'Lain-lain'].map(m => [m, m]);
-const nav = (items, cur) => `<div class="nav"><div class="in">${items.map(([id, ic, lb, badge]) => `<button class="${cur === id ? 'on' : ''}" data-act="${S.mode === 'owner' ? 'tab' : 'ttab'}" data-id="${id}"><i>${ic}</i>${lb}${badge ? `<em>${badge}</em>` : ''}</button>`).join('')}</div></div>`;
+const nav = (items, cur) => `<div class="nav"><div class="in"><div class="navbrand"><img src="icon-192.png" alt=""><div><b>ProSewa</b><small>${S.mode === 'owner' ? 'Admin' : 'Penyewa'}</small></div></div>${items.map(([id, ic, lb, badge]) => `<button class="${cur === id ? 'on' : ''}" data-act="${S.mode === 'owner' ? 'tab' : 'ttab'}" data-id="${id}"><i>${ic}</i>${lb}${badge ? `<em>${badge}</em>` : ''}</button>`).join('')}</div></div>`;
 
 /* ===================== TEMA & HEADER ===================== */
 function rerender() { ({owner: renderOwner, tenant: renderTenant, locked: renderLocked, super: renderSuper}[S.mode] || renderLogin)(); }
@@ -681,9 +719,9 @@ function oStatus() {
   h += `${sel('Bulan', 'm', months.map(x => [x, monthLabel(x)]), m, 'data-chg="month"')}<div class="bar" style="margin:10px 0 4px"><i style="width:${expected ? Math.min(100, got / expected * 100) : 0}%"></i></div>`;
 
   h += `<div class="sec-h">🧾 Bukti bayaran (${pend.length})</div>`;
-  h += pend.length ? pend.map(p => `<div class="tc warn"><div class="row" style="padding:0;border:0">${p.proof ? `<img class="proof" src="${p.proof}" data-act="viewProof" data-id="${p.id}" alt="bukti">` : '<div class="proof"></div>'}
+  h += pend.length ? '<div class="tcgrid">' + pend.map(p => `<div class="tc warn"><div class="row" style="padding:0;border:0">${p.proof ? `<img class="proof" src="${p.proof}" data-act="viewProof" data-id="${p.id}" alt="bukti">` : '<div class="proof"></div>'}
       <div class="grow"><span class="chip c-pending">Menunggu semakan</span><h4>${esc(p.tenantName)}</h4><div class="s">${monthLabel(p.month)} · <b style="color:var(--ink)">${RM(p.amount)}</b> · ${esc(p.method)}${p.ref ? ' · ' + esc(p.ref) : ''}</div><div class="s">Dihantar ${dtLabel(p.submittedAt)}</div></div></div>
-      <div class="acts"><button class="btn sm" data-act="approve" data-id="${p.id}">✓ Lulus & hantar resit</button><button class="btn sm red fx" data-act="rejectForm" data-id="${p.id}">Tolak</button></div></div>`).join('')
+      <div class="acts"><button class="btn sm" data-act="approve" data-id="${p.id}">✓ Lulus & hantar resit</button><button class="btn sm red fx" data-act="rejectForm" data-id="${p.id}">Tolak</button></div></div>`).join('') + '</div>'
     : '<div class="empty">Tiada bukti bayaran baru.</div>';
 
   h += `<div class="sec-h">⏳ Belum bayar (${unpaid.length}) ${unpaid.length ? `<button class="btn sm ghost" data-act="remindForm">🔔 Peringatan</button>` : ''}</div>`;
@@ -744,19 +782,19 @@ function oSub() {
 function oSettings() {
   const o = S.owner, s = S.settings;
   const perm = 'Notification' in window ? Notification.permission : 'unsupported';
-  return header('Tetapan', 'Tetapan.', o.email, {btns: ownerBtns()}) + `<div class="wrap">
-    <div class="sec-h">Paparan</div><div class="card"><div class="switch">Bahasa ${langSeg()}</div><div class="switch">Tema ${themeSeg()}</div></div>
-    <div class="sec-h">Profil & maklumat bayaran</div><form class="card" data-form="profile">${fld('Nama', 'name', o.name, 'text', 'required')}${fld('No. telefon', 'phone', o.phone, 'tel')}
+  return header('Tetapan', 'Tetapan.', o.email, {btns: ownerBtns()}) + `<div class="wrap"><div class="cols">
+    <div class="blk"><div class="sec-h">Paparan</div><div class="card"><div class="switch">Bahasa ${langSeg()}</div><div class="switch">Tema ${themeSeg()}</div></div></div>
+    <div class="blk"><div class="sec-h">Profil & maklumat bayaran</div><form class="card" data-form="profile">${fld('Nama', 'name', o.name, 'text', 'required')}${fld('No. telefon', 'phone', o.phone, 'tel')}
       ${fld('Bank / e-wallet', 'bankName', o.bankName, 'text', 'placeholder="cth: Maybank"')}${fld('No. akaun / DuitNow', 'bankAcc', o.bankAcc)}${fld('Nama pemegang akaun', 'accName', o.accName)}
-      <p class="muted">Maklumat bank dipaparkan kepada penyewa.</p><button class="btn wide">Simpan profil</button></form>
-    <div class="sec-h">Peringatan automatik</div><form class="card" data-form="settings">
+      <p class="muted">Maklumat bank dipaparkan kepada penyewa.</p><button class="btn wide">Simpan profil</button></form></div>
+    <div class="blk"><div class="sec-h">Peringatan automatik</div><form class="card" data-form="settings">
       <label class="switch">Notifikasi kepada penyewa sebelum tarikh bayar <input type="checkbox" name="autoOn" ${s.autoOn ? 'checked' : ''}></label>
       <div class="grid2">${fld('Berapa hari sebelum', 'autoDays', s.autoDays, 'number', 'min="0" max="15"')}${fld('Pada jam', 'autoTime', s.autoTime, 'time')}</div>
       <label class="switch" style="margin-top:8px">Notifikasi tunggakan selepas tarikh bayar <input type="checkbox" name="overdueOn" ${s.overdueOn ? 'checked' : ''}></label>
-      <button class="btn wide" style="margin-top:8px">Simpan</button></form>
-    <div class="sec-h">App</div><div class="card"><button class="btn wide ghost" data-act="enableNotif">${perm === 'granted' ? '✅ Notifikasi phone aktif' : '🔔 Aktifkan notifikasi phone'}</button><div style="height:8px"></div><button class="btn wide ghost" data-act="install">⬇ Install app ProSewa</button></div>
-    <div class="sec-h">Keselamatan</div><form class="card" data-form="password">${fld('Kata laluan baru', 'pass', '', 'password', 'required minlength="4" autocomplete="new-password"')}<button class="btn wide ink" style="margin-top:12px">Tukar kata laluan</button></form>
-    <button class="btn wide red" data-act="logout">Log Keluar</button></div>`;
+      <button class="btn wide" style="margin-top:8px">Simpan</button></form></div>
+    <div class="blk"><div class="sec-h">App</div><div class="card"><button class="btn wide ghost" data-act="enableNotif">${perm === 'granted' ? '✅ Notifikasi phone aktif' : '🔔 Aktifkan notifikasi phone'}</button><div style="height:8px"></div><button class="btn wide ghost" data-act="install">⬇ Install app ProSewa</button></div></div>
+    <div class="blk"><div class="sec-h">Keselamatan</div><form class="card" data-form="password">${fld('Kata laluan baru', 'pass', '', 'password', 'required minlength="4" autocomplete="new-password"')}<button class="btn wide ink" style="margin-top:12px">Tukar kata laluan</button></form></div></div>
+    <button class="btn wide red lo" data-act="logout">Log Keluar</button></div>`;
 }
 
 /* ===================== PENYEWA ===================== */
@@ -786,8 +824,9 @@ function tHome(notifs, unread) {
   h += `<div class="tc ${tcCls(s)}"><div class="t1"><div>${chip(s)}<h4>Sewa ${monthLabel(cm)}</h4><div class="big">${RM(t.rent)}</div><div class="muted">Sila bayar sebelum <b style="color:var(--ink)">${dateLabel(s.due)}</b></div></div>${cdBox(s)}</div>
     ${canPay ? `<button class="btn wide" style="margin-top:14px" data-act="payForm">📤 Muat naik bukti bayaran</button>` : s.code === 'pending' ? '<div class="al" style="margin:14px 0 0">⏳ Bukti bayaran anda sedang disemak. Resit akan dihantar selepas diluluskan.</div>' : '<div class="al ok" style="margin:14px 0 0">✅ Terima kasih! Sewa bulan ini sudah dijelaskan.</div>'}</div>`;
   if (a.sum > 0) h += `<div class="al hot"><b>⚠️ Tunggakan ${RM(a.sum)}</b>${a.months.map(monthLabel).join(', ')}<div style="margin-top:8px"><button class="btn sm" data-act="payForm">Muat naik bukti</button></div></div>`;
-  h += `<div class="sec-h">💳 Cara bayar</div><div class="card">${o.bankAcc ? `<div class="kv"><span>Bank</span><b>${esc(o.bankName)}</b></div><div class="kv"><span>No. akaun</span><b>${esc(o.bankAcc)} <button class="link" data-act="copy" data-id="${esc(o.bankAcc)}">salin</button></b></div><div class="kv"><span>Nama</span><b>${esc(o.accName || o.name)}</b></div>` : '<p class="muted" style="margin:0">Tuan rumah belum isi maklumat bayaran.</p>'}</div>
-    <div class="sec-h">🏠 Maklumat sewaan</div><div class="card"><div class="kv"><span>Alamat</span><b>${esc(t.address)}</b></div><div class="kv"><span>Sewa bulanan</span><b>${RM(t.rent)}</b></div><div class="kv"><span>Tarikh bayar</span><b>Sebelum ${t.dueDay} hb setiap bulan</b></div><div class="kv"><span>Deposit</span><b>${RM(t.deposit)}</b></div><div class="kv"><span>Tuan rumah</span><b>${esc(o.name || '-')}</b></div></div>
+  h += `<div class="cols"><div class="blk"><div class="sec-h">💳 Cara bayar</div><div class="card">${o.bankAcc ? `<div class="kv"><span>Bank</span><b>${esc(o.bankName)}</b></div><div class="kv"><span>No. akaun</span><b>${esc(o.bankAcc)} <button class="link" data-act="copy" data-id="${esc(o.bankAcc)}">salin</button></b></div><div class="kv"><span>Nama</span><b>${esc(o.accName || o.name)}</b></div>` : '<p class="muted" style="margin:0">Tuan rumah belum isi maklumat bayaran.</p>'}</div>
+</div>
+    <div class="blk"><div class="sec-h">🏠 Maklumat sewaan</div><div class="card"><div class="kv"><span>Alamat</span><b>${esc(t.address)}</b></div><div class="kv"><span>Sewa bulanan</span><b>${RM(t.rent)}</b></div><div class="kv"><span>Tarikh bayar</span><b>Sebelum ${t.dueDay} hb setiap bulan</b></div><div class="kv"><span>Deposit</span><b>${RM(t.deposit)}</b></div><div class="kv"><span>Tuan rumah</span><b>${esc(o.name || '-')}</b></div></div></div></div>
     ${o.phone ? `<a class="btn wide wa" href="${waLink(o.phone, `Salam ${o.name || ''}, saya ${t.name} (${t.address}). `)}" target="_blank" rel="noopener">💬 Chat tuan rumah (urgent)</a><div style="height:8px"></div>` : ''}
     <button class="btn wide ghost" data-act="enableNotif">🔔 Aktifkan notifikasi phone</button>`;
   return h + `</div>`;
@@ -798,9 +837,9 @@ function tNotif(notifs, unread, seen) {
 function tHistory(notifs, unread) {
   const list = [...S.payments].sort((a, b) => (b.month + b.submittedAt).localeCompare(a.month + a.submittedAt));
   const ok = list.filter(p => p.status === 'confirmed'), tot = ok.reduce((a, p) => a + (+p.amount || 0), 0);
-  return header('Sejarah', 'Sejarah bayaran.', 'Tekan bayaran yang diluluskan untuk lihat resit.', {btns: tenantBtns(unread), stats: [[RM(tot), 'Jumlah dibayar', 'g'], [ok.length, 'Resit']]}) + `<div class="wrap">${list.length ? list.map(p => `<div class="tc ${p.status === 'pending' ? 'warn' : p.status === 'rejected' ? 'hot' : ''}" ${p.status === 'confirmed' ? `data-act="receipt" data-id="${p.id}" style="cursor:pointer"` : ''}><div class="t1"><div>${payChip(p)}<h4>${monthLabel(p.month)}</h4>
+  return header('Sejarah', 'Sejarah bayaran.', 'Tekan bayaran yang diluluskan untuk lihat resit.', {btns: tenantBtns(unread), stats: [[RM(tot), 'Jumlah dibayar', 'g'], [ok.length, 'Resit']]}) + `<div class="wrap">${list.length ? '<div class="tcgrid">' + list.map(p => `<div class="tc ${p.status === 'pending' ? 'warn' : p.status === 'rejected' ? 'hot' : ''}" ${p.status === 'confirmed' ? `data-act="receipt" data-id="${p.id}" style="cursor:pointer"` : ''}><div class="t1"><div>${payChip(p)}<h4>${monthLabel(p.month)}</h4>
       <div class="muted">${esc(p.method)} · dibayar ${dateLabel(p.paidDate)}</div>${p.status === 'confirmed' ? `<div class="muted">Resit ${esc(p.receiptNo)} ›</div>` : ''}${p.status === 'rejected' ? `<div class="muted" style="color:var(--red)">${esc(p.rejectReason || '')}</div>` : ''}</div>
-      <div class="cd"><b style="font-size:15px">${RM(p.amount).replace('RM ', '')}</b><small>RM</small></div></div></div>`).join('') : '<div class="empty">Belum ada bayaran.</div>'}</div>`;
+      <div class="cd"><b style="font-size:15px">${RM(p.amount).replace('RM ', '')}</b><small>RM</small></div></div></div>`).join('') + '</div>' : '<div class="empty">Belum ada bayaran.</div>'}</div>`;
 }
 
 /* ===================== MODAL ===================== */
