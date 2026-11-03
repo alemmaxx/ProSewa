@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a1210">
+<script>try{if(localStorage.getItem("prosewa_theme")==="light"){document.documentElement.dataset.theme="light";document.querySelector('meta[name="theme-color"]').content="#ffffff"}}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ProSewa">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>ProSewa</title>
+<style>
+:root{
+  --bg:#0a1210;--card:#141f1b;--card2:#1b2a24;--ink:#f1ede2;--muted:#93a39b;--line:#25342e;
+  --green:#2fbf8c;--green2:#123528;--gold:#d9b44a;--gold2:#2e2712;
+  --red:#ef6b5c;--red2:#3a1c19;--amber:#e9a640;--amber2:#33270f;--blue:#7aa7f5;--blue2:#16233b;
+  --star:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23d9b44a' stroke-width='1'%3E%3Crect x='16' y='16' width='24' height='24'/%3E%3Crect x='16' y='16' width='24' height='24' transform='rotate(45 28 28)'/%3E%3Ccircle cx='28' cy='28' r='5'/%3E%3C/g%3E%3C/svg%3E");
+  --soft:rgba(241,237,226,.08);--soft2:rgba(241,237,226,.1);--hdr:rgba(10,18,16,.96);--hdr0:rgba(10,18,16,0);--navbg:rgba(10,18,16,.94);--cs:dark;
+  --f:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:15px;line-height:1.5}
+button,input,select,textarea{font-family:var(--f)}
+#app{max-width:760px;margin:0 auto;min-height:100vh;padding-bottom:100px}
+/* header */
+header{position:sticky;top:0;z-index:5;padding:calc(14px + env(safe-area-inset-top)) 16px 18px;background:linear-gradient(180deg,var(--hdr) 40%,var(--hdr0));display:flex;align-items:center;gap:10px}
+header .mark{width:36px;height:36px;border-radius:9px}
+header .ttl{margin:0;font-size:20px;font-weight:800;letter-spacing:-.3px;white-space:nowrap}
+header .ttl span{font-weight:400;color:var(--muted);font-size:12px;letter-spacing:0;margin-left:4px}
+.hb{width:40px;height:40px;border-radius:10px;border:0;background:var(--soft);color:var(--ink);font-size:18px;cursor:pointer;display:grid;place-items:center;position:relative;flex:none}
+.hb.first{margin-left:auto}
+.hb.add{background:var(--gold);color:#1b1503;font:800 26px var(--f);line-height:1}
+.hb em{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--red);color:#fff;font:800 11px/20px var(--f);font-style:normal;text-align:center}
+/* hero */
+.hero{position:relative;margin-top:-72px;padding:96px 16px 20px;overflow:hidden;isolation:isolate}
+.hero::before{content:"";position:absolute;inset:0;z-index:-2;background:radial-gradient(120% 80% at 85% 10%,#0f5a45 0%,transparent 60%),radial-gradient(90% 70% at 0% 100%,#2a2210 0%,transparent 60%),var(--bg)}
+.hero::after{content:"";position:absolute;inset:0;z-index:-1;background:var(--star) 0 0/56px;opacity:.07;mask-image:linear-gradient(180deg,#000 10%,transparent 85%);-webkit-mask-image:linear-gradient(180deg,#000 10%,transparent 85%)}
+.hero .tag{font-size:13px;color:var(--gold);font-weight:700}
+.hero h2{margin:6px 0 4px;font-size:clamp(36px,10.5vw,60px);line-height:.98;font-weight:800;letter-spacing:-2px;background-image:linear-gradient(180deg,#fffbe9 0%,#f3dc8e 42%,#c99a2e 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 0 #3a2a08) drop-shadow(0 5px 12px rgba(217,180,74,.32))}
+.hero .sub{font-size:14px;opacity:.86;margin:6px 0 0}
+.hero .stats{display:flex;gap:22px;margin:14px 0 0;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.hero .stats b{display:block;color:var(--ink);font-size:20px;font-variant-numeric:tabular-nums}
+.hero .stats b.r{color:var(--red)}.hero .stats b.g{color:var(--green)}
+.wrap{padding:0 16px}
+.sec-h{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin:18px 0 8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+/* komponen */
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:0 0 12px}
+.card h3{margin:0 0 10px;font-size:17px;font-weight:800;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.muted{color:var(--muted);font-size:13px}
+.row{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.card>.row:first-of-type,.card>h3+.row{border-top:0}
+.row .grow{flex:1;min-width:0}
+.row .t{font-weight:700}
+.row .s{font-size:13px;color:var(--muted);margin-top:2px}
+.av{width:40px;height:40px;border-radius:10px;background:var(--gold);color:#1b1503;display:grid;place-items:center;font-weight:800;flex:none;font-size:14px}
+.chip{display:inline-block;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;vertical-align:middle}
+.c-paid{background:var(--green2);color:var(--green)}.c-pending{background:var(--amber2);color:var(--amber)}
+.c-overdue,.c-rejected{background:var(--red2);color:var(--red)}.c-unpaid{background:var(--line);color:var(--muted)}
+.c-partial{background:var(--amber2);color:var(--amber)}.c-info{background:var(--blue2);color:var(--blue)}
+.btn{border:0;border-radius:8px;padding:11px 16px;font:700 14px var(--f);background:var(--gold);color:#1b1503;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;white-space:nowrap}
+.btn:active{transform:scale(.98)}
+.btn.ink{background:var(--ink);color:var(--bg)}
+.btn.ghost{background:var(--soft2);color:var(--ink)}
+.btn.red{background:var(--red2);color:var(--red)}
+.btn.wa{background:#25d366;color:#06291a}
+.btn.sm{padding:7px 11px;font-size:13px}
+.btn.wide{width:100%}
+.btn[disabled]{opacity:.6}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.acts .btn{flex:1}
+.acts .btn.fx{flex:0 0 auto}
+.empty{margin:0;padding:22px 18px;border:1px dashed var(--line);border-radius:12px;color:var(--muted);font-size:14px;text-align:center}
+.card .empty{border:0;padding:14px 6px}
+/* kad penyewa (gaya tender card) */
+.tc{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:0 0 12px;padding:14px;border-left:3px solid var(--green)}
+.tc.warn{border-left-color:var(--amber)}.tc.hot{border-left-color:var(--red)}.tc.past{border-left-color:var(--line);opacity:.62}
+.tc .t1{display:flex;gap:10px;justify-content:space-between;align-items:flex-start}
+.tc h4{margin:4px 0 0;font-size:16px;font-weight:700;line-height:1.3}
+.num{display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 6px;border-radius:7px;background:var(--gold);color:#1b1503;font:800 12px var(--f);margin-right:6px;vertical-align:middle;font-variant-numeric:tabular-nums}
+.cd{flex:none;text-align:center;min-width:66px;border-radius:10px;padding:6px 8px;background:var(--green2);color:var(--green)}
+.cd b{display:block;font-size:20px;line-height:1.05;font-weight:800;font-variant-numeric:tabular-nums}
+.cd small{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.warn .cd{background:var(--amber2);color:var(--amber)}.hot .cd{background:var(--red2);color:var(--red)}.past .cd{background:var(--line);color:var(--muted)}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
+.kv:last-child{border-bottom:0}
+.kv span{color:var(--muted);flex:none}
+.kv b{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.tc .kvs{margin-top:10px}
+/* nav */
+.nav{position:fixed;bottom:0;left:0;right:0;background:var(--navbg);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;justify-content:center;z-index:6;padding-bottom:env(safe-area-inset-bottom)}
+.nav .in{display:flex;max-width:760px;width:100%}
+.nav button{flex:1;border:0;background:none;color:var(--muted);padding:9px 2px 10px;font:500 11px var(--f);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;position:relative}
+.nav button i{font-style:normal;font-size:20px;line-height:1;filter:grayscale(1);opacity:.7}
+.nav button.on{color:var(--ink);font-weight:700}
+.nav button.on i{filter:none;opacity:1}
+.nav button em{position:absolute;top:4px;left:calc(50% + 8px);min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:var(--gold);color:#1b1503;font:800 10px/17px var(--f);font-style:normal}
+/* borang */
+.fld{display:block;margin-bottom:2px}
+.fld span{display:block;font-size:13px;color:var(--muted);margin:12px 0 5px}
+input,select,textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:15px var(--f);min-height:46px;outline:none;color-scheme:var(--cs)}
+input:focus,select:focus,textarea:focus{border-color:var(--gold)}
+textarea{min-height:80px;resize:vertical}
+input::placeholder,textarea::placeholder{color:var(--muted);opacity:.85}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 10px}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:4px 0 12px}
+.seg button{flex:1;border:0;background:var(--bg);color:var(--ink);padding:9px;font:13px var(--f);cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--bg);font-weight:700}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;font-size:14px}
+.switch input{width:auto;min-height:0;transform:scale(1.3);accent-color:var(--green)}
+.filebtn{display:flex;align-items:center;justify-content:center;gap:8px;border:1px dashed var(--gold);border-radius:12px;padding:16px;cursor:pointer;color:var(--gold);font-weight:700;background:var(--gold2);text-align:center;margin-top:4px}
+.filebtn input{display:none}
+/* sheet */
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:flex-end;justify-content:center;z-index:20}
+#modal.on{display:flex}
+#modal .sheet{background:var(--bg);width:100%;max-width:760px;max-height:94vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px calc(28px + env(safe-area-inset-bottom));border-top:1px solid var(--line);animation:up .28s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+#modal .mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+#modal .mh b{font-size:19px;font-weight:800}
+#modal .x{width:36px;height:36px;border-radius:10px;border:0;background:var(--soft);color:var(--ink);font-size:16px;cursor:pointer}
+#toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:30;opacity:0;pointer-events:none;transition:.25s;max-width:90%;text-align:center;font-weight:600}
+#toast.on{opacity:1}#toast.err{background:var(--red);color:#fff}
+.al{border-radius:10px;padding:10px 12px;margin:0 0 12px;font-size:13px;background:var(--amber2);border-left:3px solid var(--amber)}
+.al.hot{background:var(--red2);border-left-color:var(--red)}
+.al.ok{background:var(--green2);border-left-color:var(--green)}
+.al b{display:block;font-size:14px;margin-bottom:2px}
+.big{font-size:34px;font-weight:800;margin:2px 0;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.bar{height:6px;background:var(--line);border-radius:4px;margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--gold);border-radius:4px}
+.chart{display:flex;align-items:flex-end;gap:4px;height:130px;padding-top:8px}
+.chart .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end}
+.chart .bars{display:flex;gap:2px;align-items:flex-end;height:100%;width:100%;justify-content:center}
+.chart .bars i{width:42%;border-radius:4px 4px 0 0;background:var(--gold);min-height:2px}
+.chart .bars i.e{background:var(--line)}
+.chart small{font-size:10px;color:var(--muted)}
+.legend{display:flex;gap:12px;font-size:12px;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+table.rep{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+table.rep th,table.rep td{padding:7px 4px;border-bottom:1px solid var(--line);text-align:right}
+table.rep th{color:var(--muted);font-weight:600}
+table.rep th:first-child,table.rep td:first-child{text-align:left}
+table.rep tr.tot td{font-weight:800;border-bottom:0;color:var(--gold)}
+.proof{width:64px;height:64px;border-radius:10px;object-fit:cover;border:1px solid var(--line);flex:none;cursor:pointer;background:var(--card2)}
+.proofbig{width:100%;border-radius:12px;border:1px solid var(--line);margin-top:8px}
+.linkbox{font:700 14px ui-monospace,Menlo,monospace;background:var(--card2);padding:10px;border-radius:8px;text-align:center;word-break:break-all;margin:8px 0}
+.msgbox{background:var(--card2);padding:10px 12px;border-radius:8px;font-size:14px;margin:8px 0}
+/* resit */
+#receipt{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:8px}
+#receipt .rh{text-align:center;border-bottom:1px dashed var(--line);padding-bottom:12px;margin-bottom:10px}
+#receipt .rh b{display:block;font-size:20px;font-weight:800;color:var(--gold);margin-top:6px;letter-spacing:1px}
+#receipt .amt{text-align:center;font-size:34px;font-weight:800;margin:8px 0 10px;color:var(--green);letter-spacing:-1px}
+.stamp{text-align:center;margin-top:12px}.stamp span{display:inline-block;border:2px solid var(--green);color:var(--green);font-weight:800;border-radius:8px;padding:3px 14px;transform:rotate(-4deg);letter-spacing:2px}
+/* notifikasi */
+.notif{display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.card>.notif:first-child{border-top:0}
+.notif .ic{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;flex:none;background:var(--card2);font-size:18px}
+.notif.new .nt::after{content:" • Baru";color:var(--gold);font-size:11px;font-weight:800}
+/* login */
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(120% 80% at 85% 10%,#0f5a45 0%,transparent 60%),radial-gradient(90% 70% at 0% 100%,#2a2210 0%,transparent 60%),var(--bg)}
+.lbox{width:100%;max-width:380px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px 20px;text-align:center}
+.lbox form,.lbox .fld{text-align:left}
+.llogo{width:72px;height:72px;border-radius:18px}
+.lh{margin:10px 0 2px;font-size:30px;font-weight:800;letter-spacing:-1px;background-image:linear-gradient(180deg,#fffbe9 0%,#f3dc8e 42%,#c99a2e 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.lang{display:inline-flex;margin-bottom:12px}
+.lang button{border:1px solid var(--line);background:none;color:var(--muted);padding:6px 14px;font:700 12px var(--f);cursor:pointer}
+.lang button:first-child{border-radius:10px 0 0 10px}.lang button:last-child{border-radius:0 10px 10px 0;border-left:0}
+.lang button.on{background:var(--ink);color:var(--bg)}
+.link{background:none;border:0;color:var(--gold);font-weight:700;cursor:pointer;padding:0;text-decoration:underline;font-size:inherit;font-family:var(--f)}
+.hint{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:var(--blue2);color:var(--ink);font-size:13px;line-height:1.45;border:1px solid var(--line);text-align:left}
+/* tema putih (sama seperti ProTender) */
+:root[data-theme="light"]{--bg:#ffffff;--card:#ffffff;--card2:#f4f4f4;--ink:#000000;--muted:#000000;--line:#000000;--green:#16935f;--green2:#dff3e9;--gold:#c99a2e;--gold2:#f7eed6;--red:#c9483a;--red2:#fbe3df;--amber:#b7791f;--amber2:#fbefd9;--blue:#3b6fd4;--blue2:#e3ecfb;
+  --soft:rgba(0,0,0,.06);--soft2:rgba(0,0,0,.07);--hdr:rgba(255,255,255,.97);--hdr0:rgba(255,255,255,0);--navbg:#ffffff;--cs:light}
+:root[data-theme="light"] .hero h2,:root[data-theme="light"] .lh{background:none;-webkit-text-fill-color:#000;color:#000;filter:none}
+:root[data-theme="light"] .hero::before{background:#fff}
+:root[data-theme="light"] .hero::after{display:none}
+:root[data-theme="light"] .login{background:#fff}
+:root[data-theme="light"] .hero .tag,:root[data-theme="light"] .chip,:root[data-theme="light"] .cd,:root[data-theme="light"] table.rep tr.tot td,:root[data-theme="light"] #receipt .rh b,:root[data-theme="light"] .link,:root[data-theme="light"] .filebtn{color:#000!important}
+:root[data-theme="light"] .nav button,:root[data-theme="light"] .nav button.on{color:#000}
+:root[data-theme="light"] .nav button i{filter:none;opacity:1}
+:root[data-theme="light"] .hb,:root[data-theme="light"] .x,:root[data-theme="light"] .btn,:root[data-theme="light"] .lang button,:root[data-theme="light"] .chip,:root[data-theme="light"] .cd,:root[data-theme="light"] .num,:root[data-theme="light"] .av{border:1px solid #000}
+:root[data-theme="light"] .btn,:root[data-theme="light"] .hb.add{color:#000}
+:root[data-theme="light"] .tc{border:1px solid #000;border-left:5px solid var(--green)}
+:root[data-theme="light"] .tc.warn{border-left-color:var(--amber)}:root[data-theme="light"] .tc.hot{border-left-color:var(--red)}
+:root[data-theme="light"] #modal{background:rgba(23,33,28,.35)}
+:root[data-theme="light"] #modal .sheet{border:1px solid #000}
+:root[data-theme="light"] input::placeholder,:root[data-theme="light"] textarea::placeholder{color:#555;opacity:1}
+:root[data-theme="light"] .lang button.on{background:#000;color:#fff}
+:root[data-theme="light"] #toast{background:#000;color:#fff}
+@media (min-width:700px){
+  #modal{align-items:center}
+  #modal .sheet{max-width:620px;border-radius:18px;max-height:88vh;border:1px solid var(--line)}
+  .tcgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.tcgrid .tc{margin:0}
+}
+@media print{body *{visibility:hidden!important}#receipt,#receipt *{visibility:visible!important}#receipt{position:absolute;left:0;top:0;width:100%;border:0;background:#fff;color:#000}#modal{background:none}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal"><div class="sheet"><div class="mh"><b id="mt"></b><button class="x" data-act="closeModal">×</button></div><div id="mb"></div></div></div>
+<div id="toast"></div>
+
+<script>
+/* =====================================================================
+   ProSewa — 1 owner, ramai penyewa. Setiap penyewa ada link sendiri.
+   Versi ini simpan data dalam peranti (localStorage) untuk percubaan.
+   Semua akses data melalui objek DB di bawah — nanti tukar kepada Firebase.
+   ===================================================================== */
+
+/* ---------- Utiliti ---------- */
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const RM = n => 'RM ' + Number(n || 0).toLocaleString('en-MY', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const pad = n => String(n).padStart(2, '0');
+const localISO = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const nowStr = (d = new Date()) => `${localISO(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const curMonth = () => localISO().slice(0, 7);
+const MONTHS = ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogo','Sep','Okt','Nov','Dis'];
+const MONTHS_FULL = ['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
+const monthLabel = ym => { if (!ym) return '-'; const [y, m] = ym.split('-'); return MONTHS_FULL[+m - 1] + ' ' + y; };
+const dateLabel = iso => { if (!iso) return '-'; const [y, m, d] = iso.slice(0, 10).split('-'); return `${+d} ${MONTHS[+m - 1]} ${y}`; };
+const dtLabel = s => s ? dateLabel(s) + (s.length > 10 ? ', ' + s.slice(11, 16) : '') : '-';
+const addMonths = (ym, n) => { const [y, m] = ym.split('-').map(Number); const d = new Date(y, m - 1 + n, 1); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; };
+const addDays = (iso, n) => { const [y, m, d] = iso.split('-').map(Number); return localISO(new Date(y, m - 1, d + n)); };
+const monthsRange = (a, b) => { const out = []; let x = a, g = 0; while (x <= b && g++ < 240) { out.push(x); x = addMonths(x, 1); } return out; };
+const initials = n => (n || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+const genId = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+const genToken = () => Array.from({length: 12}, () => 'abcdefghjkmnpqrstuvwxyz23456789'[Math.floor(Math.random() * 31)]).join('');
+const waNum = p => { let d = String(p || '').replace(/\D/g, ''); if (d.startsWith('0')) d = '6' + d; else if (d.startsWith('1')) d = '60' + d; return d; };
+const waLink = (phone, text) => `https://wa.me/${waNum(phone)}?text=${encodeURIComponent(text)}`;
+const baseUrl = () => location.href.split('?')[0].split('#')[0];
+const tenantUrl = t => `${baseUrl()}?t=${t.token}`;
+const lsGet = (k, d = null) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } };
+
+function toast(msg, type = '') { const t = $('#toast'); t.textContent = msg; t.className = 'on ' + type; clearTimeout(toast._t); toast._t = setTimeout(() => t.className = '', 2800); }
+function openModal(title, html) { $('#mt').textContent = title; $('#mb').innerHTML = html; $('#modal').classList.add('on'); }
+function closeModal() { $('#modal').classList.remove('on'); $('#mb').innerHTML = ''; }
+async function hashPass(p) {
+  try { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('prosewa:' + p)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); }
+  catch (e) { let h = 0; for (const c of 'prosewa:' + p) h = (h * 31 + c.charCodeAt(0)) | 0; return 'x' + h; }
+}
+function compressImage(file, max = 1100, q = 0.72) {
+  return new Promise((res, rej) => {
+    if (!file || !file.type.startsWith('image/')) return rej(new Error('Sila pilih fail gambar (screenshot / foto resit).'));
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => { const s = Math.min(1, max / Math.max(img.width, img.height)); const c = document.createElement('canvas');
+      c.width = Math.round(img.width * s); c.height = Math.round(img.height * s); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg', q)); };
+    img.onerror = () => rej(new Error('Gambar tidak dapat dibaca.'));
+    img.src = url;
+  });
+}
+
+/* ---------- Lapisan data (localStorage) — tukar ke Firebase kemudian ---------- */
+const KEY = 'prosewa_data_v2';
+let mem = lsGet(KEY) || {owner: null, settings: null, tenants: [], payments: [], reminders: []};
+const save = () => { if (!lsSet(KEY, mem)) toast('Storan peranti penuh. Padam beberapa bukti bayaran lama.', 'err'); };
+const DB = {
+  async getOwner() { return mem.owner; },
+  async setOwner(o) { mem.owner = o; save(); },
+  async getSettings() { return mem.settings || (mem.settings = {autoOn: true, autoDays: 3, autoTime: '09:00', overdueOn: true}); },
+  async setSettings(s) { mem.settings = s; save(); },
+  async list(col, where = []) { return (mem[col] || []).filter(r => where.every(([k, v]) => r[k] === v)).map(r => ({...r})); },
+  async get(col, id) { const r = (mem[col] || []).find(r => r.id === id); return r ? {...r} : null; },
+  async add(col, data) { const r = {...data, id: genId()}; (mem[col] = mem[col] || []).push(r); save(); return r.id; },
+  async update(col, id, data) { const r = (mem[col] || []).find(r => r.id === id); if (!r) throw new Error('Rekod tidak dijumpai.'); Object.assign(r, data); save(); },
+  async remove(col, id) { mem[col] = (mem[col] || []).filter(r => r.id !== id); save(); },
+  async tenantByToken(tok) { const r = mem.tenants.find(t => t.token === tok); return r ? {...r} : null; }
+};
+// muat semula bila tab lain ubah data (cth: buka link penyewa dalam tab lain)
+addEventListener('storage', e => { if (e.key === KEY) { mem = lsGet(KEY) || mem; refresh(); } });
+
+/* ---------- Data contoh ---------- */
+async function seedDemo() {
+  const cm = curMonth();
+  const T = [
+    {name: 'Siti Nurhaliza binti Ali', phone: '0123456789', address: 'No. 12, Jalan Mawar 3, Seksyen 7, Shah Alam', rent: 1300, deposit: 2600, dueDay: 5, startDate: addMonths(cm, -6) + '-01'},
+    {name: 'Muhammad Faiz', phone: '0198765432', address: 'Bilik A, No. 8 Jalan 2/3, Bandar Baru Bangi', rent: 550, deposit: 550, dueDay: 1, startDate: addMonths(cm, -4) + '-01'},
+    {name: 'Lim Wei Jie', phone: '0167788990', address: 'Bilik B, No. 8 Jalan 2/3, Bandar Baru Bangi', rent: 450, deposit: 450, dueDay: 7, startDate: addMonths(cm, -2) + '-01'}
+  ];
+  mem = {owner: {name: 'Encik Ahmad', email: 'admin@demo.com', pass: await hashPass('1234'), phone: '0131234567', bankName: 'Maybank', bankAcc: '1122 3344 5566', accName: 'Ahmad bin Hassan'},
+    settings: {autoOn: true, autoDays: 3, autoTime: '09:00', overdueOn: true}, tenants: [], payments: [], reminders: []};
+  T.forEach(t => mem.tenants.push({...t, id: genId(), token: genToken(), active: true, notes: '', createdAt: nowStr()}));
+  const [a, b, c] = mem.tenants;
+  const pay = (t, ym, extra = {}) => mem.payments.push({id: genId(), tenantId: t.id, tenantName: t.name, address: t.address, month: ym, amount: t.rent, paidDate: ym + '-0' + Math.max(1, t.dueDay - 1),
+    method: 'DuitNow', ref: '', proof: '', status: 'confirmed', receiptNo: rcptNo(ym), submittedAt: ym + '-01T10:00', confirmedAt: ym + '-0' + t.dueDay + 'T20:00', ...extra});
+  for (let i = -6; i <= -1; i++) pay(a, addMonths(cm, i));
+  for (let i = -4; i <= -2; i++) pay(b, addMonths(cm, i), {method: 'Tunai'});
+  for (let i = -2; i <= -1; i++) pay(c, addMonths(cm, i));
+  pay(a, cm, {status: 'pending', receiptNo: '', confirmedAt: '', ref: 'MBB 88213', submittedAt: nowStr(), paidDate: localISO(), proof: demoProof(a.name, 1300)});
+  mem.reminders.push({id: genId(), tenantId: b.id, at: nowStr(new Date(Date.now() - 3600e3)), message: `Salam ${b.name}, sewa bulan lepas masih tertunggak. Mohon jelaskan segera. Terima kasih.`, createdAt: nowStr(), ownerNotified: true});
+  mem.reminders.push({id: genId(), tenantId: c.id, at: `${addDays(localISO(), 1)}T09:00`, message: `Salam ${c.name}, peringatan mesra sewa ${monthLabel(cm)} ${RM(c.rent)} perlu dibayar sebelum ${dateLabel(dueDate(c, cm))}.`, createdAt: nowStr(), ownerNotified: false});
+  save();
+}
+function demoProof(name, amt) {
+  const c = document.createElement('canvas'); c.width = 360; c.height = 520; const g = c.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, 360, 520); g.fillStyle = '#ffc800'; g.fillRect(0, 0, 360, 70);
+  g.fillStyle = '#222'; g.font = 'bold 22px sans-serif'; g.fillText('Transfer Successful', 70, 44);
+  g.fillStyle = '#1a9b4b'; g.beginPath(); g.arc(180, 140, 36, 0, 7); g.fill(); g.fillStyle = '#fff'; g.font = 'bold 40px sans-serif'; g.fillText('✓', 165, 154);
+  g.fillStyle = '#111'; g.font = 'bold 30px sans-serif'; g.fillText('RM ' + amt.toFixed(2), 105, 230);
+  g.font = '16px sans-serif'; g.fillStyle = '#555';
+  [['From', name.split(' ')[0]], ['To', 'Ahmad bin Hassan'], ['Bank', 'Maybank'], ['Ref', 'MBB 88213'], ['Date', dateLabel(localISO())]].forEach(([k, v], i) => { g.fillText(k, 30, 290 + i * 36); g.fillText(v, 150, 290 + i * 36); });
+  return c.toDataURL('image/jpeg', .7);
+}
+
+/* ---------- Logik sewa ---------- */
+const rcptNo = ym => `PS-${ym.replace('-', '')}-${genToken().slice(0, 4).toUpperCase()}`;
+function dueDate(t, ym) { const [y, m] = ym.split('-').map(Number); const last = new Date(y, m, 0).getDate(); return `${ym}-${pad(Math.min(+t.dueDay || 1, last))}`; }
+function monthStatus(t, ym, payments) {
+  const ps = payments.filter(p => p.tenantId === t.id && p.month === ym);
+  const paid = ps.filter(p => p.status === 'confirmed').reduce((a, p) => a + (+p.amount || 0), 0);
+  const rent = +t.rent || 0, due = dueDate(t, ym), late = localISO() > due;
+  if (rent > 0 && paid >= rent) return {code: 'paid', label: 'Sudah bayar', paid, due};
+  if (ps.some(p => p.status === 'pending')) return {code: 'pending', label: 'Menunggu semakan', paid, due};
+  if (paid > 0) return {code: 'partial', label: 'Bayar separa', paid, due, late};
+  if (late) return {code: 'overdue', label: 'Tertunggak', paid, due};
+  return {code: 'unpaid', label: 'Belum bayar', paid, due};
+}
+function arrears(t, payments) {
+  const out = {sum: 0, months: []}; if (!t.startDate) return out;
+  for (const ym of monthsRange(t.startDate.slice(0, 7), curMonth())) {
+    const s = monthStatus(t, ym, payments);
+    if (s.code === 'overdue' || (s.code === 'partial' && s.late)) { out.sum += (+t.rent || 0) - s.paid; out.months.push(ym); }
+  }
+  return out;
+}
+const chip = s => `<span class="chip c-${s.code}">${esc(s.label)}</span>`;
+const payChip = p => ({confirmed: '<span class="chip c-paid">Diluluskan</span>', pending: '<span class="chip c-pending">Menunggu</span>', rejected: '<span class="chip c-rejected">Ditolak</span>'}[p.status] || '');
+const bankText = o => o?.bankAcc ? `Bayaran ke ${o.bankName || ''} ${o.bankAcc} (${o.accName || o.name || ''}).` : '';
+const reminderMsg = (t, ym, o) => `Salam ${t.name}, peringatan mesra: sewa ${monthLabel(ym)} sebanyak ${RM(t.rent)} perlu dibayar sebelum ${dateLabel(dueDate(t, ym))}. ${bankText(o)} Selepas bayar, sila muat naik bukti bayaran dalam app ini. Terima kasih — ${o?.name || ''}`;
+
+/* ---------- Notifikasi penyewa (dikira) ---------- */
+function tenantNotifs(t, payments, reminders, settings) {
+  const now = nowStr(), out = [], cm = curMonth();
+  const s = monthStatus(t, cm, payments);
+  if (settings.autoOn && ['unpaid', 'overdue', 'partial'].includes(s.code)) {
+    const at = `${addDays(s.due, -(+settings.autoDays || 0))}T${settings.autoTime || '09:00'}`;
+    if (now >= at) out.push({id: `due-${cm}`, at, ic: '🔔', title: 'Peringatan bayar sewa', body: `Sewa ${monthLabel(cm)} ${RM(t.rent)} perlu dibayar sebelum ${dateLabel(s.due)}.`});
+  }
+  if (settings.overdueOn) { const a = arrears(t, payments); if (a.sum > 0) out.push({id: `arr-${a.months.join('_')}`, at: `${addDays(dueDate(t, a.months[a.months.length - 1]), 1)}T${settings.autoTime || '09:00'}`, ic: '⚠️', title: 'Sewa tertunggak', body: `Tunggakan ${RM(a.sum)} (${a.months.map(monthLabel).join(', ')}).`}); }
+  reminders.filter(r => r.tenantId === t.id && r.at <= now).forEach(r => out.push({id: 'r-' + r.id, at: r.at, ic: '📩', title: 'Mesej dari tuan rumah', body: r.message}));
+  payments.filter(p => p.tenantId === t.id).forEach(p => {
+    if (p.status === 'confirmed' && p.confirmedAt) out.push({id: 'ok-' + p.id, at: p.confirmedAt, ic: '✅', title: 'Bayaran diluluskan', body: `Resit ${p.receiptNo} untuk ${monthLabel(p.month)} sedia. Tekan untuk lihat.`, pay: p.id});
+    if (p.status === 'rejected') out.push({id: 'no-' + p.id, at: p.rejectedAt || p.submittedAt, ic: '❌', title: 'Bukti bayaran ditolak', body: `${monthLabel(p.month)}: ${p.rejectReason || 'Sila hubungi tuan rumah.'}`});
+  });
+  return out.sort((a, b) => b.at.localeCompare(a.at));
+}
+
+/* ---------- State ---------- */
+const S = {mode: null, tab: 'tenants', month: curMonth(), year: new Date().getFullYear(), owner: null, settings: null,
+  tenants: [], payments: [], reminders: [], t: null, tTab: 'home'};
+
+async function loadOwner() {
+  S.owner = await DB.getOwner(); S.settings = await DB.getSettings();
+  [S.tenants, S.payments, S.reminders] = await Promise.all([DB.list('tenants'), DB.list('payments'), DB.list('reminders')]);
+}
+async function loadTenant(tok) {
+  S.t = await DB.tenantByToken(tok);
+  S.owner = await DB.getOwner(); S.settings = await DB.getSettings();
+  if (S.t) { [S.payments, S.reminders] = await Promise.all([DB.list('payments', [['tenantId', S.t.id]]), DB.list('reminders', [['tenantId', S.t.id]])]); }
+}
+async function refresh() {
+  if (S.mode === 'owner') { await loadOwner(); renderOwner(); }
+  else if (S.mode === 'tenant') { await loadTenant(S.token); renderTenant(); }
+}
+
+/* ---------- Komponen ---------- */
+const fld = (label, name, val = '', type = 'text', extra = '') => `<label class="fld"><span>${label}</span><input name="${name}" type="${type}" value="${esc(val)}" ${extra}></label>`;
+const money = (label, name, val = '') => fld(label, name, val, 'number', 'step="0.01" min="0" inputmode="decimal" required');
+const sel = (label, name, opts, val, extra = '') => `<label class="fld"><span>${label}</span><select name="${name}" ${extra}>${opts.map(([v, t]) => `<option value="${esc(v)}" ${String(v) === String(val) ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></label>`;
+const area = (label, name, val = '', extra = '') => `<label class="fld"><span>${label}</span><textarea name="${name}" rows="3" ${extra}>${esc(val)}</textarea></label>`;
+const hid = (name, val) => `<input type="hidden" name="${name}" value="${esc(val ?? '')}">`;
+const METHODS = ['DuitNow', 'Pindahan bank', "Touch 'n Go", 'Tunai', 'Lain-lain'].map(m => [m, m]);
+const nav = (items, cur) => `<div class="nav"><div class="in">${items.map(([id, ic, lb, badge]) => `<button class="${cur === id ? 'on' : ''}" data-act="${S.mode === 'owner' ? 'tab' : 'ttab'}" data-id="${id}"><i>${ic}</i>${lb}${badge ? `<em>${badge}</em>` : ''}</button>`).join('')}</div></div>`;
+
+/* ===================== TEMA & HEADER ===================== */
+function setTheme(t) { try { localStorage.setItem('prosewa_theme', t); } catch (e) {} if (t === 'light') document.documentElement.dataset.theme = 'light'; else delete document.documentElement.dataset.theme; $('meta[name="theme-color"]').content = t === 'light' ? '#ffffff' : '#0a1210'; }
+const curTheme = () => document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+const themeSeg = () => `<div class="lang"><button class="${curTheme() === 'dark' ? 'on' : ''}" data-act="theme" data-id="dark">🌙 Asal</button><button class="${curTheme() === 'light' ? 'on' : ''}" data-act="theme" data-id="light">☀️ Putih</button></div>`;
+function header(tag, title, sub, o = {}) {
+  const stats = o.stats ? `<div class="stats">${o.stats.map(([v, l, c]) => `<div><b class="${c || ''}">${v}</b>${l}</div>`).join('')}</div>` : '';
+  return `<header><img class="mark" src="icon-192.png" alt=""><div class="ttl">ProSewa</div>${o.btns ? o.btns : '<span style="margin-left:auto"></span>'}</header>
+    <section class="hero"><div class="tag">✦ ${esc(tag)}</div><h2>${esc(title)}</h2>${sub ? `<p class="sub">${esc(sub)}</p>` : ''}${stats}</section>`;
+}
+const hb = (act, ic, lbl, badge = 0, cls = '', id = '') => `<button class="hb ${cls}" data-act="${act}" ${id ? `data-id="${id}"` : ''} aria-label="${lbl}">${ic}${badge ? `<em>${badge}</em>` : ''}</button>`;
+const daysTo = iso => Math.round((new Date(iso + 'T00:00:00') - new Date(localISO() + 'T00:00:00')) / 864e5);
+function cdBox(s) {
+  if (s.code === 'paid') return `<div class="cd"><b>✓</b><small>Dibayar</small></div>`;
+  if (s.code === 'pending') return `<div class="cd"><b>⏳</b><small>Semak</small></div>`;
+  const d = daysTo(s.due);
+  return d < 0 ? `<div class="cd"><b>${-d}</b><small>Hari lewat</small></div>` : d === 0 ? `<div class="cd"><b>0</b><small>Hari ini</small></div>` : `<div class="cd"><b>${d}</b><small>Hari lagi</small></div>`;
+}
+const tcCls = s => s.code === 'paid' ? '' : s.code === 'overdue' || (s.code === 'partial' && s.late) ? 'hot' : s.code === 'pending' ? 'warn' : daysTo(s.due) <= 3 ? 'warn' : '';
+
+/* ===================== OWNER: LOGIN ===================== */
+function renderLogin() {
+  S.mode = 'login';
+  const has = !!mem.owner;
+  const body = has
+    ? `<form data-form="login">${fld('Emel', 'email', '', 'email', 'required autocomplete="username" placeholder="cth: nama@email.com"')}${fld('Kata laluan', 'pass', '', 'password', 'required autocomplete="current-password" placeholder="Kata laluan anda"')}
+       <button class="btn wide" style="margin-top:14px">Log Masuk</button></form>
+       <p class="muted" style="margin:12px 0 0">Data contoh: admin@demo.com / 1234 · <button class="link" data-act="resetAll">Set semula</button></p>`
+    : `<form data-form="setup">${fld('Nama', 'name', '', 'text', 'required placeholder="Nama anda"')}${fld('No. telefon', 'phone', '', 'tel', 'required placeholder="012-3456789"')}${fld('Emel', 'email', '', 'email', 'required autocomplete="username" placeholder="cth: nama@email.com"')}${fld('Kata laluan', 'pass', '', 'password', 'required minlength="4" autocomplete="new-password" placeholder="Min 4 aksara"')}
+       <button class="btn wide" style="margin-top:14px">Cipta Akaun Admin</button></form>
+       <button class="btn wide ghost" style="margin-top:8px" data-act="useDemo">✨ Cuba dengan data contoh</button>`;
+  $('#app').innerHTML = `<div class="login"><div class="lbox">${themeSeg()}<br><img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa</h2>
+    <p class="muted" style="margin:0 0 6px">${has ? 'Log masuk admin untuk teruskan' : 'Cipta akaun admin (owner)'}</p>${body}
+    <div class="hint">Versi percubaan: data disimpan dalam peranti ini. Selepas sambung Firebase, link penyewa boleh dibuka di phone penyewa.</div></div></div>`;
+}
+
+/* ===================== OWNER ===================== */
+function renderOwner() {
+  if (S.mode !== 'owner') return;
+  const pend = S.payments.filter(p => p.status === 'pending').length;
+  const v = {tenants: oTenants, status: oStatus, report: oReport, settings: oSettings}[S.tab] || oTenants;
+  $('#app').innerHTML = v() + nav([['tenants', '👥', 'Penyewa'], ['status', '💳', 'Status Sewa', pend], ['report', '📊', 'Laporan'], ['settings', '⚙️', 'Tetapan']], S.tab);
+}
+const activeT = () => S.tenants.filter(t => t.active !== false);
+const ownerBtns = () => { const pend = S.payments.filter(p => p.status === 'pending').length; return hb('install', '⬇', 'Install', 0, 'first') + hb('tab', '🔔', 'Bukti bayaran', pend, '', 'status') + hb('tenantForm', '+', 'Tambah penyewa', 0, 'add'); };
+
+function oTenants() {
+  const cm = curMonth(), list = activeT();
+  const st = list.map(t => ({t, s: monthStatus(t, cm, S.payments)}));
+  const paid = st.filter(x => x.s.code === 'paid').length, late = st.filter(x => tcCls(x.s) === 'hot').length;
+  let h = header('Penyewa', 'Senarai penyewa.', list.length ? `${monthLabel(cm)} · tekan + di atas untuk tambah penyewa.` : 'Tekan + di atas untuk tambah penyewa baru.',
+    {btns: ownerBtns(), stats: [[list.length, 'Penyewa'], [paid, 'Sudah bayar', 'g'], [late, 'Tertunggak', late ? 'r' : '']]}) + `<div class="wrap">`;
+  if (!list.length) return h + `<div class="empty">Belum ada penyewa.<br>Tekan <b>+</b> di kanan atas untuk tambah.</div></div>`;
+  h += `<div class="tcgrid">${st.map(({t, s}, i) => `<div class="tc ${tcCls(s)}"><div class="t1"><div><span class="num">${i + 1}</span>${chip(s)}<h4>${esc(t.name)}</h4></div>${cdBox(s)}</div>
+    <div class="kvs"><div class="kv"><span>Alamat</span><b>${esc(t.address || '-')}</b></div><div class="kv"><span>Sewa</span><b>${RM(t.rent)} / bulan</b></div><div class="kv"><span>Tarikh bayar</span><b>Sebelum ${t.dueDay} hb · ${dateLabel(s.due)}</b></div><div class="kv"><span>Telefon</span><b>${esc(t.phone)}</b></div></div>
+    <div class="acts"><button class="btn sm" data-act="shareLink" data-id="${t.id}">🔗 Link</button><button class="btn sm ghost" data-act="tenantForm" data-id="${t.id}">✏️ Edit</button><a class="btn sm wa fx" href="${waLink(t.phone, 'Salam ' + t.name + ', ')}" target="_blank" rel="noopener">💬</a><button class="btn sm red fx" data-act="delTenant" data-id="${t.id}">🗑</button></div></div>`).join('')}</div>`;
+  return h + `</div>`;
+}
+
+function oStatus() {
+  const m = S.month, list = activeT().filter(t => !t.startDate || t.startDate.slice(0, 7) <= m);
+  const pend = S.payments.filter(p => p.status === 'pending').sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
+  const st = list.map(t => ({t, s: monthStatus(t, m, S.payments)}));
+  const paid = st.filter(x => x.s.code === 'paid'), unpaid = st.filter(x => x.s.code !== 'paid');
+  const expected = list.reduce((a, t) => a + (+t.rent || 0), 0);
+  const got = S.payments.filter(p => p.month === m && p.status === 'confirmed').reduce((a, p) => a + (+p.amount || 0), 0);
+  const months = [...new Set([addMonths(curMonth(), 1), curMonth(), ...S.payments.map(p => p.month)])].sort().reverse();
+  const now = nowStr(), upcoming = S.reminders.filter(r => r.at > now).sort((a, b) => a.at.localeCompare(b.at));
+  const tn = id => S.tenants.find(t => t.id === id)?.name || '(dipadam)';
+
+  let h = header('Status Sewa', monthLabel(m) + '.', `Kutipan ${RM(got)} daripada ${RM(expected)}`,
+    {btns: ownerBtns(), stats: [[paid.length + '/' + list.length, 'Sudah bayar', 'g'], [pend.length, 'Perlu semak'], [unpaid.length - pend.length, 'Belum bayar', unpaid.length - pend.length ? 'r' : '']]}) + `<div class="wrap">`;
+  h += `${sel('Bulan', 'm', months.map(x => [x, monthLabel(x)]), m, 'data-chg="month"')}<div class="bar" style="margin:10px 0 4px"><i style="width:${expected ? Math.min(100, got / expected * 100) : 0}%"></i></div>`;
+
+  h += `<div class="sec-h">🧾 Bukti bayaran (${pend.length})</div>`;
+  h += pend.length ? pend.map(p => `<div class="tc warn"><div class="row" style="padding:0;border:0">${p.proof ? `<img class="proof" src="${p.proof}" data-act="viewProof" data-id="${p.id}" alt="bukti">` : '<div class="proof"></div>'}
+      <div class="grow"><span class="chip c-pending">Menunggu semakan</span><h4>${esc(p.tenantName)}</h4><div class="s">${monthLabel(p.month)} · <b style="color:var(--ink)">${RM(p.amount)}</b> · ${esc(p.method)}${p.ref ? ' · ' + esc(p.ref) : ''}</div><div class="s">Dihantar ${dtLabel(p.submittedAt)}</div></div></div>
+      <div class="acts"><button class="btn sm" data-act="approve" data-id="${p.id}">✓ Lulus & hantar resit</button><button class="btn sm red fx" data-act="rejectForm" data-id="${p.id}">Tolak</button></div></div>`).join('')
+    : '<div class="empty">Tiada bukti bayaran baru.</div>';
+
+  h += `<div class="sec-h">⏳ Belum bayar (${unpaid.length}) ${unpaid.length ? `<button class="btn sm ghost" data-act="remindForm">🔔 Peringatan</button>` : ''}</div>`;
+  h += unpaid.length ? `<div class="tcgrid">${unpaid.map(({t, s}) => `<div class="tc ${tcCls(s)}"><div class="t1"><div>${chip(s)}<h4>${esc(t.name)}</h4><div class="muted">${RM(t.rent)} · akhir ${dateLabel(s.due)}</div></div>${cdBox(s)}</div>
+      <div class="acts"><button class="btn sm" data-act="remindNow" data-id="${t.id}">🔔 Ingatkan</button><button class="btn sm ghost" data-act="remindForm" data-id="${t.id}">⏰ Jadual</button><button class="btn sm ghost" data-act="cashForm" data-id="${t.id}">💵 Tunai</button><a class="btn sm wa fx" href="${waLink(t.phone, 'Salam ' + t.name + ', ')}" target="_blank" rel="noopener">💬</a></div></div>`).join('')}</div>`
+    : '<div class="empty">Semua penyewa sudah bayar 🎉</div>';
+
+  h += `<div class="sec-h">✅ Sudah bayar (${paid.length})</div>`;
+  h += paid.length ? `<div class="card">${paid.map(({t}) => { const p = S.payments.filter(x => x.tenantId === t.id && x.month === m && x.status === 'confirmed').pop();
+      return `<div class="row" data-act="receipt" data-id="${p.id}" style="cursor:pointer"><div class="av">${initials(t.name)}</div><div class="grow"><div class="t">${esc(t.name)}</div><div class="s">${RM(p.amount)} · ${dateLabel(p.paidDate)} · ${esc(p.receiptNo)}</div></div><span class="chip c-paid">Resit ›</span></div>`; }).join('')}</div>`
+    : '<div class="empty">Belum ada.</div>';
+
+  h += `<div class="sec-h">⏰ Peringatan akan dihantar (${upcoming.length})</div><div class="card">${upcoming.length ? upcoming.map(r => `<div class="row"><div class="grow"><div class="t">${esc(tn(r.tenantId))}</div><div class="s">📅 ${dtLabel(r.at)}</div><div class="s">${esc(r.message).slice(0, 110)}${r.message.length > 110 ? '…' : ''}</div></div><button class="btn sm red fx" data-act="delReminder" data-id="${r.id}">Batal</button></div>`).join('') : '<div class="empty">Tiada peringatan berjadual.</div>'}
+    <p class="muted" style="margin:8px 0 0">${S.settings.autoOn ? `Auto: ${S.settings.autoDays} hari sebelum tarikh bayar, jam ${S.settings.autoTime}.` : 'Peringatan automatik dimatikan.'} <button class="link" data-act="tab" data-id="settings">Ubah</button></p></div>`;
+  return h + `</div>`;
+}
+
+function reportData(y) {
+  const ys = String(y), months = Array.from({length: 12}, (_, i) => `${ys}-${pad(i + 1)}`);
+  const inc = months.map(m => S.payments.filter(p => p.status === 'confirmed' && p.month === m).reduce((a, p) => a + (+p.amount || 0), 0));
+  const exp = months.map(m => m > curMonth() ? 0 : S.tenants.filter(t => t.startDate && t.startDate.slice(0, 7) <= m && (t.active !== false || (t.endedAt || '') >= m)).reduce((a, t) => a + (+t.rent || 0), 0));
+  const per = S.tenants.map(t => ({t, paid: S.payments.filter(p => p.tenantId === t.id && p.status === 'confirmed' && p.month.startsWith(ys)).reduce((a, p) => a + (+p.amount || 0), 0), arr: t.active !== false ? arrears(t, S.payments) : {sum: 0, months: []}}));
+  return {months, inc, exp, per};
+}
+function oReport() {
+  const y = S.year, r = reportData(y);
+  const ti = r.inc.reduce((a, b) => a + b, 0), te = r.exp.reduce((a, b) => a + b, 0), arr = r.per.reduce((a, x) => a + x.arr.sum, 0);
+  const max = Math.max(1, ...r.inc, ...r.exp);
+  const years = [...new Set([new Date().getFullYear(), ...S.payments.map(p => +p.month.slice(0, 4))])].sort().reverse();
+  const pct = te ? Math.round(ti / te * 100) : 0;
+  let h = header('Laporan', `Tahun ${y}.`, `Kutipan ${pct}% daripada jangkaan ${RM(te)}`, {btns: ownerBtns(), stats: [[RM(ti), 'Diterima', 'g'], [RM(arr), 'Tunggakan', arr ? 'r' : '']]}) + `<div class="wrap">
+    <div class="grid2">${sel('Tahun', 'y', years.map(v => [v, v]), y, 'data-chg="year"')}<div class="fld"><span>&nbsp;</span><button class="btn ghost wide" data-act="csv">⬇ CSV</button></div></div>
+    <div class="sec-h">Kutipan bulanan</div><div class="card"><div class="chart">${r.months.map((m, i) => `<div class="col"><div class="bars"><i class="e" style="height:${r.exp[i] / max * 100}%"></i><i style="height:${r.inc[i] / max * 100}%"></i></div><small>${MONTHS[i]}</small></div>`).join('')}</div>
+    <div class="legend"><span><i style="background:var(--line)"></i>Jangkaan</span><span><i style="background:var(--gold)"></i>Diterima</span></div>
+    <table class="rep" style="margin-top:10px"><tr><th>Bulan</th><th>Jangkaan</th><th>Diterima</th><th>Baki</th></tr>
+    ${r.months.map((m, i) => (r.exp[i] || r.inc[i]) ? `<tr><td>${MONTHS[i]}</td><td>${RM(r.exp[i])}</td><td>${RM(r.inc[i])}</td><td style="color:${r.exp[i] - r.inc[i] > 0 ? 'var(--red)' : 'inherit'}">${RM(Math.max(0, r.exp[i] - r.inc[i]))}</td></tr>` : '').join('')}
+    <tr class="tot"><td>Jumlah</td><td>${RM(te)}</td><td>${RM(ti)}</td><td>${RM(Math.max(0, te - ti))}</td></tr></table></div>
+    <div class="sec-h">Ikut penyewa</div><div class="card"><table class="rep"><tr><th>Penyewa</th><th>Bayar ${y}</th><th>Tunggakan</th></tr>
+    ${r.per.map(x => `<tr><td>${esc(x.t.name)}${x.t.active === false ? ' <span class="muted">(tamat)</span>' : ''}</td><td>${RM(x.paid)}</td><td style="color:${x.arr.sum ? 'var(--red)' : 'inherit'}">${RM(x.arr.sum)}</td></tr>`).join('') || '<tr><td colspan="3" class="muted">Tiada data</td></tr>'}</table></div>`;
+  return h + `</div>`;
+}
+
+function oSettings() {
+  const o = S.owner, s = S.settings;
+  const perm = 'Notification' in window ? Notification.permission : 'unsupported';
+  return header('Tetapan', 'Tetapan.', o.email, {btns: ownerBtns()}) + `<div class="wrap">
+    <div class="sec-h">Paparan</div><div class="card"><div class="switch">Tema ${themeSeg()}</div></div>
+    <div class="sec-h">Profil & maklumat bayaran</div><form class="card" data-form="profile">${fld('Nama', 'name', o.name, 'text', 'required')}${fld('No. telefon', 'phone', o.phone, 'tel')}
+      ${fld('Bank / e-wallet', 'bankName', o.bankName, 'text', 'placeholder="cth: Maybank"')}${fld('No. akaun / DuitNow', 'bankAcc', o.bankAcc)}${fld('Nama pemegang akaun', 'accName', o.accName)}
+      <p class="muted">Maklumat bank dipaparkan kepada penyewa.</p><button class="btn wide">Simpan profil</button></form>
+    <div class="sec-h">Peringatan automatik</div><form class="card" data-form="settings">
+      <label class="switch">Notifikasi kepada penyewa sebelum tarikh bayar <input type="checkbox" name="autoOn" ${s.autoOn ? 'checked' : ''}></label>
+      <div class="grid2">${fld('Berapa hari sebelum', 'autoDays', s.autoDays, 'number', 'min="0" max="15"')}${fld('Pada jam', 'autoTime', s.autoTime, 'time')}</div>
+      <label class="switch" style="margin-top:8px">Notifikasi tunggakan selepas tarikh bayar <input type="checkbox" name="overdueOn" ${s.overdueOn ? 'checked' : ''}></label>
+      <button class="btn wide" style="margin-top:8px">Simpan</button></form>
+    <div class="sec-h">App</div><div class="card"><button class="btn wide ghost" data-act="enableNotif">${perm === 'granted' ? '✅ Notifikasi phone aktif' : '🔔 Aktifkan notifikasi phone'}</button><div style="height:8px"></div><button class="btn wide ghost" data-act="install">⬇ Install app ProSewa</button></div>
+    <div class="sec-h">Keselamatan</div><form class="card" data-form="password">${fld('Kata laluan baru', 'pass', '', 'password', 'required minlength="4" autocomplete="new-password"')}<button class="btn wide ink" style="margin-top:12px">Tukar kata laluan</button></form>
+    <button class="btn wide red" data-act="logout">Log Keluar</button></div>`;
+}
+
+/* ===================== PENYEWA ===================== */
+function renderTenant() {
+  if (S.mode !== 'tenant') return;
+  if (!S.t || S.t.active === false) {
+    $('#app').innerHTML = `<div class="login"><div class="lbox"><img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa</h2><p class="muted">Link ini tidak sah atau sewaan telah tamat.<br>Sila hubungi tuan rumah anda.</p></div></div>`;
+    return;
+  }
+  const notifs = tenantNotifs(S.t, S.payments, S.reminders, S.settings), seenKey = 'prosewa_seen_' + S.t.token;
+  const seenBefore = lsGet(seenKey, []);
+  if (S.tTab === 'notif') lsSet(seenKey, notifs.map(n => n.id));
+  const unread = S.tTab === 'notif' ? 0 : notifs.filter(n => !seenBefore.includes(n.id)).length;
+  const v = {home: tHome, notif: tNotif, history: tHistory}[S.tTab] || tHome;
+  $('#app').innerHTML = v(notifs, unread, seenBefore) + nav([['home', '🏠', 'Utama'], ['notif', '🔔', 'Notifikasi', unread], ['history', '🧾', 'Sejarah']], S.tTab);
+  pushNewTenantNotifs(notifs);
+}
+const tenantBtns = unread => hb('install', '⬇', 'Install', 0, 'first') + hb('theme', curTheme() === 'dark' ? '☀️' : '🌙', 'Tema', 0, '', curTheme() === 'dark' ? 'light' : 'dark') + hb('ttab', '🔔', 'Notifikasi', unread, '', 'notif');
+function tHome(notifs, unread) {
+  const t = S.t, o = S.owner || {}, cm = curMonth(), s = monthStatus(t, cm, S.payments), a = arrears(t, S.payments);
+  const canPay = !['paid', 'pending'].includes(s.code);
+  let h = header('Sewa saya', `Salam, ${t.name.split(' ')[0]}.`, t.address, {btns: tenantBtns(unread)}) + `<div class="wrap">`;
+  if (notifs[0] && unread) h += `<div class="al" data-act="ttab" data-id="notif" style="cursor:pointer"><b>${notifs[0].ic} ${esc(notifs[0].title)}</b>${esc(notifs[0].body)}</div>`;
+  h += `<div class="tc ${tcCls(s)}"><div class="t1"><div>${chip(s)}<h4>Sewa ${monthLabel(cm)}</h4><div class="big">${RM(t.rent)}</div><div class="muted">Sila bayar sebelum <b style="color:var(--ink)">${dateLabel(s.due)}</b></div></div>${cdBox(s)}</div>
+    ${canPay ? `<button class="btn wide" style="margin-top:14px" data-act="payForm">📤 Muat naik bukti bayaran</button>` : s.code === 'pending' ? '<div class="al" style="margin:14px 0 0">⏳ Bukti bayaran anda sedang disemak. Resit akan dihantar selepas diluluskan.</div>' : '<div class="al ok" style="margin:14px 0 0">✅ Terima kasih! Sewa bulan ini sudah dijelaskan.</div>'}</div>`;
+  if (a.sum > 0) h += `<div class="al hot"><b>⚠️ Tunggakan ${RM(a.sum)}</b>${a.months.map(monthLabel).join(', ')}<div style="margin-top:8px"><button class="btn sm" data-act="payForm">Muat naik bukti</button></div></div>`;
+  h += `<div class="sec-h">💳 Cara bayar</div><div class="card">${o.bankAcc ? `<div class="kv"><span>Bank</span><b>${esc(o.bankName)}</b></div><div class="kv"><span>No. akaun</span><b>${esc(o.bankAcc)} <button class="link" data-act="copy" data-id="${esc(o.bankAcc)}">salin</button></b></div><div class="kv"><span>Nama</span><b>${esc(o.accName || o.name)}</b></div>` : '<p class="muted" style="margin:0">Tuan rumah belum isi maklumat bayaran.</p>'}</div>
+    <div class="sec-h">🏠 Maklumat sewaan</div><div class="card"><div class="kv"><span>Alamat</span><b>${esc(t.address)}</b></div><div class="kv"><span>Sewa bulanan</span><b>${RM(t.rent)}</b></div><div class="kv"><span>Tarikh bayar</span><b>Sebelum ${t.dueDay} hb setiap bulan</b></div><div class="kv"><span>Deposit</span><b>${RM(t.deposit)}</b></div><div class="kv"><span>Tuan rumah</span><b>${esc(o.name || '-')}</b></div></div>
+    ${o.phone ? `<a class="btn wide wa" href="${waLink(o.phone, `Salam ${o.name || ''}, saya ${t.name} (${t.address}). `)}" target="_blank" rel="noopener">💬 Chat tuan rumah (urgent)</a><div style="height:8px"></div>` : ''}
+    <button class="btn wide ghost" data-act="enableNotif">🔔 Aktifkan notifikasi phone</button>`;
+  return h + `</div>`;
+}
+function tNotif(notifs, unread, seen) {
+  return header('Notifikasi', 'Notifikasi.', `${notifs.length} notifikasi daripada tuan rumah & sistem`, {btns: tenantBtns(0)}) + `<div class="wrap">${notifs.length ? `<div class="card">${notifs.map(n => `<div class="notif ${seen.includes(n.id) ? '' : 'new'}" ${n.pay ? `data-act="receipt" data-id="${n.pay}" style="cursor:pointer"` : ''}><div class="ic">${n.ic}</div><div class="grow"><div class="nt" style="font-weight:700">${esc(n.title)}</div><div class="muted">${esc(n.body)}</div><div class="muted" style="font-size:11px;margin-top:2px">${dtLabel(n.at)}</div></div></div>`).join('')}</div>` : '<div class="empty">Tiada notifikasi.</div>'}</div>`;
+}
+function tHistory(notifs, unread) {
+  const list = [...S.payments].sort((a, b) => (b.month + b.submittedAt).localeCompare(a.month + a.submittedAt));
+  const ok = list.filter(p => p.status === 'confirmed'), tot = ok.reduce((a, p) => a + (+p.amount || 0), 0);
+  return header('Sejarah', 'Sejarah bayaran.', 'Tekan bayaran yang diluluskan untuk lihat resit.', {btns: tenantBtns(unread), stats: [[RM(tot), 'Jumlah dibayar', 'g'], [ok.length, 'Resit']]}) + `<div class="wrap">${list.length ? list.map(p => `<div class="tc ${p.status === 'pending' ? 'warn' : p.status === 'rejected' ? 'hot' : ''}" ${p.status === 'confirmed' ? `data-act="receipt" data-id="${p.id}" style="cursor:pointer"` : ''}><div class="t1"><div>${payChip(p)}<h4>${monthLabel(p.month)}</h4>
+      <div class="muted">${esc(p.method)} · dibayar ${dateLabel(p.paidDate)}</div>${p.status === 'confirmed' ? `<div class="muted">Resit ${esc(p.receiptNo)} ›</div>` : ''}${p.status === 'rejected' ? `<div class="muted" style="color:var(--red)">${esc(p.rejectReason || '')}</div>` : ''}</div>
+      <div class="cd"><b style="font-size:15px">${RM(p.amount).replace('RM ', '')}</b><small>RM</small></div></div></div>`).join('') : '<div class="empty">Belum ada bayaran.</div>'}</div>`;
+}
+
+/* ===================== MODAL ===================== */
+function tenantForm(id) {
+  const t = S.tenants.find(x => x.id === id) || {dueDay: 5, startDate: localISO().slice(0, 8) + '01', deposit: 0};
+  openModal(id ? 'Edit Penyewa' : 'Tambah Penyewa', `<form data-form="tenant">${hid('id', id)}
+    ${fld('Nama penyewa', 'name', t.name, 'text', 'required')}${fld('No. telefon (WhatsApp)', 'phone', t.phone, 'tel', 'required placeholder="012-3456789"')}
+    ${area('Alamat rumah / bilik sewa', 'address', t.address, 'required')}
+    <div class="grid2">${money('Harga sewa (RM)', 'rent', t.rent)}${money('Deposit (RM)', 'deposit', t.deposit)}</div>
+    <div class="grid2">${fld('Bayar sebelum hari bulan ke-', 'dueDay', t.dueDay, 'number', 'min="1" max="31" required')}${fld('Mula sewa', 'startDate', t.startDate, 'date', 'required')}</div>
+    ${fld('Nota (pilihan)', 'notes', t.notes)}<button class="btn wide">Simpan</button></form>`);
+}
+function shareLink(id) {
+  const t = S.tenants.find(x => x.id === id), url = tenantUrl(t);
+  const msg = `Salam ${t.name}, ini link khas anda untuk urusan sewa ${t.address}:\n${url}\n\nDi sini anda boleh semak sewa, terima notifikasi, muat naik bukti bayaran & dapat resit. Boleh install sebagai app di phone. Terima kasih — ${S.owner.name}`;
+  openModal('Link Penyewa', `<p style="margin-top:0">Link khas untuk <b>${esc(t.name)}</b>. Jangan kongsi dengan orang lain.</p><div class="linkbox">${esc(url)}</div>
+    <div class="acts"><a class="btn wa" style="flex:1" href="${waLink(t.phone, msg)}" target="_blank" rel="noopener">Hantar link via WhatsApp</a><button class="btn ghost" style="flex:1" data-act="copy" data-id="${esc(url)}">Salin link</button></div>
+    <div class="acts"><a class="btn ghost" style="flex:1" href="${esc(url)}" target="_blank" rel="noopener">👁 Lihat paparan penyewa</a><button class="btn red" data-act="newToken" data-id="${t.id}">Tukar link</button></div>
+    <p class="muted">"Tukar link" akan matikan link lama (contoh bila link tersebar).</p>`);
+}
+function payForm() {
+  const t = S.t, cm = curMonth(), a = arrears(t, S.payments), s = monthStatus(t, cm, S.payments);
+  const opts = [...new Set([...a.months, cm, addMonths(cm, 1)])].filter(m => !['paid', 'pending'].includes(monthStatus(t, m, S.payments).code));
+  openModal('Muat Naik Bukti Bayaran', `<form data-form="tpay">
+    <label class="filebtn" id="filebtn"><input type="file" name="file" accept="image/*" data-chg="proofPick" required>📷 Pilih screenshot / gambar resit bank</label><div id="preview"></div>
+    <div class="grid2" style="margin-top:10px">${sel('Untuk bulan', 'month', opts.map(m => [m, monthLabel(m)]), a.months[0] || (s.code === 'paid' ? addMonths(cm, 1) : cm))}${money('Jumlah (RM)', 'amount', t.rent)}</div>
+    <div class="grid2">${fld('Tarikh bayar', 'paidDate', localISO(), 'date', 'required')}${sel('Kaedah', 'method', METHODS, 'DuitNow')}</div>
+    ${fld('No. rujukan (pilihan)', 'ref', '')}<button class="btn wide">📤 Hantar kepada tuan rumah</button></form>`);
+}
+function cashForm(id) {
+  const t = S.tenants.find(x => x.id === id);
+  openModal('Rekod Bayaran Tunai', `<form data-form="cash">${hid('tenantId', id)}<p style="margin-top:0"><b>${esc(t.name)}</b></p>
+    <div class="grid2">${sel('Untuk bulan', 'month', monthsRange(addMonths(curMonth(), -6), addMonths(curMonth(), 1)).reverse().map(m => [m, monthLabel(m)]), S.month)}${money('Jumlah (RM)', 'amount', t.rent)}</div>
+    <div class="grid2">${fld('Tarikh terima', 'paidDate', localISO(), 'date', 'required')}${sel('Kaedah', 'method', METHODS, 'Tunai')}</div><button class="btn wide">Simpan & jana resit</button></form>`);
+}
+function remindForm(id, now = false) {
+  const un = activeT().filter(t => monthStatus(t, S.month, S.payments).code !== 'paid');
+  const t = S.tenants.find(x => x.id === id) || un[0];
+  const tm = new Date(Date.now() + 3600e3);
+  openModal(now ? 'Hantar Peringatan' : 'Peringatan dalam App', `<form data-form="remind">
+    ${sel('Kepada', 'tenantId', [...(un.length > 1 ? [['__all', `Semua yang belum bayar (${un.length})`]] : []), ...activeT().map(x => [x.id, x.name])], t?.id, 'data-chg="remindWho"')}
+    ${sel('Bila', 'when', [['now', 'Hantar sekarang'], ['later', 'Jadualkan tarikh & masa']], now ? 'now' : 'later', 'data-chg="remindWhen"')}
+    <div class="grid2" id="whenBox" style="${now ? 'display:none' : ''}">${fld('Tarikh', 'date', localISO(tm), 'date')}${fld('Masa', 'time', `${pad(tm.getHours())}:00`, 'time')}</div>
+    ${area('Mesej', 'message', t ? reminderMsg(t, S.month, S.owner) : '', 'rows="5" required')}
+    <p class="muted" style="margin-top:0">Mesej akan masuk sebagai notifikasi dalam app penyewa (dan notifikasi phone jika penyewa aktifkan).</p>
+    <button class="btn wide">🔔 Hantar / Jadualkan</button></form>`);
+}
+function rejectForm(id) {
+  openModal('Tolak Bukti Bayaran', `<form data-form="reject">${hid('id', id)}${sel('Sebab', 'reason', [['Jumlah tidak tepat', 'Jumlah tidak tepat'], ['Gambar tidak jelas', 'Gambar tidak jelas'], ['Bayaran belum diterima dalam akaun', 'Bayaran belum diterima dalam akaun'], ['Lain-lain', 'Lain-lain']], 'Jumlah tidak tepat')}
+    ${fld('Nota tambahan (pilihan)', 'note', '')}<button class="btn wide red">Tolak</button></form>`);
+}
+function viewProof(id) {
+  const p = S.payments.find(x => x.id === id);
+  openModal('Bukti Bayaran', `<img class="proofbig" src="${p.proof}" alt="bukti"><div class="kv"><span>Penyewa</span><b>${esc(p.tenantName)}</b></div><div class="kv"><span>Bulan</span><b>${monthLabel(p.month)}</b></div><div class="kv"><span>Jumlah</span><b>${RM(p.amount)}</b></div><div class="kv"><span>Rujukan</span><b>${esc(p.ref || '-')}</b></div>
+    ${p.status === 'pending' ? `<div class="acts"><button class="btn" style="flex:1" data-act="approve" data-id="${p.id}">✓ Lulus</button><button class="btn red" style="flex:1" data-act="rejectForm" data-id="${p.id}">Tolak</button></div>` : ''}`);
+}
+function receipt(id) {
+  const p = S.payments.find(x => x.id === id); if (!p) return;
+  const o = S.owner || {}, isOwner = S.mode === 'owner', t = S.tenants.find(x => x.id === p.tenantId) || S.t;
+  const msg = `RESIT SEWA ${p.receiptNo}\nDiterima daripada: ${p.tenantName}\nAlamat: ${p.address}\nBulan: ${monthLabel(p.month)}\nJumlah: ${RM(p.amount)}\nTarikh: ${dateLabel(p.paidDate)}\n\nLihat resit: ${t ? tenantUrl(t) : ''}\nTerima kasih — ${o.name || ''}`;
+  openModal('Resit Bayaran', `<div id="receipt"><div class="rh"><img src="icon-192.png" width="36" height="36" style="border-radius:10px" alt=""><br><b>RESIT SEWA</b><div class="muted">${esc(p.receiptNo)}</div></div>
+    <div class="amt">${RM(p.amount)}</div>
+    <div class="kv"><span>Diterima daripada</span><b>${esc(p.tenantName)}</b></div><div class="kv"><span>Alamat</span><b>${esc(p.address)}</b></div>
+    <div class="kv"><span>Sewa bulan</span><b>${monthLabel(p.month)}</b></div><div class="kv"><span>Tarikh bayar</span><b>${dateLabel(p.paidDate)}</b></div>
+    <div class="kv"><span>Kaedah</span><b>${esc(p.method)}${p.ref ? ' (' + esc(p.ref) + ')' : ''}</b></div><div class="kv"><span>Diluluskan oleh</span><b>${esc(o.name || '-')}</b></div><div class="kv"><span>Tarikh lulus</span><b>${dtLabel(p.confirmedAt)}</b></div>
+    <div class="stamp"><span>DIBAYAR</span></div><p class="muted" style="text-align:center;margin:12px 0 0">Dijana oleh ProSewa</p></div>
+    <div class="acts" style="margin-top:12px"><button class="btn ghost" style="flex:1" data-act="print">🖨️ Simpan PDF</button>
+    ${p.proof ? `<button class="btn ghost" data-act="viewProof" data-id="${p.id}">Bukti</button>` : ''}
+    ${isOwner ? `<button class="btn red" data-act="delPay" data-id="${p.id}">Padam</button>` : ''}</div>`);
+}
+
+/* ===================== NOTIFIKASI PHONE & INSTALL ===================== */
+let swReg = null, installEvt = null;
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').then(r => swReg = r).catch(() => {});
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; });
+function phoneNotify(title, body) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  const opt = {body, icon: 'icon-192.png', badge: 'icon-192.png', data: {url: location.href}};
+  try { if (swReg) swReg.showNotification(title, opt); else new Notification(title, opt); } catch (e) {}
+}
+function pushNewTenantNotifs(notifs) {
+  const k = 'prosewa_pushed_' + S.t.token, done = lsGet(k, []);
+  const fresh = notifs.filter(n => !done.includes(n.id));
+  if (fresh.length) { fresh.slice(0, 3).forEach(n => phoneNotify(n.title, n.body)); lsSet(k, [...done, ...fresh.map(n => n.id)].slice(-200)); }
+}
+// Owner: semak peringatan yang sampai masa setiap 30 saat
+async function ownerTick() {
+  if (S.mode !== 'owner') return;
+  const now = nowStr(), due = mem.reminders.filter(r => r.at <= now && !r.ownerNotified);
+  for (const r of due) {
+    await DB.update('reminders', r.id, {ownerNotified: true});
+    const t = S.tenants.find(x => x.id === r.tenantId); if (!t) continue;
+    phoneNotify('🔔 Peringatan dihantar', `Peringatan berjadual telah masuk ke app ${t.name}.`);
+    toast(`🔔 Peringatan berjadual dihantar kepada ${t.name}.`);
+  }
+  if (due.length) { await loadOwner(); renderOwner(); }
+}
+setInterval(ownerTick, 30000);
+
+/* ===================== TINDAKAN ===================== */
+const ACTIONS = {
+  remindNow: id => remindForm(id, true),
+  theme: id => { setTheme(id); S.mode === 'owner' ? renderOwner() : S.mode === 'tenant' ? renderTenant() : renderLogin(); },
+  closeModal, tenantForm, shareLink, payForm, cashForm, remindForm, rejectForm, viewProof, receipt,
+  tab: id => { closeModal(); S.tab = id; renderOwner(); scrollTo(0, 0); },
+  ttab: id => { S.tTab = id; renderTenant(); scrollTo(0, 0); },
+  print: () => window.print(),
+  copy: async v => { try { await navigator.clipboard.writeText(v); toast('Disalin.'); } catch (e) { prompt('Salin:', v); } },
+  useDemo: async () => { await seedDemo(); await enterOwner(); toast('Data contoh dimuatkan. Log masuk: admin@demo.com / 1234'); },
+  resetAll: async () => { if (!confirm('Padam SEMUA data dalam peranti ini?')) return; mem = {owner: null, settings: null, tenants: [], payments: [], reminders: []}; save(); renderLogin(); },
+  logout: () => { lsSet('prosewa_session', false); S.mode = null; renderLogin(); },
+  delTenant: async id => {
+    const t = S.tenants.find(x => x.id === id);
+    if (!confirm(`Padam ${t.name}? Link penyewa akan dimatikan. Rekod bayaran lama kekal dalam laporan.`)) return;
+    await DB.update('tenants', id, {active: false, endedAt: curMonth(), token: 'x-' + genToken()});
+    toast('Penyewa dibuang.'); await refresh();
+  },
+  newToken: async id => { if (!confirm('Tukar link? Link lama tidak boleh digunakan lagi.')) return; await DB.update('tenants', id, {token: genToken()}); await loadOwner(); shareLink(id); toast('Link baru dijana.'); },
+  approve: async id => {
+    const p = S.payments.find(x => x.id === id);
+    await DB.update('payments', id, {status: 'confirmed', receiptNo: rcptNo(p.month), confirmedAt: nowStr()});
+    await refresh(); receipt(id); toast('Diluluskan. Resit kini ada dalam app penyewa.');
+  },
+  delPay: async id => { if (!confirm('Padam rekod bayaran ini?')) return; await DB.remove('payments', id); closeModal(); toast('Dipadam.'); await refresh(); },
+  delReminder: async id => { await DB.remove('reminders', id); toast('Peringatan dibatalkan.'); await refresh(); },
+  enableNotif: async () => {
+    if (!('Notification' in window)) return toast('Phone/browser ini tidak sokong notifikasi. Install app dahulu.', 'err');
+    const r = await Notification.requestPermission();
+    if (r === 'granted') { phoneNotify('ProSewa', 'Notifikasi diaktifkan ✅'); toast('Notifikasi diaktifkan.'); } else toast('Kebenaran notifikasi ditolak.', 'err');
+    S.mode === 'owner' ? renderOwner() : renderTenant();
+  },
+  install: async () => {
+    if (installEvt) { installEvt.prompt(); await installEvt.userChoice; installEvt = null; return; }
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    openModal('Install App', ios ? '<p>iPhone (Safari): tekan butang <b>Share ⬆️</b> di bawah, kemudian pilih <b>"Add to Home Screen"</b>.</p>'
+      : '<p>Android (Chrome): tekan menu <b>⋮</b> di kanan atas, kemudian pilih <b>"Install app"</b> atau <b>"Add to Home screen"</b>.</p><p class="muted">Kalau sudah install, buka dari ikon ProSewa di skrin utama.</p>');
+  },
+  csv: () => {
+    const y = String(S.year), r = reportData(S.year);
+    const rows = [['Laporan ProSewa ' + y], [], ['Bulan', 'Jangkaan', 'Diterima', 'Baki'], ...r.months.map((m, i) => [monthLabel(m), r.exp[i].toFixed(2), r.inc[i].toFixed(2), Math.max(0, r.exp[i] - r.inc[i]).toFixed(2)]),
+      [], ['Senarai bayaran diluluskan'], ['Bulan', 'Penyewa', 'Alamat', 'Jumlah', 'Tarikh bayar', 'Kaedah', 'No. resit']];
+    S.payments.filter(p => p.status === 'confirmed' && p.month.startsWith(y)).sort((a, b) => a.month.localeCompare(b.month)).forEach(p => rows.push([p.month, p.tenantName, p.address, (+p.amount).toFixed(2), p.paidDate, p.method, p.receiptNo]));
+    rows.push([], ['Tunggakan semasa'], ['Penyewa', 'Jumlah', 'Bulan']); r.per.filter(x => x.arr.sum).forEach(x => rows.push([x.t.name, x.arr.sum.toFixed(2), x.arr.months.join(' ')]));
+    const csv = '﻿' + rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type: 'text/csv'})); a.download = `ProSewa-Laporan-${y}.csv`; a.click();
+  }
+};
+const CHANGES = {
+  remindWhen: el => { $('#whenBox').style.display = el.value === 'later' ? '' : 'none'; },
+  month: el => { S.month = el.value; renderOwner(); },
+  year: el => { S.year = +el.value; renderOwner(); },
+  remindWho: el => { const t = S.tenants.find(x => x.id === el.value); const m = el.form.message;
+    m.value = t ? reminderMsg(t, S.month, S.owner) : `Salam, peringatan mesra: sewa ${monthLabel(S.month)} perlu dibayar sebelum tarikh akhir. ${bankText(S.owner)} Selepas bayar, sila muat naik resit di link penyewa anda. Terima kasih — ${S.owner.name}`; },
+  proofPick: async el => {
+    const f = el.files[0]; if (!f) return;
+    try { const d = await compressImage(f); el.form.dataset.proof = d; $('#preview').innerHTML = `<img class="proofbig" src="${d}" alt="">`; $('#filebtn').lastChild.textContent = ' Tukar gambar'; }
+    catch (e) { toast(e.message, 'err'); el.value = ''; }
+  }
+};
+
+/* ===================== BORANG ===================== */
+async function enterOwner() { lsSet('prosewa_session', true); S.mode = 'owner'; S.tab = 'tenants'; await loadOwner(); renderOwner(); ownerTick(); }
+const FORMS = {
+  async setup(d) { await DB.setOwner({name: d.name.trim(), phone: d.phone.trim(), email: d.email.trim().toLowerCase(), pass: await hashPass(d.pass), bankName: '', bankAcc: '', accName: d.name.trim()}); await enterOwner(); toast('Akaun dicipta. Isi maklumat bank di Tetapan.'); },
+  async login(d) { const o = await DB.getOwner(); if (!o || o.email !== d.email.trim().toLowerCase() || o.pass !== await hashPass(d.pass)) throw new Error('Emel atau kata laluan salah.'); await enterOwner(); },
+  async password(d) { await DB.setOwner({...S.owner, pass: await hashPass(d.pass)}); toast('Kata laluan ditukar.'); await refresh(); },
+  async profile(d) { await DB.setOwner({...S.owner, name: d.name.trim(), phone: d.phone.trim(), bankName: d.bankName.trim(), bankAcc: d.bankAcc.trim(), accName: d.accName.trim()}); toast('Profil disimpan.'); await refresh(); },
+  async settings(d) { await DB.setSettings({autoOn: !!d.autoOn, autoDays: Math.max(0, +d.autoDays || 0), autoTime: d.autoTime || '09:00', overdueOn: !!d.overdueOn}); toast('Tetapan disimpan.'); await refresh(); },
+  async tenant(d) {
+    const data = {name: d.name.trim(), phone: d.phone.trim(), address: d.address.trim(), rent: +d.rent, deposit: +d.deposit || 0, dueDay: Math.min(31, Math.max(1, +d.dueDay || 1)), startDate: d.startDate, notes: d.notes || ''};
+    if (d.id) { await DB.update('tenants', d.id, data); closeModal(); toast('Penyewa dikemas kini.'); await refresh(); return; }
+    const id = await DB.add('tenants', {...data, token: genToken(), active: true, createdAt: nowStr()});
+    closeModal(); await refresh(); shareLink(id); toast('Penyewa ditambah. Hantar link kepada penyewa.');
+  },
+  async tpay(d, f) {
+    if (!f.dataset.proof) throw new Error('Sila pilih gambar bukti bayaran.');
+    const t = S.t;
+    await DB.add('payments', {tenantId: t.id, tenantName: t.name, address: t.address, month: d.month, amount: +d.amount, paidDate: d.paidDate, method: d.method, ref: d.ref || '', proof: f.dataset.proof, status: 'pending', receiptNo: '', submittedAt: nowStr(), confirmedAt: ''});
+    closeModal(); toast('Bukti dihantar! Tunggu tuan rumah luluskan.'); await refresh();
+  },
+  async cash(d) {
+    const t = S.tenants.find(x => x.id === d.tenantId);
+    const id = await DB.add('payments', {tenantId: t.id, tenantName: t.name, address: t.address, month: d.month, amount: +d.amount, paidDate: d.paidDate, method: d.method, ref: '', proof: '', status: 'confirmed', receiptNo: rcptNo(d.month), submittedAt: nowStr(), confirmedAt: nowStr()});
+    closeModal(); await refresh(); receipt(id); toast('Bayaran direkod.');
+  },
+  async remind(d) {
+    const isNow = d.when === 'now', at = isNow ? nowStr() : `${d.date}T${d.time}`;
+    if (!isNow && (!d.date || !d.time || at <= nowStr())) throw new Error('Pilih tarikh & masa akan datang.');
+    const targets = d.tenantId === '__all' ? activeT().filter(t => monthStatus(t, S.month, S.payments).code !== 'paid') : [S.tenants.find(x => x.id === d.tenantId)];
+    for (const t of targets) await DB.add('reminders', {tenantId: t.id, at, message: d.tenantId === '__all' ? d.message.replace(/^Salam,/, `Salam ${t.name},`) : d.message, createdAt: nowStr(), ownerNotified: isNow});
+    closeModal(); toast(isNow ? `Peringatan dihantar ke app ${targets.length} penyewa.` : `${targets.length} peringatan dijadualkan pada ${dtLabel(at)}.`); await refresh();
+  },
+  async reject(d) { await DB.update('payments', d.id, {status: 'rejected', rejectReason: d.reason + (d.note ? ' — ' + d.note : ''), rejectedAt: nowStr()}); closeModal(); toast('Bukti ditolak. Penyewa akan dimaklumkan.'); await refresh(); }
+};
+
+/* ===================== EVENT ===================== */
+document.addEventListener('click', async e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const fn = ACTIONS[el.dataset.act]; if (!fn) return;
+  e.preventDefault();
+  try { await fn(el.dataset.id, el); } catch (err) { console.error(err); toast(err.message || 'Ralat berlaku.', 'err'); }
+});
+$('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+document.addEventListener('change', e => { const el = e.target.closest('[data-chg]'); if (el && CHANGES[el.dataset.chg]) CHANGES[el.dataset.chg](el); });
+document.addEventListener('submit', async e => {
+  const f = e.target.closest('form[data-form]'); if (!f) return;
+  e.preventDefault();
+  const btn = f.querySelector('button:not([type=button])'); if (btn) btn.disabled = true;
+  try { await FORMS[f.dataset.form](Object.fromEntries(new FormData(f)), f); }
+  catch (err) { console.error(err); toast(err.message || 'Ralat berlaku.', 'err'); }
+  finally { if (btn && document.body.contains(btn)) btn.disabled = false; }
+});
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+
+/* ===================== MULA ===================== */
+(async function boot() {
+  const tok = new URLSearchParams(location.search).get('t');
+  if (tok) { lsSet('prosewa_tenant_token', tok); }
+  const session = lsGet('prosewa_session', false);
+  const savedTok = lsGet('prosewa_tenant_token');
+  if (tok || (!session && savedTok)) { S.mode = 'tenant'; S.token = tok || savedTok; await loadTenant(S.token); renderTenant(); return; }
+  if (session && mem.owner) { await enterOwner(); return; }
+  renderLogin();
+})();
+</script>
+</body>
+</html>
