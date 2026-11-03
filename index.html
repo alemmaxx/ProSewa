@@ -440,7 +440,7 @@ function oTenants() {
   if (!list.length) return h + `<div class="empty">Belum ada penyewa.<br>Tekan <b>+</b> di kanan atas untuk tambah.</div></div>`;
   h += `<div class="tcgrid">${st.map(({t, s}, i) => `<div class="tc ${tcCls(s)}"><div class="t1"><div><span class="num">${i + 1}</span>${chip(s)}<h4>${esc(t.name)}</h4></div>${cdBox(s)}</div>
     <div class="kvs"><div class="kv"><span>Alamat</span><b>${esc(t.address || '-')}</b></div><div class="kv"><span>Sewa</span><b>${RM(t.rent)} / bulan</b></div><div class="kv"><span>Tarikh bayar</span><b>Sebelum ${t.dueDay} hb · ${dateLabel(s.due)}</b></div><div class="kv"><span>Telefon</span><b>${esc(t.phone)}</b></div></div>
-    <div class="acts"><button class="btn sm" data-act="shareLink" data-id="${t.id}">🔗 Link</button><button class="btn sm ghost" data-act="tenantForm" data-id="${t.id}">✏️ Edit</button><a class="btn sm wa fx" href="${waLink(t.phone, 'Salam ' + t.name + ', ')}" target="_blank" rel="noopener">💬</a><button class="btn sm red fx" data-act="delTenant" data-id="${t.id}">🗑</button></div></div>`).join('')}</div>`;
+    <div class="acts"><button class="btn sm" data-act="copyLink" data-id="${t.id}">📋 Salin link</button><button class="btn sm ghost" data-act="tenantForm" data-id="${t.id}">✏️ Edit</button><button class="btn sm ghost fx" data-act="shareLink" data-id="${t.id}" aria-label="Kongsi">🔗</button><a class="btn sm wa fx" href="${waLink(t.phone, 'Salam ' + t.name + ', ')}" target="_blank" rel="noopener">💬</a><button class="btn sm red fx" data-act="delTenant" data-id="${t.id}">🗑</button></div></div>`).join('')}</div>`;
   return h + `</div>`;
 }
 
@@ -528,9 +528,7 @@ function renderTenant() {
   if (S.mode !== 'tenant') return;
   if (!S.t || S.t.active === false) {
     $('#app').innerHTML = `<div class="login"><div class="lbox">${themeSeg()}<br><img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa Penyewa</h2>
-      <p class="muted">${S.token ? 'Link/kod ini tidak sah atau sewaan telah tamat.' : 'Buka link yang dihantar oleh tuan rumah, atau masukkan kod penyewa anda.'}</p>
-      <form data-form="tcode">${fld('Kod penyewa / link', 'code', '', 'text', 'required placeholder="cth: ab12cd34ef56" autocapitalize="off"')}<button class="btn wide" style="margin-top:14px">Masuk</button></form>
-      ${isStandalone() ? '' : '<button class="btn wide ghost" style="margin-top:8px" data-act="install">⬇ Pasang app ProSewa Penyewa</button>'}</div></div>`;
+      <p class="muted">${S.token ? 'Link ini tidak sah atau sewaan telah tamat.' : 'Sila buka link khas yang dihantar oleh tuan rumah anda.'}<br>Hubungi tuan rumah untuk dapatkan link baru.</p></div></div>`;
     return;
   }
   const notifs = tenantNotifs(S.t, S.payments, S.reminders, S.settings), seenKey = 'prosewa_seen_' + S.t.token;
@@ -581,7 +579,7 @@ function tenantForm(id) {
 function shareLink(id) {
   const t = S.tenants.find(x => x.id === id), url = tenantUrl(t);
   const msg = `Salam ${t.name}, ini link khas anda untuk urusan sewa ${t.address}:\n${url}\n\nDi sini anda boleh semak sewa, terima notifikasi, muat naik bukti bayaran & dapat resit. Boleh install sebagai app di phone. Terima kasih — ${S.owner.name}`;
-  openModal('Link Penyewa', `<p style="margin-top:0">Link khas untuk <b>${esc(t.name)}</b>. Jangan kongsi dengan orang lain.</p><div class="linkbox">${esc(url)}</div><p class="muted" style="margin:0 0 6px">Kod penyewa: <b style="color:var(--gold);letter-spacing:1px">${esc(t.token)}</b></p>
+  openModal('Link Penyewa', `<p style="margin-top:0">Link khas untuk <b>${esc(t.name)}</b>. Jangan kongsi dengan orang lain.</p><div class="linkbox">${esc(url)}</div><p class="muted" style="margin:0 0 6px">Penyewa cuma buka link ini, tiada login. Boleh terus pasang sebagai app.</p>
     <div class="acts"><a class="btn wa" style="flex:1" href="${waLink(t.phone, msg)}" target="_blank" rel="noopener">Hantar link via WhatsApp</a><button class="btn ghost" style="flex:1" data-act="copy" data-id="${esc(url)}">Salin link</button></div>
     <div class="acts"><a class="btn ghost" style="flex:1" href="${esc(url)}" target="_blank" rel="noopener">👁 Lihat paparan penyewa</a><button class="btn red" data-act="newToken" data-id="${t.id}">Tukar link</button></div>
     <p class="muted">"Tukar link" akan matikan link lama (contoh bila link tersebar).</p>`);
@@ -674,6 +672,7 @@ const ACTIONS = {
   tab: id => { closeModal(); S.tab = id; renderOwner(); scrollTo(0, 0); },
   ttab: id => { S.tTab = id; renderTenant(); scrollTo(0, 0); },
   print: () => window.print(),
+  copyLink: async id => { const t = S.tenants.find(x => x.id === id); const u = tenantUrl(t); try { await navigator.clipboard.writeText(u); toast(`Link ${t.name.split(' ')[0]} disalin ✅`); } catch (e) { shareLink(id); } },
   copy: async v => { try { await navigator.clipboard.writeText(v); toast('Disalin.'); } catch (e) { prompt('Salin:', v); } },
   useDemo: async () => { await seedDemo(); await enterOwner(); toast('Data contoh dimuatkan. Log masuk: admin@demo.com / 1234'); },
   resetAll: async () => { if (!confirm('Padam SEMUA data dalam peranti ini?')) return; mem = {owner: null, settings: null, tenants: [], payments: [], reminders: []}; save(); renderLogin(); },
@@ -730,12 +729,6 @@ const CHANGES = {
 /* ===================== BORANG ===================== */
 async function enterOwner() { lsSet('prosewa_session', true); S.mode = 'owner'; S.tab = 'tenants'; await loadOwner(); renderOwner(); ownerTick(); }
 const FORMS = {
-  async tcode(d) {
-    let c = String(d.code || '').trim(); const m = c.match(/[?&]t=([a-z0-9]+)/i); if (m) c = m[1];
-    c = c.toLowerCase(); S.token = c; await loadTenant(c);
-    if (!S.t) { renderTenant(); throw new Error('Kod tidak dijumpai.'); }
-    lsSet('prosewa_tenant_token', c); history.replaceState(null, '', 'penyewa.html?t=' + c); S.tTab = 'home'; renderTenant();
-  },
   async setup(d) { await DB.setOwner({name: d.name.trim(), phone: d.phone.trim(), email: d.email.trim().toLowerCase(), pass: await hashPass(d.pass), bankName: '', bankAcc: '', accName: d.name.trim()}); await enterOwner(); toast('Akaun dicipta. Isi maklumat bank di Tetapan.'); },
   async login(d) { const o = await DB.getOwner(); if (!o || o.email !== d.email.trim().toLowerCase() || o.pass !== await hashPass(d.pass)) throw new Error('Emel atau kata laluan salah.'); await enterOwner(); },
   async password(d) { await DB.setOwner({...S.owner, pass: await hashPass(d.pass)}); toast('Kata laluan ditukar.'); await refresh(); },

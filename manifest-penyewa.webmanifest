@@ -2,7 +2,6 @@
   "name": "ProSewa Penyewa",
   "short_name": "Sewa Saya",
   "description": "Semak sewa, muat naik bukti bayaran & dapat resit",
-  "start_url": "./penyewa.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
