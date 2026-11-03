@@ -490,8 +490,8 @@ function ensureSub() { if (!mem.subscription) { mem.subscription = {plan: 'trial
 function subInfo() {
   const s = mem.subscription; if (!s) return null;
   const end = s.plan === 'trial' ? addDays(s.start, trialDays()) : s.end;   // percubaan ikut tetapan hari semasa
-  const days = Math.round((new Date(end + 'T23:59:59') - new Date()) / 864e5);
-  return {...s, end, days, active: days >= 0, planName: s.plan === 'trial' ? 'Percubaan percuma' : (PLANS.find(p => p.id === s.plan)?.name || s.plan)};
+  const diff = new Date(end + 'T23:59:59') - new Date(), active = diff >= 0, days = active ? Math.floor(diff / 864e5) : -Math.ceil(-diff / 864e5);
+  return {...s, end, days, active, planName: s.plan === 'trial' ? 'Percubaan percuma' : (PLANS.find(p => p.id === s.plan)?.name || s.plan)};
 }
 function activateSub(planId, ref) {
   const pl = PLANS.find(p => p.id === planId), cur = subInfo();
