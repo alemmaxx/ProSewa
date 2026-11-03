@@ -34,6 +34,12 @@ header .ttl{margin:0;font-size:20px;font-weight:800;letter-spacing:-.3px;white-s
 header .ttl span{font-weight:400;color:var(--muted);font-size:12px;letter-spacing:0;margin-left:4px}
 .hb{width:40px;height:40px;border-radius:10px;border:0;background:var(--soft);color:var(--ink);font-size:18px;cursor:pointer;display:grid;place-items:center;position:relative;flex:none}
 .hb.first{margin-left:auto}
+header .ttl{margin-right:auto}
+.instb{height:40px;border:0;border-radius:10px;padding:0 12px;background:var(--gold);color:#1b1503;font:800 13px var(--f);cursor:pointer;white-space:nowrap;flex:none}
+:root[data-theme="light"] .instb{border:1px solid #000;color:#000}
+.instbig{display:flex;align-items:center;gap:12px;background:var(--gold2);border:1px solid var(--gold);border-radius:14px;padding:12px 14px;margin:0 0 12px;text-align:left}
+.instbig b{display:block;color:var(--gold)}
+.instbig .btn{margin-left:auto;flex:none}
 .hb.add{background:var(--gold);color:#1b1503;font:800 26px var(--f);line-height:1}
 .hb em{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--red);color:#fff;font:800 11px/20px var(--f);font-style:normal;text-align:center}
 /* hero */
@@ -231,8 +237,11 @@ const genId = () => Math.random().toString(36).slice(2, 10) + Date.now().toStrin
 const genToken = () => Array.from({length: 12}, () => 'abcdefghjkmnpqrstuvwxyz23456789'[Math.floor(Math.random() * 31)]).join('');
 const waNum = p => { let d = String(p || '').replace(/\D/g, ''); if (d.startsWith('0')) d = '6' + d; else if (d.startsWith('1')) d = '60' + d; return d; };
 const waLink = (phone, text) => `https://wa.me/${waNum(phone)}?text=${encodeURIComponent(text)}`;
-const baseUrl = () => location.href.split('?')[0].split('#')[0];
-const tenantUrl = t => `${baseUrl()}?t=${t.token}`;
+const IS_TENANT_SITE = /penyewa\.html$/i.test(location.pathname);
+const baseDir = () => location.href.split(/[?#]/)[0].replace(/[^/]*$/, '');
+const tenantUrl = t => `${baseDir()}penyewa.html?t=${t.token}`;
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const instBtn = () => isStandalone() ? '' : `<button class="instb" data-act="install">⬇ Pasang</button>`;
 const lsGet = (k, d = null) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } };
 
@@ -407,7 +416,7 @@ function renderLogin() {
     : `<form data-form="setup">${fld('Nama', 'name', '', 'text', 'required placeholder="Nama anda"')}${fld('No. telefon', 'phone', '', 'tel', 'required placeholder="012-3456789"')}${fld('Emel', 'email', '', 'email', 'required autocomplete="username" placeholder="cth: nama@email.com"')}${fld('Kata laluan', 'pass', '', 'password', 'required minlength="4" autocomplete="new-password" placeholder="Min 4 aksara"')}
        <button class="btn wide" style="margin-top:14px">Cipta Akaun Admin</button></form>
        <button class="btn wide ghost" style="margin-top:8px" data-act="useDemo">✨ Cuba dengan data contoh</button>`;
-  $('#app').innerHTML = `<div class="login"><div class="lbox">${themeSeg()}<br><img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa</h2>
+  $('#app').innerHTML = `<div class="login"><div class="lbox">${themeSeg()}<br>${isStandalone() ? '' : `<div class="instbig"><div><b>Pasang app ProSewa Admin</b><span class="muted">Buka terus dari skrin utama phone</span></div><button class="btn sm" data-act="install">⬇ Pasang</button></div>`}<img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa</h2>
     <p class="muted" style="margin:0 0 6px">${has ? 'Log masuk admin untuk teruskan' : 'Cipta akaun admin (owner)'}</p>${body}
     <div class="hint">Versi percubaan: data disimpan dalam peranti ini. Selepas sambung Firebase, link penyewa boleh dibuka di phone penyewa.</div></div></div>`;
 }
@@ -420,7 +429,7 @@ function renderOwner() {
   $('#app').innerHTML = v() + nav([['tenants', '👥', 'Penyewa'], ['status', '💳', 'Status Sewa', pend], ['report', '📊', 'Laporan'], ['settings', '⚙️', 'Tetapan']], S.tab);
 }
 const activeT = () => S.tenants.filter(t => t.active !== false);
-const ownerBtns = () => { const pend = S.payments.filter(p => p.status === 'pending').length; return hb('install', '⬇', 'Install', 0, 'first') + hb('tab', '🔔', 'Bukti bayaran', pend, '', 'status') + hb('tenantForm', '+', 'Tambah penyewa', 0, 'add'); };
+const ownerBtns = () => { const pend = S.payments.filter(p => p.status === 'pending').length; return instBtn() + hb('tab', '🔔', 'Bukti bayaran', pend, '', 'status') + hb('tenantForm', '+', 'Tambah penyewa', 0, 'add'); };
 
 function oTenants() {
   const cm = curMonth(), list = activeT();
@@ -518,7 +527,10 @@ function oSettings() {
 function renderTenant() {
   if (S.mode !== 'tenant') return;
   if (!S.t || S.t.active === false) {
-    $('#app').innerHTML = `<div class="login"><div class="lbox"><img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa</h2><p class="muted">Link ini tidak sah atau sewaan telah tamat.<br>Sila hubungi tuan rumah anda.</p></div></div>`;
+    $('#app').innerHTML = `<div class="login"><div class="lbox">${themeSeg()}<br><img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa Penyewa</h2>
+      <p class="muted">${S.token ? 'Link/kod ini tidak sah atau sewaan telah tamat.' : 'Buka link yang dihantar oleh tuan rumah, atau masukkan kod penyewa anda.'}</p>
+      <form data-form="tcode">${fld('Kod penyewa / link', 'code', '', 'text', 'required placeholder="cth: ab12cd34ef56" autocapitalize="off"')}<button class="btn wide" style="margin-top:14px">Masuk</button></form>
+      ${isStandalone() ? '' : '<button class="btn wide ghost" style="margin-top:8px" data-act="install">⬇ Pasang app ProSewa Penyewa</button>'}</div></div>`;
     return;
   }
   const notifs = tenantNotifs(S.t, S.payments, S.reminders, S.settings), seenKey = 'prosewa_seen_' + S.t.token;
@@ -529,11 +541,12 @@ function renderTenant() {
   $('#app').innerHTML = v(notifs, unread, seenBefore) + nav([['home', '🏠', 'Utama'], ['notif', '🔔', 'Notifikasi', unread], ['history', '🧾', 'Sejarah']], S.tTab);
   pushNewTenantNotifs(notifs);
 }
-const tenantBtns = unread => hb('install', '⬇', 'Install', 0, 'first') + hb('theme', curTheme() === 'dark' ? '☀️' : '🌙', 'Tema', 0, '', curTheme() === 'dark' ? 'light' : 'dark') + hb('ttab', '🔔', 'Notifikasi', unread, '', 'notif');
+const tenantBtns = unread => instBtn() + hb('theme', curTheme() === 'dark' ? '☀️' : '🌙', 'Tema', 0, '', curTheme() === 'dark' ? 'light' : 'dark') + hb('ttab', '🔔', 'Notifikasi', unread, '', 'notif');
 function tHome(notifs, unread) {
   const t = S.t, o = S.owner || {}, cm = curMonth(), s = monthStatus(t, cm, S.payments), a = arrears(t, S.payments);
   const canPay = !['paid', 'pending'].includes(s.code);
   let h = header('Sewa saya', `Salam, ${t.name.split(' ')[0]}.`, t.address, {btns: tenantBtns(unread)}) + `<div class="wrap">`;
+  if (!isStandalone()) h += `<div class="instbig"><div><b>Pasang app ProSewa Penyewa</b><span class="muted">Dapat notifikasi & buka terus dari skrin utama</span></div><button class="btn sm" data-act="install">⬇ Pasang</button></div>`;
   if (notifs[0] && unread) h += `<div class="al" data-act="ttab" data-id="notif" style="cursor:pointer"><b>${notifs[0].ic} ${esc(notifs[0].title)}</b>${esc(notifs[0].body)}</div>`;
   h += `<div class="tc ${tcCls(s)}"><div class="t1"><div>${chip(s)}<h4>Sewa ${monthLabel(cm)}</h4><div class="big">${RM(t.rent)}</div><div class="muted">Sila bayar sebelum <b style="color:var(--ink)">${dateLabel(s.due)}</b></div></div>${cdBox(s)}</div>
     ${canPay ? `<button class="btn wide" style="margin-top:14px" data-act="payForm">📤 Muat naik bukti bayaran</button>` : s.code === 'pending' ? '<div class="al" style="margin:14px 0 0">⏳ Bukti bayaran anda sedang disemak. Resit akan dihantar selepas diluluskan.</div>' : '<div class="al ok" style="margin:14px 0 0">✅ Terima kasih! Sewa bulan ini sudah dijelaskan.</div>'}</div>`;
@@ -568,7 +581,7 @@ function tenantForm(id) {
 function shareLink(id) {
   const t = S.tenants.find(x => x.id === id), url = tenantUrl(t);
   const msg = `Salam ${t.name}, ini link khas anda untuk urusan sewa ${t.address}:\n${url}\n\nDi sini anda boleh semak sewa, terima notifikasi, muat naik bukti bayaran & dapat resit. Boleh install sebagai app di phone. Terima kasih — ${S.owner.name}`;
-  openModal('Link Penyewa', `<p style="margin-top:0">Link khas untuk <b>${esc(t.name)}</b>. Jangan kongsi dengan orang lain.</p><div class="linkbox">${esc(url)}</div>
+  openModal('Link Penyewa', `<p style="margin-top:0">Link khas untuk <b>${esc(t.name)}</b>. Jangan kongsi dengan orang lain.</p><div class="linkbox">${esc(url)}</div><p class="muted" style="margin:0 0 6px">Kod penyewa: <b style="color:var(--gold);letter-spacing:1px">${esc(t.token)}</b></p>
     <div class="acts"><a class="btn wa" style="flex:1" href="${waLink(t.phone, msg)}" target="_blank" rel="noopener">Hantar link via WhatsApp</a><button class="btn ghost" style="flex:1" data-act="copy" data-id="${esc(url)}">Salin link</button></div>
     <div class="acts"><a class="btn ghost" style="flex:1" href="${esc(url)}" target="_blank" rel="noopener">👁 Lihat paparan penyewa</a><button class="btn red" data-act="newToken" data-id="${t.id}">Tukar link</button></div>
     <p class="muted">"Tukar link" akan matikan link lama (contoh bila link tersebar).</p>`);
@@ -628,6 +641,7 @@ function receipt(id) {
 let swReg = null, installEvt = null;
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').then(r => swReg = r).catch(() => {});
 addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; });
+addEventListener('appinstalled', () => { installEvt = null; toast('App berjaya dipasang ✅'); });
 function phoneNotify(title, body) {
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
   const opt = {body, icon: 'icon-192.png', badge: 'icon-192.png', data: {url: location.href}};
@@ -685,10 +699,10 @@ const ACTIONS = {
     S.mode === 'owner' ? renderOwner() : renderTenant();
   },
   install: async () => {
-    if (installEvt) { installEvt.prompt(); await installEvt.userChoice; installEvt = null; return; }
-    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    openModal('Install App', ios ? '<p>iPhone (Safari): tekan butang <b>Share ⬆️</b> di bawah, kemudian pilih <b>"Add to Home Screen"</b>.</p>'
-      : '<p>Android (Chrome): tekan menu <b>⋮</b> di kanan atas, kemudian pilih <b>"Install app"</b> atau <b>"Add to Home screen"</b>.</p><p class="muted">Kalau sudah install, buka dari ikon ProSewa di skrin utama.</p>');
+    if (installEvt) { installEvt.prompt(); const r = await installEvt.userChoice; installEvt = null; if (r.outcome === 'accepted') toast('App sedang dipasang ✅'); return; }
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent), app = IS_TENANT_SITE ? 'ProSewa Penyewa' : 'ProSewa';
+    openModal('Pasang App ' + app, ios ? `<ol style="padding-left:20px;line-height:1.7"><li>Buka link ini dalam <b>Safari</b>.</li><li>Tekan butang <b>Share ⬆️</b> di bawah.</li><li>Pilih <b>"Add to Home Screen"</b>, kemudian tekan <b>Add</b>.</li></ol>`
+      : `<ol style="padding-left:20px;line-height:1.7"><li>Buka link ini dalam <b>Chrome</b>.</li><li>Tekan menu <b>⋮</b> di kanan atas.</li><li>Pilih <b>"Install app"</b> atau <b>"Add to Home screen"</b>.</li></ol><p class="muted">Kalau sudah dipasang, buka dari ikon ${app} di skrin utama.</p>`);
   },
   csv: () => {
     const y = String(S.year), r = reportData(S.year);
@@ -716,6 +730,12 @@ const CHANGES = {
 /* ===================== BORANG ===================== */
 async function enterOwner() { lsSet('prosewa_session', true); S.mode = 'owner'; S.tab = 'tenants'; await loadOwner(); renderOwner(); ownerTick(); }
 const FORMS = {
+  async tcode(d) {
+    let c = String(d.code || '').trim(); const m = c.match(/[?&]t=([a-z0-9]+)/i); if (m) c = m[1];
+    c = c.toLowerCase(); S.token = c; await loadTenant(c);
+    if (!S.t) { renderTenant(); throw new Error('Kod tidak dijumpai.'); }
+    lsSet('prosewa_tenant_token', c); history.replaceState(null, '', 'penyewa.html?t=' + c); S.tTab = 'home'; renderTenant();
+  },
   async setup(d) { await DB.setOwner({name: d.name.trim(), phone: d.phone.trim(), email: d.email.trim().toLowerCase(), pass: await hashPass(d.pass), bankName: '', bankAcc: '', accName: d.name.trim()}); await enterOwner(); toast('Akaun dicipta. Isi maklumat bank di Tetapan.'); },
   async login(d) { const o = await DB.getOwner(); if (!o || o.email !== d.email.trim().toLowerCase() || o.pass !== await hashPass(d.pass)) throw new Error('Emel atau kata laluan salah.'); await enterOwner(); },
   async password(d) { await DB.setOwner({...S.owner, pass: await hashPass(d.pass)}); toast('Kata laluan ditukar.'); await refresh(); },
@@ -770,12 +790,15 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) refr
 /* ===================== MULA ===================== */
 (async function boot() {
   const tok = new URLSearchParams(location.search).get('t');
-  if (tok) { lsSet('prosewa_tenant_token', tok); }
-  const session = lsGet('prosewa_session', false);
-  const savedTok = lsGet('prosewa_tenant_token');
-  if (tok || (!session && savedTok)) { S.mode = 'tenant'; S.token = tok || savedTok; await loadTenant(S.token); renderTenant(); return; }
-  if (session && mem.owner) { await enterOwner(); return; }
-  renderLogin();
+  if (!IS_TENANT_SITE) {
+    if (tok) { location.replace(baseDir() + 'penyewa.html?t=' + encodeURIComponent(tok)); return; }   // link lama → website penyewa
+    if (lsGet('prosewa_session', false) && mem.owner) { await enterOwner(); return; }
+    renderLogin(); return;
+  }
+  if (tok) lsSet('prosewa_tenant_token', tok);
+  S.mode = 'tenant'; S.token = tok || lsGet('prosewa_tenant_token');
+  if (S.token) await loadTenant(S.token);
+  renderTenant();
 })();
 </script>
 </body>

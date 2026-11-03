@@ -1,7 +1,7 @@
 {
   "name": "ProSewa",
   "short_name": "ProSewa",
-  "description": "Urus sewa rumah: bayaran, resit & peringatan",
+  "description": "ProSewa Admin: urus penyewa, bayaran, resit & peringatan",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -10,7 +10,18 @@
   "theme_color": "#0a1210",
   "lang": "ms",
   "icons": [
-    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
-    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
-  ]
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "id": "./?app=admin"
 }

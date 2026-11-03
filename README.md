@@ -2,6 +2,11 @@
 
 App web untuk **1 owner, ramai penyewa**. Setiap penyewa ada link sendiri dan tak perlu daftar akaun. Boleh di-install sebagai app di phone.
 
+## Dua website
+- **Owner (admin):** `https://alemmaxx.github.io/ProSewa/` — install sebagai app **ProSewa**.
+- **Penyewa:** `https://alemmaxx.github.io/ProSewa/penyewa.html?t=KOD` — setiap penyewa ada link & kod sendiri, install sebagai app **ProSewa Penyewa**.
+- `penyewa.html` dijana automatik oleh `build.sh` semasa deploy (GitHub Actions) — edit `index.html` sahaja.
+
 ## Fail
 | Fail | Fungsi |
 |---|---|
