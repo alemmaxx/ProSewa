@@ -102,6 +102,11 @@ header .ttl{margin-right:auto}
 .nav{position:fixed;bottom:0;left:0;right:0;background:var(--navbg);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;justify-content:center;z-index:6;padding-bottom:env(safe-area-inset-bottom)}
 .nav .in{display:flex;max-width:760px;width:100%}
 .navbrand{display:none}
+.stack{max-width:760px;margin:0 auto}
+.stack>.blk{margin-bottom:4px}
+.stack+.btn.lo,.stack~.btn{max-width:760px;margin-left:auto;margin-right:auto;display:flex}
+.wrap{min-width:0}
+.cols>*{min-width:0}
 .nav button{flex:1;border:0;background:none;color:var(--muted);padding:9px 2px 10px;font:500 11px var(--f);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;position:relative}
 .nav button i{font-style:normal;font-size:20px;line-height:1;filter:grayscale(1);opacity:.7}
 .nav button.on{color:var(--ink);font-weight:700}
@@ -255,7 +260,7 @@ table.rep tr.tot td{font-weight:800;border-bottom:0;color:var(--gold)}
   .hero h2{font-size:64px}
   .wrap{padding:0 28px}
   .tcgrid{grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
-  .cols{grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:0 16px}
+  .cols{grid-template-columns:repeat(2,minmax(0,1fr));gap:0 16px}
   .tc{transition:transform .15s,box-shadow .15s}
   .tc:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.18)}
   #toast{bottom:28px}
@@ -1059,7 +1064,7 @@ function oSub() {
 function oSettings() {
   const o = S.owner, s = S.settings;
   const perm = 'Notification' in window ? Notification.permission : 'unsupported';
-  return header('Tetapan', 'Tetapan.', o.name ? `${o.name}${o.phone ? ' · ' + o.phone : ''}` : 'Lengkapkan maklumat anda', {btns: ownerBtns()}) + `<div class="wrap"><div class="cols">
+  return header('Tetapan', 'Tetapan.', o.name ? `${o.name}${o.phone ? ' · ' + o.phone : ''}` : 'Lengkapkan maklumat anda', {btns: ownerBtns()}) + `<div class="wrap"><div class="stack">
     <div class="blk"><div class="sec-h">Paparan</div><div class="card"><div class="switch">Bahasa ${langSeg()}</div><div class="switch">Tema ${themeSeg()}</div></div></div>
     <div class="blk"><div class="sec-h">Maklumat syarikat (untuk resit)</div><form class="card" data-form="company">
       <div class="logobox"><div id="logoPrev">${o.logo ? `<img src="${o.logo}" alt="logo">` : '<span class="muted">Tiada logo</span>'}</div>
