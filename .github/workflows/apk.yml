@@ -52,6 +52,7 @@ jobs:
           cp _site/${{ matrix.page }} www/index.html
           cp icon-192.png icon-512.png icon-t-192.png icon-t-512.png www/
           cp node_modules/html2pdf.js/dist/html2pdf.bundle.min.js www/lib/
+          cp node_modules/pdfjs-dist/build/pdf.min.js node_modules/pdfjs-dist/build/pdf.worker.min.js www/lib/
           FCMJS=""; [ "${{ steps.fcm.outputs.on }}" = "1" ] && FCMJS="window.PROSEWA_FCM=true;"
           sed -i "s#<head>#<head><script>window.PROSEWA_APP=\"${{ matrix.kind }}\";$FCMJS</script>#" www/index.html
           grep -c 'PROSEWA_APP="${{ matrix.kind }}"' www/index.html

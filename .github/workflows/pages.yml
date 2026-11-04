@@ -18,6 +18,8 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - name: Pasang pustaka PDF
+        run: npm install --no-audit --no-fund --omit=dev pdfjs-dist@3.11.174 html2pdf.js@0.10.2 --no-save
       - name: Sediakan fail web (+ APK terkini)
         env:
           FETCH_APK: '1'

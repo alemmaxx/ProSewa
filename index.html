@@ -363,7 +363,49 @@ async function hashPass(p) {
   try { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('prosewa:' + p)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); }
   catch (e) { let h = 0; for (const c of 'prosewa:' + p) h = (h * 31 + c.charCodeAt(0)) | 0; return 'x' + h; }
 }
+/* ---------- PDF (slip bank) → gambar: halaman 1–2 dipaparkan seperti screenshot ---------- */
+const PDFJS_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+const isPdf = f => !!f && (f.type === 'application/pdf' || /\.pdf$/i.test(f.name || ''));
+let _pdfjs = null;
+async function pdfLib() {
+  if (_pdfjs) return _pdfjs;
+  let base = 'lib/';
+  if (!window.pdfjsLib) await loadScript(base + 'pdf.min.js').catch(() => { base = PDFJS_CDN; return loadScript(base + 'pdf.min.js').catch(() => { throw new Error(navigator.onLine ? 'PDF tidak dapat dibaca. Cuba screenshot slip itu.' : 'Tiada sambungan internet.'); }); });   // APK & web: dibundel; jika tiada, CDN
+  if (!window.pdfjsLib) throw new Error('PDF tidak dapat dibaca. Cuba screenshot slip itu.');
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = base + 'pdf.worker.min.js';
+  return _pdfjs = window.pdfjsLib;
+}
+function trimWhite(c) {   // buang ruang putih atas / bawah (slip bank biasanya di atas halaman A4)
+  const g = c.getContext('2d'), {width: w, height: h} = c, d = g.getImageData(0, 0, w, h).data, ink = y => { for (let x = 0; x < w; x += 3) { const i = (y * w + x) * 4; if (d[i] < 235 || d[i + 1] < 235 || d[i + 2] < 235) return true; } return false; };
+  let top = 0, bot = h - 1; while (top < h && !ink(top)) top++; while (bot > top && !ink(bot)) bot--;
+  if (top >= bot) return c; top = Math.max(0, top - 24); bot = Math.min(h - 1, bot + 24);
+  const o = document.createElement('canvas'); o.width = w; o.height = bot - top + 1; o.getContext('2d').drawImage(c, 0, top, w, o.height, 0, 0, w, o.height); return o;
+}
+async function pdfToCanvas(file, width = 1000, maxPages = 2) {
+  const L = await pdfLib();
+  const doc = await L.getDocument({data: new Uint8Array(await file.arrayBuffer())}).promise;
+  const parts = [];
+  for (let i = 1; i <= Math.min(doc.numPages, maxPages); i++) {
+    const pg = await doc.getPage(i), vp = pg.getViewport({scale: Math.min(3, width / pg.getViewport({scale: 1}).width)});
+    const c = document.createElement('canvas'); c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+    await pg.render({canvasContext: g, viewport: vp}).promise; parts.push(trimWhite(c));
+  }
+  const H = Math.min(3200, parts.reduce((a, c) => a + c.height, 0) + (parts.length - 1) * 12), out = document.createElement('canvas'); out.width = parts[0].width; out.height = H;
+  const g = out.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, out.width, H); let y = 0;
+  parts.forEach(c => { g.drawImage(c, 0, y); y += c.height + 12; if (y < H) { g.fillStyle = '#ddd'; g.fillRect(0, y - 7, out.width, 2); } });
+  return {canvas: out, pages: doc.numPages};
+}
+async function pdfToDataURL(file) {
+  const {canvas: c, pages} = await pdfToCanvas(file);
+  let q = .72, d = c.toDataURL('image/jpeg', q);
+  while (d.length > 850000 && q > .35) { q -= .1; d = c.toDataURL('image/jpeg', q); }
+  if (d.length > 850000) { const s = document.createElement('canvas'); s.width = Math.round(c.width * .7); s.height = Math.round(c.height * .7); s.getContext('2d').drawImage(c, 0, 0, s.width, s.height); d = s.toDataURL('image/jpeg', .6); }
+  if (pages > 2) toast('PDF ada ' + pages + ' halaman. Hanya 2 halaman pertama disimpan.');
+  return d;
+}
 function compressLogo(file, max = 360) {
+  if (isPdf(file)) return pdfToCanvas(file, 900, 1).then(({canvas}) => new Promise(r => canvas.toBlob(r, 'image/png'))).then(b => compressLogo(b, max));
   return new Promise((res, rej) => {
     if (!file || !file.type.startsWith('image/')) return rej(new Error('Sila pilih fail gambar (PNG / JPG).'));
     const img = new Image(), url = URL.createObjectURL(file);
@@ -376,8 +418,9 @@ function compressLogo(file, max = 360) {
   });
 }
 function compressImage(file, max = 1100, q = 0.72) {
+  if (isPdf(file)) return pdfToDataURL(file);
   return new Promise((res, rej) => {
-    if (!file || !file.type.startsWith('image/')) return rej(new Error('Sila pilih fail gambar (screenshot / foto resit).'));
+    if (!file || !file.type.startsWith('image/')) return rej(new Error('Sila pilih gambar (screenshot / foto) atau fail PDF.'));
     const img = new Image(), url = URL.createObjectURL(file);
     img.onload = () => { const s = Math.min(1, max / Math.max(img.width, img.height)); const c = document.createElement('canvas');
       c.width = Math.round(img.width * s); c.height = Math.round(img.height * s); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
@@ -419,6 +462,7 @@ const I18N_RX = [
   [/Link (\S+) disalin/g, "$1's link copied"],
   [/Ditambah (\d+) hari/g, 'Added $1 days'],
   [/Salam, /g, 'Hi, '],
+  [/PDF ada (\d+) halaman\. Hanya 2 halaman pertama disimpan\./g, 'The PDF has $1 pages. Only the first 2 pages are saved.'],
   [/Bil & utiliti (\d{4})/g, 'Bills & utilities $1'],
   [/Jumlah bil (\d{4})/g, 'Total bills $1'],
   [/Bil berulang aktif \((\d+)\)/g, 'Active recurring bills ($1)'],
@@ -448,7 +492,8 @@ const I18N_RX = [
   [/Sewa (.+?) (RM [\d,.]+) belum dibayar\./g, 'Rent for $1 ($2) is unpaid.']
 ];
 Object.assign(I18N, {
-  'LAPORAN KUTIPAN SEWA': 'RENT COLLECTION REPORT', 'Bil elektrik': 'Electricity bill', 'Bil air': 'Water bill', 'Bil IWK (pembetungan)': 'IWK (sewerage) bill', 'Bil internet / WiFi': 'Internet / WiFi bill', 'Bil gas': 'Gas bill', 'Rekod bil bulan ini': "Record this month's bills", 'Bil berulang': 'Recurring bills', 'Jumlah bil': 'Total bills',
+  'LAPORAN KUTIPAN SEWA': 'RENT COLLECTION REPORT', 'Pilih screenshot / gambar / PDF resit bank': 'Choose a screenshot / image / PDF of the bank receipt', 'Muat naik slip bayaran / PDF (pilihan)': 'Upload payment slip / PDF (optional)', 'Lampirkan gambar / PDF bil (pilihan)': 'Attach bill image / PDF (optional)', 'Lampirkan gambar / PDF resit (pilihan)': 'Attach receipt image / PDF (optional)',
+  'Sila pilih gambar (screenshot / foto) atau fail PDF.': 'Please choose an image (screenshot / photo) or a PDF file.', 'PDF tidak dapat dibaca. Cuba screenshot slip itu.': "The PDF couldn't be read. Try a screenshot of the slip instead.", '⏳ Membaca PDF…': '⏳ Reading PDF…', 'Bil elektrik': 'Electricity bill', 'Bil air': 'Water bill', 'Bil IWK (pembetungan)': 'IWK (sewerage) bill', 'Bil internet / WiFi': 'Internet / WiFi bill', 'Bil gas': 'Gas bill', 'Rekod bil bulan ini': "Record this month's bills", 'Bil berulang': 'Recurring bills', 'Jumlah bil': 'Total bills',
   'Ikut rumah': 'By property', 'Rumah': 'Property', 'Belum ada bil direkod. Tekan': 'No bills recorded yet. Tap', 'untuk bil elektrik / air, atau': 'for electricity / water bills, or', 'untuk bil tetap seperti IWK & maintenance.': 'for fixed bills such as IWK & maintenance.',
   'Bil yang owner bayar dikira sebagai perbelanjaan dan ditolak daripada pendapatan sewa bersih.': 'Bills paid by the owner count as expenses and are deducted from net rental income.', 'Rekod Bil Bulanan': 'Record Monthly Bills', 'Isi bil yang anda bayar. Kosongkan yang tiada.': "Fill in the bills you paid. Leave the rest empty.", 'Bulan bil': 'Bill month',
   'Lampirkan gambar bil (pilihan)': 'Attach bill image (optional)', 'Simpan bil': 'Save bills', 'Edit Bil Berulang': 'Edit Recurring Bill', 'Untuk bil tetap setiap bulan (cth: IWK RM8, maintenance RM150, internet RM99). Sistem rekod secara automatik setiap bulan pada tarikh dipilih.': 'For fixed monthly bills (e.g. IWK RM8, maintenance RM150, internet RM99). The system records them automatically every month on the chosen date.',
@@ -1441,7 +1486,7 @@ function oSettings() {
       ${fld('Bank / e-wallet', 'bankName', o.bankName, 'text', 'placeholder="cth: Maybank"')}${fld('No. akaun / DuitNow', 'bankAcc', o.bankAcc)}${fld('Nama pemegang akaun', 'accName', o.accName)}
       <div class="fld"><span>QR bayaran (DuitNow / e-wallet)</span></div>
       <div class="logobox"><div id="qrPrev" class="qrprev">${o.qr ? `<img src="${o.qr}" alt="QR">` : '<span class="muted">Tiada QR</span>'}</div>
-        <div><label class="btn sm ghost" style="cursor:pointer">📷 Pilih QR<input type="file" accept="image/*" data-chg="qrPick" hidden></label>
+        <div><label class="btn sm ghost" style="cursor:pointer">📷 Pilih QR<input type="file" accept="image/*,application/pdf,.pdf" data-chg="qrPick" hidden></label>
         ${o.qr ? '<button type="button" class="btn sm red" data-act="qrRemove">Buang</button>' : ''}<p class="muted" style="margin:6px 0 0">Screenshot / gambar QR dari app bank. Penyewa boleh imbas atau simpan QR ini.</p></div></div>
       <p class="muted">Maklumat bank & QR dipaparkan kepada penyewa.</p><button class="btn wide">Simpan profil</button></form></div>
     <div class="blk"><div class="sec-h">Peringatan automatik</div><form class="card" data-form="settings">
@@ -1494,7 +1539,7 @@ function issueNew() {
   openModal('Aduan Kerosakan', `<form data-form="issue">${sel('Kategori', 'category', ISSUE_CATS.map(c => [c, c]), ISSUE_CATS[0])}
     ${fld('Tajuk ringkas', 'title', '', 'text', 'required maxlength="80" placeholder="cth: Paip sinki dapur bocor"')}
     ${area('Penerangan (pilihan)', 'desc', '', 'maxlength="800" placeholder="cth: Air menitis bawah sinki sejak semalam."')}
-    <label class="filebtn" id="filebtn"><input type="file" accept="image/*" data-chg="proofPick">📷 Tambah gambar (pilihan)</label><div id="preview"></div>
+    <label class="filebtn" id="filebtn"><input type="file" accept="image/*,application/pdf,.pdf" data-chg="proofPick">📷 Tambah gambar (pilihan)</label><div id="preview"></div>
     <button class="btn wide" style="margin-top:10px">Hantar aduan</button></form>`);
 }
 function issueView(id) {
@@ -1691,7 +1736,7 @@ function payForm() {
   const t = S.t, cm = curMonth(), a = arrears(t, S.payments), s = monthStatus(t, cm, S.payments);
   const opts = [...new Set([...a.months, cm, addMonths(cm, 1)])].filter(m => !['paid', 'pending'].includes(monthStatus(t, m, S.payments).code));
   openModal('Muat Naik Bukti Bayaran', `<form data-form="tpay">
-    <label class="filebtn" id="filebtn"><input type="file" name="file" accept="image/*" data-chg="proofPick" required>📷 Pilih screenshot / gambar resit bank</label><div id="preview"></div>
+    <label class="filebtn" id="filebtn"><input type="file" name="file" accept="image/*,application/pdf,.pdf" data-chg="proofPick" required>📷 Pilih screenshot / gambar / PDF resit bank</label><div id="preview"></div>
     <div class="grid2" style="margin-top:10px">${sel('Untuk bulan', 'month', opts.map(m => [m, monthLabel(m)]), a.months[0] || (s.code === 'paid' ? addMonths(cm, 1) : cm))}${money('Jumlah (RM)', 'amount', t.rent)}</div>
     <div class="grid2">${fld('Tarikh dibayar', 'paidDate', localISO(), 'date', 'required')}${sel('Kaedah', 'method', METHODS, 'DuitNow')}</div>
     ${fld('No. rujukan (pilihan)', 'ref', '')}<button class="btn wide">📤 Hantar kepada tuan rumah</button></form>`);
@@ -1704,7 +1749,7 @@ function cashForm(id) {
     <div class="grid2">${sel('Untuk bulan', 'month', monthsRange(addMonths(curMonth(), -6), addMonths(curMonth(), 1)).reverse().map(m => [m, monthLabel(m)]), m0)}${money('Jumlah (RM)', 'amount', rentFor(t, m0))}</div>
     <div class="grid2">${fld('Tarikh terima', 'paidDate', localISO(), 'date', 'required')}${sel('Kaedah', 'method', METHODS, 'Tunai')}</div>
     ${fld('No. rujukan (pilihan)', 'ref', '', 'text', 'placeholder="cth: no. transaksi bank"')}
-    <label class="filebtn" id="filebtn"><input type="file" accept="image/*" data-chg="proofPick">📷 Muat naik slip bayaran (pilihan)</label><div id="preview"></div>
+    <label class="filebtn" id="filebtn"><input type="file" accept="image/*,application/pdf,.pdf" data-chg="proofPick">📷 Muat naik slip bayaran / PDF (pilihan)</label><div id="preview"></div>
     <button class="btn wide" style="margin-top:10px">Simpan & jana resit</button></form>`);
 }
 function remindForm(id, now = false) {
@@ -1738,7 +1783,7 @@ function billForm() {
     <div class="grid2">${sel('Bulan bil', 'month', monthsRange(addMonths(m, -11), m).reverse().map(x => [x, monthLabel(x)]), m)}${fld('Tarikh dibayar', 'date', localISO(), 'date', 'required')}</div>
     ${sel('Rumah', 'unit', [['', 'Umum (semua unit)'], ...units.map(u => [u, u])], units[0] || '')}
     <div class="grid2">${BILL_CATS.map((c, i) => fld(`${BILL_IC[c]} ${c} (RM)`, 'b' + i, '', 'number', 'step="0.01" min="0" inputmode="decimal"')).join('')}</div>
-    <label class="filebtn" id="expfile"><input type="file" accept="image/*" data-chg="expPick">📎 Lampirkan gambar bil (pilihan)</label><div id="exppreview"></div>
+    <label class="filebtn" id="expfile"><input type="file" accept="image/*,application/pdf,.pdf" data-chg="expPick">📎 Lampirkan gambar / PDF bil (pilihan)</label><div id="exppreview"></div>
     <button class="btn wide" style="margin-top:12px">Simpan bil</button></form>`);
 }
 function recForm(id) {
@@ -1761,7 +1806,7 @@ function expForm(id) {
     ${sel('Kategori', 'category', EXP_CATS.map(c => [c, c]), e.category)}
     ${sel('Unit', 'unit', [['', 'Umum (semua unit)'], ...unitList().map(u => [u, u])], normU(e.unit))}
     ${fld('Nota (pilihan)', 'note', e.note, 'text', 'placeholder="cth: Cukai pintu separuh tahun pertama"')}
-    <label class="filebtn" id="expfile"><input type="file" accept="image/*" data-chg="expPick">📎 ${e.proof ? 'Tukar gambar resit' : 'Lampirkan gambar resit (pilihan)'}</label><div id="exppreview">${e.proof ? `<img class="proofbig" src="${e.proof}" alt="">` : ''}</div>
+    <label class="filebtn" id="expfile"><input type="file" accept="image/*,application/pdf,.pdf" data-chg="expPick">📎 ${e.proof ? 'Tukar gambar resit' : 'Lampirkan gambar / PDF resit (pilihan)'}</label><div id="exppreview">${e.proof ? `<img class="proofbig" src="${e.proof}" alt="">` : ''}</div>
     <button class="btn wide" style="margin-top:12px">Simpan</button></form>`);
 }
 function rejectForm(id) {
@@ -2183,12 +2228,12 @@ const CHANGES = {
     catch (e) { toast(e.message, 'err'); el.value = ''; }
   },
   expPick: async el => {
-    const f = el.files[0]; if (!f) return;
+    const f = el.files[0]; if (!f) return; if (isPdf(f)) $('#exppreview').innerHTML = `<p class="muted">${tr('⏳ Membaca PDF…')}</p>`;
     try { const d = await compressImage(f, 1000, .68); el.form.dataset.proof = d; $('#exppreview').innerHTML = `<img class="proofbig" src="${d}" alt="">`; }
     catch (e) { toast(e.message, 'err'); el.value = ''; }
   },
   proofPick: async el => {
-    const f = el.files[0]; if (!f) return;
+    const f = el.files[0]; if (!f) return; if (isPdf(f)) $('#preview').innerHTML = `<p class="muted">${tr('⏳ Membaca PDF…')}</p>`;
     try { const d = await compressImage(f, 1000, .68); el.form.dataset.proof = d; $('#preview').innerHTML = `<img class="proofbig" src="${d}" alt="">`; $('#filebtn').lastChild.textContent = ' Tukar gambar'; }
     catch (e) { toast(e.message, 'err'); el.value = ''; }
   }
