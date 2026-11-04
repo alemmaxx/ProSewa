@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "710803283811",
+    "firebase_url": "https://kukusanmy-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "kukusanmy",
+    "storage_bucket": "kukusanmy.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:710803283811:android:1d9df61d10e1cef139fd56",
+        "android_client_info": {
+          "package_name": "com.prokuiz.prosewa"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "710803283811-uep9lfn344g3uk4on3otln85kdh90pab.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_kSXj4MZpyjrhhUT0i2okh80MxoqJHUY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "710803283811-uep9lfn344g3uk4on3otln85kdh90pab.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
