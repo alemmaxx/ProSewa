@@ -15,8 +15,10 @@ jobs:
         run: sh build.sh
       - name: Semak secret Firebase
         id: chk
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KUKUSANMY }}
         run: |
-          if [ -n "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KUKUSANMY }}" ]; then echo "ok=true" >> $GITHUB_OUTPUT; else echo "ok=false" >> $GITHUB_OUTPUT; echo "::warning::Secret FIREBASE_SERVICE_ACCOUNT_KUKUSANMY belum ditambah — deploy Firebase dilangkau."; fi
+          if [ -n "$SA" ]; then echo "ok=true" >> $GITHUB_OUTPUT; else echo "ok=false" >> $GITHUB_OUTPUT; echo "::warning::Secret FIREBASE_SERVICE_ACCOUNT_KUKUSANMY belum ditambah — deploy Firebase dilangkau."; fi
       - name: Deploy ke Firebase Hosting
         if: steps.chk.outputs.ok == 'true'
         uses: FirebaseExtended/action-hosting-deploy@v0
