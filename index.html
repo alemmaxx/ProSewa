@@ -681,11 +681,14 @@ const FireAPI = {
   async updateTenant(tok, d) { await fbInit(); await fb.F.updateDoc(fdoc('tenants', tok), d); },
   async rekeyTenant(tok) {
     await fbInit(); const nt = genToken(), F = fb.F;
-    const t = fsnap(await F.getDoc(fdoc('tenants', tok))); await F.setDoc(fdoc('tenants', nt), t);
-    for (const col of ['payments', 'reminders']) {
-      const s = await F.getDocs(fcol('tenants', tok, col));
-      for (const d of s.docs) { await F.setDoc(fdoc('tenants', nt, col, d.id), {...d.data(), tenantId: nt}); await F.deleteDoc(d.ref); }
+    const t = fsnap(await F.getDoc(fdoc('tenants', tok))); delete t.movedTo; await F.setDoc(fdoc('tenants', nt), t);
+    const subs = {};
+    for (const col of ['payments', 'reminders']) {   // salin dahulu ke link baru
+      subs[col] = (await F.getDocs(fcol('tenants', tok, col))).docs;
+      for (const d of subs[col]) await F.setDoc(fdoc('tenants', nt, col, d.id), {...d.data(), tenantId: nt});
     }
+    await F.updateDoc(fdoc('tenants', tok), {movedTo: nt});   // rules benarkan padam resit lama hanya bila salinan wujud di link baru
+    for (const col of ['payments', 'reminders']) for (const d of subs[col]) await F.deleteDoc(d.ref);
     await F.deleteDoc(fdoc('tenants', tok)); return nt;
   },
   async listSub(tok, col) { await fbInit(); const s = await fb.F.getDocs(fcol('tenants', tok, col)); return s.docs.map(d => ({...d.data(), id: d.id})); },
