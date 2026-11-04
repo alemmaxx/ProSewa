@@ -253,12 +253,14 @@ table.rep tr.tot td{font-weight:800;border-bottom:0;color:var(--gold)}
   .nav button:hover{background:var(--soft)}
   .nav button em{position:static;margin-left:auto;font-size:11px;min-width:22px;height:22px;line-height:22px;text-align:center}
   header .mark,header .ttl{display:none}
-  header{padding:18px 28px 10px}
+  header{padding-top:18px;padding-bottom:10px}
   header>.instb,header>.hb:first-of-type{margin-left:auto}
-  #app{max-width:1320px;padding-bottom:40px}
-  .hero{margin-top:-68px;padding:84px 28px 20px}
+  #app{max-width:none;padding-bottom:40px}
+  header{padding-left:max(28px,calc((100% - 1264px)/2));padding-right:max(28px,calc((100% - 1264px)/2))}
+  .hero{margin-top:-68px;padding:84px max(28px,calc((100% - 1264px)/2)) 24px}
   .hero h2{font-size:64px}
-  .wrap{padding:0 28px}
+  .wrap{padding:0 max(28px,calc((100% - 1264px)/2))}
+  .stack,.stack~.btn{margin-left:0!important}
   .tcgrid{grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
   .cols{grid-template-columns:repeat(2,minmax(0,1fr));gap:0 16px}
   .tc{transition:transform .15s,box-shadow .15s}
