@@ -163,6 +163,10 @@ table.rep tr.tot td{font-weight:800;border-bottom:0;color:var(--gold)}
 #receipt .rco b{display:block;font-size:16px;font-weight:800}
 #receipt .rco .muted{font-size:12px;line-height:1.45}
 #receipt .rlogo{width:64px;height:64px;object-fit:contain;border-radius:10px;background:#fff;flex:none}
+.qrprev{width:120px!important;height:120px!important}
+.qrbox{text-align:center;margin-top:10px;padding-top:12px;border-top:1px solid var(--line)}
+.qrbox img{width:200px;max-width:100%;border-radius:12px;background:#fff;padding:6px;cursor:zoom-in}
+.qrbox .acts{justify-content:center}.qrbox .acts .btn{flex:0 0 auto}
 .logobox{display:flex;gap:14px;align-items:center;margin-bottom:6px}
 #logoPrev{width:84px;height:84px;border-radius:12px;border:1px dashed var(--line);display:grid;place-items:center;background:#fff;overflow:hidden;flex:none;text-align:center}
 #logoPrev img{max-width:100%;max-height:100%;object-fit:contain}
@@ -359,6 +363,10 @@ const I18N_RX = [
   [/Salam, /g, 'Hi, ']
 ];
 Object.assign(I18N, {
+  'QR bayaran (DuitNow / e-wallet)': 'Payment QR (DuitNow / e-wallet)', 'Tiada QR': 'No QR', 'Pilih QR': 'Choose QR', 'Screenshot / gambar QR dari app bank. Penyewa boleh imbas atau simpan QR ini.': 'Screenshot / image of the QR from your bank app. Tenants can scan or save it.',
+  'Maklumat bank & QR dipaparkan kepada penyewa.': 'Bank details & QR are shown to tenants.', 'QR dipilih. Tekan Simpan profil untuk simpan.': 'QR selected. Tap Save profile to keep it.', 'Tekan Simpan profil untuk buang QR.': 'Tap Save profile to remove the QR.',
+  'QR Bayaran': 'Payment QR', 'Simpan QR ke phone': 'Save QR to phone', 'iPhone: tekan lama pada gambar QR → Simpan ke Foto.': 'iPhone: long-press the QR image → Save to Photos.', 'Besarkan': 'Enlarge', 'Simpan QR': 'Save QR',
+  'Imbas QR ini dengan app bank / e-wallet anda.': 'Scan this QR with your bank / e-wallet app.',
   'Awalan no. resit': 'Receipt no. prefix', 'Resit seterusnya': 'Next receipt',
   'Maklumat syarikat (untuk resit)': 'Company details (for receipts)', 'Tiada logo': 'No logo', 'Pilih logo': 'Choose logo', 'Buang': 'Remove',
   'PNG / JPG. Logo menggantikan logo ProSewa pada resit.': 'PNG / JPG. Your logo replaces the ProSewa logo on receipts.', 'Nama syarikat / perniagaan': 'Company / business name',
@@ -953,7 +961,11 @@ function oSettings() {
       <button class="btn wide" style="margin-top:12px">Simpan maklumat syarikat</button></form></div>
     <div class="blk"><div class="sec-h">Profil & maklumat bayaran</div><form class="card" data-form="profile">${fld('Nama', 'name', o.name, 'text', 'required')}${fld('No. telefon', 'phone', o.phone, 'tel')}
       ${fld('Bank / e-wallet', 'bankName', o.bankName, 'text', 'placeholder="cth: Maybank"')}${fld('No. akaun / DuitNow', 'bankAcc', o.bankAcc)}${fld('Nama pemegang akaun', 'accName', o.accName)}
-      <p class="muted">Maklumat bank dipaparkan kepada penyewa.</p><button class="btn wide">Simpan profil</button></form></div>
+      <div class="fld"><span>QR bayaran (DuitNow / e-wallet)</span></div>
+      <div class="logobox"><div id="qrPrev" class="qrprev">${o.qr ? `<img src="${o.qr}" alt="QR">` : '<span class="muted">Tiada QR</span>'}</div>
+        <div><label class="btn sm ghost" style="cursor:pointer">📷 Pilih QR<input type="file" accept="image/*" data-chg="qrPick" hidden></label>
+        ${o.qr ? '<button type="button" class="btn sm red" data-act="qrRemove">Buang</button>' : ''}<p class="muted" style="margin:6px 0 0">Screenshot / gambar QR dari app bank. Penyewa boleh imbas atau simpan QR ini.</p></div></div>
+      <p class="muted">Maklumat bank & QR dipaparkan kepada penyewa.</p><button class="btn wide">Simpan profil</button></form></div>
     <div class="blk"><div class="sec-h">Peringatan automatik</div><form class="card" data-form="settings">
       <label class="switch">Notifikasi kepada penyewa sebelum tarikh bayar <input type="checkbox" name="autoOn" ${s.autoOn ? 'checked' : ''}></label>
       <div class="grid2">${fld('Berapa hari sebelum', 'autoDays', s.autoDays, 'number', 'min="0" max="15"')}${fld('Pada jam', 'autoTime', s.autoTime, 'time')}</div>
@@ -994,7 +1006,8 @@ function tHome(notifs, unread) {
   h += `<div class="tc ${tcCls(s)}"><div class="t1"><div>${chip(s)}<h4>Sewa ${monthLabel(cm)}</h4><div class="big">${RM(t.rent)}</div><div class="muted">Sila bayar sebelum <b style="color:var(--ink)">${dateLabel(s.due)}</b></div></div>${cdBox(s)}</div>
     ${canPay ? `<button class="btn wide" style="margin-top:14px" data-act="payForm">📤 Muat naik bukti bayaran</button>` : s.code === 'pending' ? '<div class="al" style="margin:14px 0 0">⏳ Bukti bayaran anda sedang disemak. Resit akan dihantar selepas diluluskan.</div>' : '<div class="al ok" style="margin:14px 0 0">✅ Terima kasih! Sewa bulan ini sudah dijelaskan.</div>'}</div>`;
   if (a.sum > 0) h += `<div class="al hot"><b>⚠️ Tunggakan ${RM(a.sum)}</b>${a.months.map(monthLabel).join(', ')}<div style="margin-top:8px"><button class="btn sm" data-act="payForm">Muat naik bukti</button></div></div>`;
-  h += `<div class="cols"><div class="blk"><div class="sec-h">💳 Cara bayar</div><div class="card">${o.bankAcc ? `<div class="kv"><span>Bank</span><b>${esc(o.bankName)}</b></div><div class="kv"><span>No. akaun</span><b>${esc(o.bankAcc)} <button class="link" data-act="copy" data-id="${esc(o.bankAcc)}">salin</button></b></div><div class="kv"><span>Nama</span><b>${esc(o.accName || o.name)}</b></div>` : '<p class="muted" style="margin:0">Tuan rumah belum isi maklumat bayaran.</p>'}</div>
+  h += `<div class="cols"><div class="blk"><div class="sec-h">💳 Cara bayar</div><div class="card">${o.bankAcc ? `<div class="kv"><span>Bank</span><b>${esc(o.bankName)}</b></div><div class="kv"><span>No. akaun</span><b>${esc(o.bankAcc)} <button class="link" data-act="copy" data-id="${esc(o.bankAcc)}">salin</button></b></div><div class="kv"><span>Nama</span><b>${esc(o.accName || o.name)}</b></div>` : (o.qr ? '' : '<p class="muted" style="margin:0">Tuan rumah belum isi maklumat bayaran.</p>')}
+    ${o.qr ? `<div class="qrbox"><img src="${o.qr}" alt="QR bayaran" data-act="qrView"><div class="acts"><button class="btn sm" data-act="qrView">🔍 Besarkan</button><a class="btn sm ghost" href="${o.qr}" download="QR-Bayaran.png">⬇ Simpan QR</a></div><p class="muted" style="margin:6px 0 0">Imbas QR ini dengan app bank / e-wallet anda.</p></div>` : ''}</div>
 </div>
     <div class="blk"><div class="sec-h">🏠 Maklumat sewaan</div><div class="card"><div class="kv"><span>Alamat</span><b>${esc(t.address)}</b></div><div class="kv"><span>Sewa bulanan</span><b>${RM(t.rent)}</b></div><div class="kv"><span>Tarikh bayar</span><b>Sebelum ${t.dueDay} hb setiap bulan</b></div><div class="kv"><span>Deposit</span><b>${RM(t.deposit)}</b></div><div class="kv"><span>Tuan rumah</span><b>${esc(o.name || '-')}</b></div></div></div></div>
     ${o.phone ? `<a class="btn wide wa" href="${waLink(o.phone, `Salam ${o.name || ''}, saya ${t.name} (${t.address}). `)}" target="_blank" rel="noopener">💬 Chat tuan rumah (urgent)</a><div style="height:8px"></div>` : ''}
@@ -1181,6 +1194,8 @@ const ACTIONS = {
   superTrial: async uid => { await API.setSub(uid, {plan: 'trial', start: localISO()}); toast('Percubaan diset semula.'); renderSuper(); },
   superExpire: async uid => { if (!confirm('Tamatkan langganan owner sekarang? (untuk uji)')) return; const o = S.owners.find(x => x.uid === uid), si = subInfo(fsub(o.sub)); await API.setSub(uid, {plan: si && si.plan !== 'trial' ? si.plan : 'monthly', start: si?.start || localISO(), end: addDays(localISO(), -1)}); toast('Langganan ditamatkan.'); renderSuper(); },
   google: async () => { try { const r = await API.google(); if (r) { S.lastEmail = r.email; if (!ONLINE) await enterOwner(r.uid); } } catch (e) { if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') throw e; } },
+  qrRemove: (id, el) => { const f = el.closest('form'); f.dataset.qr = ''; $('#qrPrev').innerHTML = '<span class="muted">Tiada QR</span>'; el.remove(); S.dirty = true; toast('Tekan Simpan profil untuk buang QR.'); },
+  qrView: () => { const q = S.owner?.qr; if (!q) return; openModal('QR Bayaran', `<img src="${q}" alt="QR" style="width:100%;border-radius:12px;background:#fff"><a class="btn wide" style="margin-top:10px" href="${q}" download="QR-Bayaran-${(S.owner.company || S.owner.name || 'ProSewa').replace(/[^A-Za-z0-9]+/g, '-')}.png">⬇ Simpan QR ke phone</a><p class="muted" style="text-align:center">iPhone: tekan lama pada gambar QR → Simpan ke Foto.</p>`); },
   logoRemove: (id, el) => { const f = el.closest('form'); f.dataset.logo = ''; $('#logoPrev').innerHTML = '<span class="muted">Tiada logo</span>'; el.remove(); S.dirty = true; toast('Tekan Simpan untuk buang logo.'); },
   goSuper: () => { location.hash = '#super'; renderSuper(); },
   closeModal, tenantForm, shareLink, payForm, cashForm, remindForm, rejectForm, viewProof, receipt,
@@ -1232,6 +1247,11 @@ const CHANGES = {
   year: el => { S.year = +el.value; renderOwner(); },
   remindWho: el => { const t = S.tenants.find(x => x.id === el.value); const m = el.form.message;
     m.value = t ? reminderMsg(t, S.month, S.owner) : (LANG === 'en' ? `Hi, a friendly reminder: rent for ${monthLabel(S.month)} is due soon. After paying, please upload your payment proof in the app. Thank you — ${S.owner.name}` : `Salam, peringatan mesra: sewa ${monthLabel(S.month)} perlu dibayar sebelum tarikh akhir. ${bankText(S.owner)} Selepas bayar, sila muat naik resit di link penyewa anda. Terima kasih — ${S.owner.name}`); },
+  qrPick: async el => {
+    const f = el.files[0]; if (!f) return; S.dirty = true;
+    try { const d = await compressLogo(f, 720); el.form.dataset.qr = d; $('#qrPrev').innerHTML = `<img src="${d}" alt="QR">`; toast('QR dipilih. Tekan Simpan profil untuk simpan.'); }
+    catch (e) { toast(e.message, 'err'); el.value = ''; }
+  },
   logoPick: async el => {
     const f = el.files[0]; if (!f) return; S.dirty = true;
     try { const d = await compressLogo(f); el.form.dataset.logo = d; $('#logoPrev').innerHTML = `<img src="${d}" alt="logo">`; toast('Logo dipilih. Tekan Simpan untuk simpan.'); }
@@ -1262,7 +1282,11 @@ const FORMS = {
     if (f.dataset.logo !== undefined) up.logo = f.dataset.logo;
     await API.setOwner(S.uid, up); Object.assign(S.owner, up); toast('Maklumat syarikat disimpan ✅'); await refresh();
   },
-  async profile(d) { await API.setOwner(S.uid, {name: d.name.trim(), phone: d.phone.trim(), bankName: d.bankName.trim(), bankAcc: d.bankAcc.trim(), accName: d.accName.trim()}); toast('Profil disimpan.'); await refresh(); },
+  async profile(d, f) {
+    const up = {name: d.name.trim(), phone: d.phone.trim(), bankName: d.bankName.trim(), bankAcc: d.bankAcc.trim(), accName: d.accName.trim()};
+    if (f.dataset.qr !== undefined) up.qr = f.dataset.qr;
+    await API.setOwner(S.uid, up); Object.assign(S.owner, up); toast('Profil disimpan.'); await refresh();
+  },
   async settings(d) { await API.setOwner(S.uid, {settings: {autoOn: !!d.autoOn, autoDays: Math.max(0, +d.autoDays || 0), autoTime: d.autoTime || '09:00', overdueOn: !!d.overdueOn}}); toast('Tetapan disimpan.'); await refresh(); },
   async tenant(d) {
     const data = {name: d.name.trim(), phone: d.phone.trim(), address: d.address.trim(), rent: +d.rent, deposit: +d.deposit || 0, dueDay: Math.min(31, Math.max(1, +d.dueDay || 1)), startDate: d.startDate, notes: d.notes || ''};
