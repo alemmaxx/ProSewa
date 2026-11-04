@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="ms">
+<html lang="ms" translate="no" class="notranslate">
 <head>
 <meta charset="UTF-8">
+<meta name="google" content="notranslate">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0a1210">
 <script>try{if(localStorage.getItem("prosewa_theme")==="light"){document.documentElement.dataset.theme="light";document.querySelector('meta[name="theme-color"]').content="#ffffff"}}catch(e){}</script>
@@ -260,7 +261,7 @@ table.rep tr.tot td{font-weight:800;border-bottom:0;color:var(--gold)}
 @media print{body *{visibility:hidden!important}#receipt,#receipt *{visibility:visible!important}#receipt{position:absolute;left:0;top:0;width:100%;border:0;background:#fff;color:#000}#receipt .muted,#receipt .kv span{color:#444!important}#receipt .rco{border-color:#ccc}#modal{background:none}}
 </style>
 </head>
-<body>
+<body translate="no" class="notranslate">
 <div id="app"></div>
 <div id="modal"><div class="sheet"><div class="mh"><b id="mt"></b><button class="x" data-act="closeModal">×</button></div><div id="mb"></div></div></div>
 <div id="toast"></div>
@@ -507,9 +508,9 @@ function trNode(root) {
   [root, ...root.querySelectorAll('[placeholder],[aria-label],[title]')].forEach(el => ['placeholder', 'aria-label', 'title'].forEach(a => { if (el.hasAttribute?.(a)) { const v = tr(el.getAttribute(a)); if (v !== el.getAttribute(a)) el.setAttribute(a, v); } }));
 }
 const _obs = new MutationObserver(ms => { if (LANG !== 'en') return; _obs.disconnect(); ms.forEach(m => m.addedNodes.forEach(trNode)); _obs.observe(document.body, {childList: true, subtree: true}); });
-function setLang(l) { LANG = l === 'en' ? 'en' : 'bm'; lsSet('prosewa_lang', LANG); document.documentElement.lang = LANG === 'en' ? 'en' : 'ms'; }
+function setLang(l) { LANG = l === 'en' ? 'en' : 'bm'; lsSet('prosewa_lang', LANG); document.documentElement.lang = LANG === 'en' ? 'en' : 'ms'; document.documentElement.setAttribute('translate', 'no'); }
 const langSeg = () => `<div class="lang" style="margin-right:6px"><button class="${LANG === 'bm' ? 'on' : ''}" data-act="lang" data-id="bm">BM</button><button class="${LANG === 'en' ? 'on' : ''}" data-act="lang" data-id="en">EN</button></div>`;
-document.documentElement.lang = LANG === 'en' ? 'en' : 'ms'; _obs.observe(document.body, {childList: true, subtree: true});
+document.documentElement.lang = LANG === 'en' ? 'en' : 'ms'; document.documentElement.setAttribute('translate', 'no'); _obs.observe(document.body, {childList: true, subtree: true});
 
 /* =====================================================================
    FIREBASE — isi config projek kukusanmy di bawah. Kalau kosong, app guna
