@@ -260,7 +260,20 @@ table.rep tr.tot td{font-weight:800;border-bottom:0;color:var(--gold)}
   #toast{bottom:28px}
   .btn.lo{max-width:420px}
 }
-@media print{body *{visibility:hidden!important}#receipt,#receipt *{visibility:visible!important}#receipt{position:absolute;left:0;top:0;width:100%;border:0;background:#fff;color:#000}#receipt .muted,#receipt .kv span{color:#444!important}#receipt .rco{border-color:#ccc}#modal{background:none}}
+#printArea{display:none}
+@page{size:A4;margin:14mm}
+@media print{
+  html,body{background:#fff!important;padding:0!important}
+  body>*:not(#printArea){display:none!important}
+  #printArea{display:block!important;color:#000;font-family:var(--f)}
+  #printArea #receipt{border:0;background:#fff;color:#000;max-width:560px;margin:0 auto;padding:0;page-break-inside:avoid;break-inside:avoid}
+  #printArea .muted,#printArea .kv span{color:#444!important}
+  #printArea .kv{border-color:#ddd}
+  #printArea .rco{border-color:#ccc}
+  #printArea .rh b{color:#8a6a12!important}
+  #printArea .amt{color:#16935f!important}
+  #printArea .stamp span{color:#16935f!important;border-color:#16935f!important}
+}
 </style>
 </head>
 <body translate="no" class="notranslate">
@@ -1093,7 +1106,7 @@ function receipt(id) {
       <div class="rh"><b>RESIT SEWA</b><div class="muted">${esc(p.receiptNo)}</div></div>
     <div class="amt">${RM(p.amount)}</div>
     <div class="kv"><span>Diterima daripada</span><b>${esc(p.tenantName)}</b></div><div class="kv"><span>Alamat</span><b>${esc(p.address)}</b></div>
-    <div class="kv"><span>Sewa bulan</span><b>${monthLabel(p.month)}</b></div><div class="kv"><span>Tarikh bayar</span><b>${dateLabel(p.paidDate)}</b></div>
+    <div class="kv"><span>Sewa bulan</span><b>${monthLabel(p.month)}</b></div><div class="kv"><span>Tarikh dibayar</span><b>${dateLabel(p.paidDate)}</b></div>
     <div class="kv"><span>Kaedah</span><b>${esc(p.method)}${p.ref ? ' (' + esc(p.ref) + ')' : ''}</b></div><div class="kv"><span>Diluluskan oleh</span><b>${esc(o.name || '-')}</b></div><div class="kv"><span>Tarikh lulus</span><b>${dtLabel(p.confirmedAt)}</b></div>
     <div class="stamp"><span>DIBAYAR</span></div><p class="muted" style="text-align:center;margin:12px 0 0">Dijana oleh ProSewa</p></div>
     <div class="acts" style="margin-top:12px"><button class="btn ghost" style="flex:1" data-act="print">🖨️ Simpan PDF</button>
@@ -1204,7 +1217,14 @@ const ACTIONS = {
   closeModal, tenantForm, shareLink, payForm, cashForm, remindForm, rejectForm, viewProof, receipt,
   tab: id => { closeModal(); S.dirty = false; S.tab = id; renderOwner(); scrollTo(0, 0); },
   ttab: id => { S.tTab = id; renderTenant(); scrollTo(0, 0); },
-  print: () => window.print(),
+  print: () => {   // cetak / simpan PDF: hanya resit, satu muka surat
+    const r = $('#receipt'); if (!r) return window.print();
+    let pa = $('#printArea'); if (!pa) { pa = document.createElement('div'); pa.id = 'printArea'; document.body.appendChild(pa); }
+    pa.innerHTML = ''; pa.appendChild(r.cloneNode(true));
+    const prevTitle = document.title, no = r.querySelector('.rh .muted')?.textContent || ''; document.title = 'Resit ' + no;
+    const done = () => { document.title = prevTitle; pa.innerHTML = ''; removeEventListener('afterprint', done); };
+    addEventListener('afterprint', done); setTimeout(() => window.print(), 50);
+  },
   copyLink: async id => { const t = S.tenants.find(x => x.id === id); const u = tenantUrl(t); try { await navigator.clipboard.writeText(u); toast(`Link ${t.name.split(' ')[0]} disalin ✅`); } catch (e) { shareLink(id); } },
   copy: async v => { try { await navigator.clipboard.writeText(v); toast('Disalin.'); } catch (e) { prompt('Salin:', v); } },
   logout: async () => { await API.logout(); S.uid = null; S.mode = null; S.authView = 'login'; renderLogin(); },
