@@ -692,7 +692,8 @@ async function loadTenant(tok) {
 }
 let _refreshing = false;
 async function refresh() {
-  if (_refreshing || $('#modal').classList.contains('on')) return;
+  if (_refreshing || $('#modal').classList.contains('on') || S.dirty) return;
+  const ae = document.activeElement; if (ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) && $('#app').contains(ae)) return;   // jangan ganggu bila sedang menaip
   _refreshing = true;
   try {
     if (S.mode === 'owner' || S.mode === 'locked') { await loadOwner(); (S.uid !== SUPER_UID && !subInfo()?.active) ? renderLocked() : (S.mode === 'locked' ? (S.mode = 'owner', renderOwner()) : renderOwner()); }
@@ -1119,7 +1120,7 @@ const ACTIONS = {
   google: async () => { try { const r = await API.google(); if (r) { S.lastEmail = r.email; if (!ONLINE) await enterOwner(r.uid); } } catch (e) { if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') throw e; } },
   goSuper: () => { location.hash = '#super'; renderSuper(); },
   closeModal, tenantForm, shareLink, payForm, cashForm, remindForm, rejectForm, viewProof, receipt,
-  tab: id => { closeModal(); S.tab = id; renderOwner(); scrollTo(0, 0); },
+  tab: id => { closeModal(); S.dirty = false; S.tab = id; renderOwner(); scrollTo(0, 0); },
   ttab: id => { S.tTab = id; renderTenant(); scrollTo(0, 0); },
   print: () => window.print(),
   copyLink: async id => { const t = S.tenants.find(x => x.id === id); const u = tenantUrl(t); try { await navigator.clipboard.writeText(u); toast(`Link ${t.name.split(' ')[0]} disalin ✅`); } catch (e) { shareLink(id); } },
@@ -1223,11 +1224,14 @@ document.addEventListener('click', async e => {
   try { await fn(el.dataset.id, el); } catch (err) { console.error(err); toast(authMsg(err), 'err'); }
 });
 $('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+document.addEventListener('input', e => { if (e.target.closest('#app form')) S.dirty = true; });
+document.addEventListener('change', e => { if (e.target.closest('#app form') && !e.target.closest('[data-chg]')) S.dirty = true; });
 document.addEventListener('change', e => { const el = e.target.closest('[data-chg]'); if (el && CHANGES[el.dataset.chg]) CHANGES[el.dataset.chg](el); });
 document.addEventListener('submit', async e => {
   const f = e.target.closest('form[data-form]'); if (!f) return;
   e.preventDefault();
   const btn = f.querySelector('button:not([type=button])'); if (btn) btn.disabled = true;
+  S.dirty = false;
   try { await FORMS[f.dataset.form](Object.fromEntries(new FormData(f)), f); }
   catch (err) { console.error(err); toast(authMsg(err), 'err'); }
   finally { if (btn && document.body.contains(btn)) btn.disabled = false; }
