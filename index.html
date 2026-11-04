@@ -422,7 +422,8 @@ const I18N_RX = [
   [/Sewa (.+?) (RM [\d,.]+) belum dibayar\./g, 'Rent for $1 ($2) is unpaid.']
 ];
 Object.assign(I18N, {
-  'LAPORAN KUTIPAN SEWA': 'RENT COLLECTION REPORT', 'Kod promo': 'Promo code', 'Bilangan kod': 'Number of codes', 'Hari langganan percuma': 'Free subscription days', 'Guna sebelum (pilihan)': 'Use before (optional)', 'guna sebelum': 'use before',
+  'LAPORAN KUTIPAN SEWA': 'RENT COLLECTION REPORT', 'Rekod Bayaran': 'Record Payment', 'Rekod bayaran': 'Record payment', 'Untuk penyewa yang bayar tunai atau tidak guna app. Anda boleh muat naik slip bayaran sendiri sebagai bukti.': "For tenants who pay cash or don't use the app. You can upload the payment slip yourself as proof.",
+  'cth: no. transaksi bank': 'e.g. bank transaction no.', 'Muat naik slip bayaran (pilihan)': 'Upload payment slip (optional)', 'Kod promo': 'Promo code', 'Bilangan kod': 'Number of codes', 'Hari langganan percuma': 'Free subscription days', 'Guna sebelum (pilihan)': 'Use before (optional)', 'guna sebelum': 'use before',
   'Setiap kod hanya boleh digunakan': 'Each code can only be used', 'sekali': 'once', 'oleh seorang owner. Selepas digunakan, kod itu tidak sah lagi.': 'by one owner. Once used, the code is no longer valid.',
   'Jana kod promo': 'Generate promo codes', 'Belum guna': 'Unused', 'Digunakan': 'Used', 'Tamat tempoh': 'Expired', 'Semua': 'All', 'Salin semua kod belum guna': 'Copy all unused codes', 'Salin': 'Copy', 'Tiada kod promo.': 'No promo codes.',
   'Edit Kod Promo': 'Edit Promo Code', 'Kod promo dikemas kini.': 'Promo code updated.', 'Ada kod promo?': 'Have a promo code?', 'Guna': 'Apply', 'Kod promo ini sudah digunakan.': 'This promo code has already been used.',
@@ -1034,6 +1035,7 @@ function oTenants() {
   if (!list.length) h += `<div class="empty">Tiada penyewa aktif.<br>Tekan <b>+</b> di kanan atas untuk tambah.</div>`;
   h += `<div class="tcgrid">${st.map(({t, s}, i) => `<div class="tc ${tcCls(s)}"><div class="t1"><div><span class="num">${i + 1}</span>${chip(s)}<h4>${esc(t.name)}</h4></div>${cdBox(s)}</div>
     <div class="kvs"><div class="kv"><span>Alamat</span><b>${esc(t.address || '-')}</b></div><div class="kv"><span>Sewa</span><b>${RM(t.rent)} / bulan</b></div><div class="kv"><span>Tarikh bayar</span><b>Sebelum ${t.dueDay} hb · ${dateLabel(s.due)}</b></div><div class="kv"><span>Telefon</span><b>${esc(t.phone)}</b></div>${+t.deposit ? `<div class="kv"><span>Deposit</span><b>${RM(t.deposit)}</b></div>` : ''}${t.contractEnd ? `<div class="kv"><span>Kontrak</span><b style="${ctInfo(t).soon ? 'color:var(--red)' : ''}">${ctLabel(t)}</b></div>` : ''}</div>
+    <div class="acts"><button class="btn sm" data-act="cashForm" data-id="${t.id}">💵 Rekod bayaran</button></div>
     <div class="acts"><button class="btn sm" data-act="copyLink" data-id="${t.id}">📋 Salin link</button><button class="btn sm ghost" data-act="tenantForm" data-id="${t.id}">✏️ Edit</button><button class="btn sm ghost fx" data-act="shareLink" data-id="${t.id}" aria-label="Kongsi">🔗</button><a class="btn sm wa fx" href="${waLink(t.phone, 'Salam ' + t.name + ', ')}" target="_blank" rel="noopener">💬</a><button class="btn sm red fx" data-act="endForm" data-id="${t.id}" aria-label="Tamatkan sewa">🚪</button></div>${t.contractEnd && ctInfo(t).soon ? `<div class="acts"><button class="btn sm ghost" style="flex:1" data-act="renewForm" data-id="${t.id}">📄 Perbaharui kontrak</button></div>` : ''}</div>`).join('')}</div>`;
   const past = S.tenants.filter(t => t.active === false).sort((a, b) => String(b.moveOut || b.endedAt || '').localeCompare(String(a.moveOut || a.endedAt || '')));
   if (past.length) h += `<div class="sec-h">Bekas penyewa (${past.length})</div><div class="card">${past.map(t => `<div class="row"><div class="av">${esc(initials(t.name))}</div><div class="grow"><div class="t"><span data-raw>${esc(t.name)}</span></div><div class="s"><span data-raw>${esc(t.address || '')}</span> · keluar ${t.moveOut ? dateLabel(t.moveOut) : monthLabel(t.endedAt)}</div>
@@ -1343,9 +1345,14 @@ function payForm() {
 }
 function cashForm(id) {
   const t = S.tenants.find(x => x.id === id);
-  openModal('Rekod Bayaran Tunai', `<form data-form="cash">${hid('tenantId', id)}<p style="margin-top:0"><b>${esc(t.name)}</b></p>
-    <div class="grid2">${sel('Untuk bulan', 'month', monthsRange(addMonths(curMonth(), -6), addMonths(curMonth(), 1)).reverse().map(m => [m, monthLabel(m)]), S.month)}${money('Jumlah (RM)', 'amount', t.rent)}</div>
-    <div class="grid2">${fld('Tarikh terima', 'paidDate', localISO(), 'date', 'required')}${sel('Kaedah', 'method', METHODS, 'Tunai')}</div><button class="btn wide">Simpan & jana resit</button></form>`);
+  const m0 = S.mode === 'owner' && S.tab === 'status' ? S.month : (arrears(t, S.payments).months[0] || curMonth());
+  openModal('Rekod Bayaran', `<form data-form="cash">${hid('tenantId', id)}<p style="margin-top:0"><b data-raw>${esc(t.name)}</b> · <span data-raw>${esc(t.address || '')}</span></p>
+    <p class="muted" style="margin:0 0 8px">Untuk penyewa yang bayar tunai atau tidak guna app. Anda boleh muat naik slip bayaran sendiri sebagai bukti.</p>
+    <div class="grid2">${sel('Untuk bulan', 'month', monthsRange(addMonths(curMonth(), -6), addMonths(curMonth(), 1)).reverse().map(m => [m, monthLabel(m)]), m0)}${money('Jumlah (RM)', 'amount', rentFor(t, m0))}</div>
+    <div class="grid2">${fld('Tarikh terima', 'paidDate', localISO(), 'date', 'required')}${sel('Kaedah', 'method', METHODS, 'Tunai')}</div>
+    ${fld('No. rujukan (pilihan)', 'ref', '', 'text', 'placeholder="cth: no. transaksi bank"')}
+    <label class="filebtn" id="filebtn"><input type="file" accept="image/*" data-chg="proofPick">📷 Muat naik slip bayaran (pilihan)</label><div id="preview"></div>
+    <button class="btn wide" style="margin-top:10px">Simpan & jana resit</button></form>`);
 }
 function remindForm(id, now = false) {
   const un = activeT().filter(t => monthStatus(t, S.month, S.payments).code !== 'paid');
@@ -1804,9 +1811,9 @@ const FORMS = {
     await API.addSub(t.id, 'payments', {ownerId: t.ownerId, tenantId: t.id, tenantName: t.name, address: t.address, month: d.month, amount: +d.amount, paidDate: d.paidDate, method: d.method, ref: d.ref || '', proof: f.dataset.proof, status: 'pending', receiptNo: '', submittedAt: nowStr(), confirmedAt: ''});
     closeModal(); toast('Bukti dihantar! Tunggu tuan rumah luluskan.'); await refresh();
   },
-  async cash(d) {
+  async cash(d, f) {
     const t = S.tenants.find(x => x.id === d.tenantId);
-    const id = await API.addSub(t.id, 'payments', {ownerId: S.uid, tenantId: t.id, tenantName: t.name, address: t.address, month: d.month, amount: +d.amount, paidDate: d.paidDate, method: d.method, ref: '', proof: '', status: 'confirmed', receiptNo: await nextRcpt(), submittedAt: nowStr(), confirmedAt: nowStr()});
+    const id = await API.addSub(t.id, 'payments', {ownerId: S.uid, tenantId: t.id, tenantName: t.name, address: t.address, month: d.month, amount: +d.amount, paidDate: d.paidDate, method: d.method, ref: (d.ref || '').trim(), proof: f?.dataset.proof || '', byOwner: true, status: 'confirmed', receiptNo: await nextRcpt(), submittedAt: nowStr(), confirmedAt: nowStr()});
     closeModal(); await refresh(); receipt(id); toast('Bayaran direkod.');
   },
   async remind(d) {
