@@ -179,6 +179,8 @@ table.rep tr.tot td{font-weight:800;border-bottom:0;color:var(--gold)}
 .pw{position:relative}.pw input{padding-right:50px}
 .pw .eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:42px;height:38px;border:0;border-radius:8px;background:none;font-size:18px;cursor:pointer;opacity:.7}
 .pw .eye.on{opacity:1;background:var(--soft)}
+.or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;margin:14px 0 10px}.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.gbtn{background:#fff;color:#1f1f1f;border:1px solid #dadce0;gap:10px}
 .authlinks{display:flex;justify-content:space-between;gap:10px;margin-top:14px;font-size:14px}
 .link{background:none;border:0;color:var(--gold);font-weight:700;cursor:pointer;padding:0;text-decoration:underline;font-size:inherit;font-family:var(--f)}
 .hint{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:var(--blue2);color:var(--ink);font-size:13px;line-height:1.45;border:1px solid var(--line);text-align:left}
@@ -337,6 +339,10 @@ const I18N_RX = [
   [/Salam, /g, 'Hi, ']
 ];
 Object.assign(I18N, {
+  'atau': 'or', 'Teruskan dengan Google': 'Continue with Google', 'Emel log masuk': 'Sign-in email', 'Disambung': 'Connected', 'Tetapkan kata laluan': 'Set password', 'Simpan kata laluan': 'Save password',
+  'Anda log masuk dengan Google. Tetapkan kata laluan supaya boleh juga log masuk guna emel & kata laluan.': 'You signed in with Google. Set a password so you can also sign in with email & password.',
+  'Kata laluan disimpan': 'Password saved', 'Akaun ini sudah wujud dengan cara log masuk lain. Log masuk guna emel & kata laluan dahulu.': 'This account exists with another sign-in method. Sign in with email & password first.',
+  'Domain ini belum dibenarkan dalam Firebase (Authorized domains).': 'This domain is not authorized in Firebase (Authorized domains).', 'Log masuk Google belum diaktifkan dalam Firebase.': 'Google sign-in is not enabled in Firebase.',
   'Daftar baru': 'Sign up', 'Lupa kata laluan?': 'Forgot password?', 'Daftar': 'Sign Up', 'Ulang kata laluan': 'Repeat password', 'Daftar akaun owner baru': 'Create a new owner account',
   'Log masuk untuk teruskan': 'Sign in to continue', 'Masukkan emel anda. Kami akan hantar pautan untuk tetapkan kata laluan baru.': "Enter your email. We'll send a link to set a new password.",
   'Hantar pautan': 'Send link', 'Kembali ke log masuk': 'Back to sign in', 'Sudah ada akaun?': 'Already have an account?', 'Log masuk': 'Sign in', 'Tunjuk kata laluan': 'Show password',
@@ -516,10 +522,12 @@ const authErr = code => Object.assign(new Error(code), {code});
 const LocalAPI = {
   async onAuth(cb) { cb(L.session); },
   async register(email, pass) { email = email.toLowerCase(); if (L.users[email]) throw authErr('auth/email-already-in-use'); const uid = email === 'super@local' ? SUPER_UID : genId() + genId(); L.users[email] = {uid, pass: await hashPass(pass)}; L.session = uid; lsave(); return uid; },
-  async login(email, pass) { const u = L.users[email.toLowerCase()]; if (!u || u.pass !== await hashPass(pass)) throw authErr('auth/invalid-credential'); L.session = u.uid; lsave(); return u.uid; },
+  async login(email, pass) { const u = L.users[email.toLowerCase()]; if (!u || !u.pass || u.pass !== await hashPass(pass)) throw authErr('auth/invalid-credential'); L.session = u.uid; lsave(); return u.uid; },
   async logout() { L.session = null; lsave(); },
   async resetPass(email) { if (!L.users[email.toLowerCase()]) throw authErr('auth/user-not-found'); },
   async changePass(p) { const e = Object.keys(L.users).find(k => L.users[k].uid === L.session); L.users[e].pass = await hashPass(p); lsave(); },
+  async google() { const email = 'google@local'; if (!L.users[email]) L.users[email] = {uid: genId() + genId(), pass: null, google: true}; L.session = L.users[email].uid; lsave(); return {uid: L.session, email}; },
+  async authInfo() { const e = Object.keys(L.users).find(k => L.users[k].uid === L.session); return {email: e || '', hasPassword: !!(e && L.users[e].pass), google: !!(e && L.users[e].google)}; },
   async getOwner(uid) { return clone(L.owners[uid] || null); },
   async setOwner(uid, d) { L.owners[uid] = {...(L.owners[uid] || {}), ...clone(d)}; lsave(); },
   async setPriv(uid, d) { L.priv[uid] = {...(L.priv[uid] || {}), ...clone(d)}; lsave(); },
@@ -563,7 +571,17 @@ const FireAPI = {
   async login(email, pass) { await fbInit(); const c = await fb.U.signInWithEmailAndPassword(fb.auth, email, pass); return c.user.uid; },
   async logout() { await fbInit(); await fb.U.signOut(fb.auth); },
   async resetPass(email) { await fbInit(); fb.auth.languageCode = LANG === 'en' ? 'en' : 'ms'; await fb.U.sendPasswordResetEmail(fb.auth, email); },
-  async changePass(p) { await fbInit(); await fb.U.updatePassword(fb.auth.currentUser, p); },
+  async changePass(p) {
+    await fbInit(); const u = fb.auth.currentUser;
+    if (u.providerData.some(x => x.providerId === 'password')) await fb.U.updatePassword(u, p);
+    else await fb.U.linkWithCredential(u, fb.U.EmailAuthProvider.credential(u.email, p));   // akaun Google: tambah kata laluan
+  },
+  async google() {
+    await fbInit(); const prov = new fb.U.GoogleAuthProvider(); prov.setCustomParameters({prompt: 'select_account'});
+    try { const c = await fb.U.signInWithPopup(fb.auth, prov); return {uid: c.user.uid, email: c.user.email}; }
+    catch (e) { if (['auth/popup-blocked', 'auth/operation-not-supported-in-this-environment'].includes(e.code)) { await fb.U.signInWithRedirect(fb.auth, prov); return null; } throw e; }
+  },
+  async authInfo() { await fbInit(); const u = fb.auth.currentUser; return u ? {email: u.email || '', hasPassword: u.providerData.some(x => x.providerId === 'password'), google: u.providerData.some(x => x.providerId === 'google.com')} : {}; },
   async getOwner(uid) { await fbInit(); return fsnap(await fb.F.getDoc(fdoc('owners', uid))); },
   async setOwner(uid, d) { await fbInit(); await fb.F.setDoc(fdoc('owners', uid), d, {merge: true}); },
   async setPriv(uid, d) { await fbInit(); await fb.F.setDoc(fdoc('ownerPriv', uid), d, {merge: true}); },
@@ -601,7 +619,8 @@ function authMsg(e) {
   const m = {'auth/invalid-credential': 'Emel atau kata laluan salah.', 'auth/wrong-password': 'Emel atau kata laluan salah.', 'auth/user-not-found': 'Emel tidak berdaftar.',
     'auth/invalid-email': 'Format emel tidak sah.', 'auth/email-already-in-use': 'Emel ini sudah didaftarkan. Sila log masuk.', 'auth/weak-password': 'Kata laluan terlalu lemah (sekurang-kurangnya 6 aksara).',
     'auth/too-many-requests': 'Terlalu banyak cubaan. Cuba lagi sebentar.', 'auth/network-request-failed': 'Tiada sambungan internet.', 'auth/requires-recent-login': 'Sila log keluar & log masuk semula, kemudian cuba lagi.',
-    'permission-denied': 'Tiada kebenaran. Sila log masuk semula.', 'unavailable': 'Tiada sambungan internet.'};
+    'permission-denied': 'Tiada kebenaran. Sila log masuk semula.', 'auth/account-exists-with-different-credential': 'Akaun ini sudah wujud dengan cara log masuk lain. Log masuk guna emel & kata laluan dahulu.',
+    'auth/unauthorized-domain': 'Domain ini belum dibenarkan dalam Firebase (Authorized domains).', 'auth/operation-not-allowed': 'Log masuk Google belum diaktifkan dalam Firebase.', 'auth/provider-already-linked': 'Kata laluan sudah ditetapkan.', 'auth/credential-already-in-use': 'Emel ini sudah didaftarkan. Sila log masuk.', 'unavailable': 'Tiada sambungan internet.'};
   return m[e?.code] || e?.message || 'Ralat berlaku.';
 }
 
@@ -721,11 +740,11 @@ function renderLogin() {
   const email = fld('Emel', 'email', S.lastEmail || '', 'email', 'required autocomplete="username" placeholder="nama@email.com"');
   let body;
   if (v === 'register') body = `<p class="muted" style="margin:0 0 6px">Daftar akaun owner baru</p><form data-form="register">${email}${pwFld('Kata laluan', 'pass', 'new-password')}${pwFld('Ulang kata laluan', 'pass2', 'new-password')}
-      <button class="btn wide" style="margin-top:14px">Daftar</button></form><p class="muted" style="margin:12px 0 0">Sudah ada akaun? <button class="link" data-act="authView" data-id="login">Log masuk</button></p>`;
+      <button class="btn wide" style="margin-top:14px">Daftar</button></form><div class="or"><span>atau</span></div><button class="btn wide gbtn" data-act="google"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg> Teruskan dengan Google</button><p class="muted" style="margin:12px 0 0">Sudah ada akaun? <button class="link" data-act="authView" data-id="login">Log masuk</button></p>`;
   else if (v === 'forgot') body = `<p class="muted" style="margin:0 0 6px">Masukkan emel anda. Kami akan hantar pautan untuk tetapkan kata laluan baru.</p><form data-form="forgot">${email}
       <button class="btn wide" style="margin-top:14px">Hantar pautan</button></form><p class="muted" style="margin:12px 0 0"><button class="link" data-act="authView" data-id="login">‹ Kembali ke log masuk</button></p>`;
   else body = `<p class="muted" style="margin:0 0 6px">Log masuk untuk teruskan</p><form data-form="login">${email}${pwFld('Kata laluan', 'pass', 'current-password')}
-      <button class="btn wide" style="margin-top:14px">Log Masuk</button></form>
+      <button class="btn wide" style="margin-top:14px">Log Masuk</button></form><div class="or"><span>atau</span></div><button class="btn wide gbtn" data-act="google"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg> Teruskan dengan Google</button>
       <div class="authlinks"><button class="link" data-act="authView" data-id="register">Daftar baru</button><button class="link" data-act="authView" data-id="forgot">Lupa kata laluan?</button></div>`;
   $('#app').innerHTML = `<div class="login"><div class="lbox">${langSeg()}${themeSeg()}<br>${inst}<img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa</h2>${body}
     ${ONLINE ? '' : '<div class="hint">Mod peranti (ujian): Firebase belum disambung, data disimpan dalam browser ini sahaja.</div>'}</div></div>`;
@@ -884,7 +903,10 @@ function oSettings() {
       <label class="switch" style="margin-top:8px">Notifikasi tunggakan selepas tarikh bayar <input type="checkbox" name="overdueOn" ${s.overdueOn ? 'checked' : ''}></label>
       <button class="btn wide" style="margin-top:8px">Simpan</button></form></div>
     <div class="blk"><div class="sec-h">App</div><div class="card"><button class="btn wide ghost" data-act="enableNotif">${perm === 'granted' ? '✅ Notifikasi phone aktif' : '🔔 Aktifkan notifikasi phone'}</button><div style="height:8px"></div><button class="btn wide ghost" data-act="install">⬇ Install app ProSewa</button></div></div>
-    <div class="blk"><div class="sec-h">Keselamatan</div><form class="card" data-form="password">${fld('Kata laluan baru', 'pass', '', 'password', 'required minlength="4" autocomplete="new-password"')}<button class="btn wide ink" style="margin-top:12px">Tukar kata laluan</button></form></div></div>
+    <div class="blk"><div class="sec-h">Keselamatan</div><form class="card" data-form="password"><div class="kv"><span>Emel log masuk</span><b data-raw>${esc(S.auth?.email || '-')}</b></div>${S.auth?.google ? '<div class="kv"><span>Google</span><b>✓ Disambung</b></div>' : ''}
+      ${S.auth && !S.auth.hasPassword ? '<p class="muted">Anda log masuk dengan Google. Tetapkan kata laluan supaya boleh juga log masuk guna emel & kata laluan.</p>' : ''}
+      ${pwFld(S.auth && !S.auth.hasPassword ? 'Tetapkan kata laluan' : 'Kata laluan baru', 'pass', 'new-password')}${pwFld('Ulang kata laluan', 'pass2', 'new-password')}
+      <button class="btn wide ink" style="margin-top:12px">${S.auth && !S.auth.hasPassword ? 'Simpan kata laluan' : 'Tukar kata laluan'}</button></form></div></div>
     ${isSuper() ? '<button class="btn wide ink lo" style="margin-bottom:10px" data-act="goSuper">🛡️ Panel Super Admin</button>' : ''}<button class="btn wide red lo" data-act="logout">Log Keluar</button></div>`;
 }
 
@@ -1038,8 +1060,13 @@ setInterval(ownerTick, 30000);
 async function enterOwner(uid, opts = {}) {
   S.uid = uid; renderLoading();
   let owner = await API.getOwner(uid);
-  if (!owner) { owner = {name: (S.lastEmail || '').split('@')[0] || 'Owner', phone: '', bankName: '', bankAcc: '', accName: '', settings: DEFAULT_SETTINGS}; await API.setOwner(uid, owner); }
-  if (opts.email) await API.setPriv(uid, {email: opts.email, createdAt: nowStr()}).catch(() => {});
+  S.auth = await API.authInfo().catch(() => ({}));
+  if (!owner) {
+    const em = S.auth.email || S.lastEmail || '';
+    owner = {name: em.split('@')[0] || 'Owner', phone: '', bankName: '', bankAcc: '', accName: '', settings: DEFAULT_SETTINGS}; await API.setOwner(uid, owner);
+    await API.setPriv(uid, {email: em.toLowerCase(), createdAt: nowStr()}).catch(() => {});
+    opts.tab = 'settings'; setTimeout(() => toast('Akaun dicipta ✅ Sila lengkapkan maklumat anda di Tetapan.'), 400);
+  }
   if (!(await API.getSub(uid))) await API.createTrial(uid);
   await loadOwner();
   if (!isSuper() && !subInfo()?.active) { renderLocked(); return; }
@@ -1089,6 +1116,7 @@ const ACTIONS = {
   },
   superTrial: async uid => { await API.setSub(uid, {plan: 'trial', start: localISO()}); toast('Percubaan diset semula.'); renderSuper(); },
   superExpire: async uid => { if (!confirm('Tamatkan langganan owner sekarang? (untuk uji)')) return; const o = S.owners.find(x => x.uid === uid), si = subInfo(fsub(o.sub)); await API.setSub(uid, {plan: si && si.plan !== 'trial' ? si.plan : 'monthly', start: si?.start || localISO(), end: addDays(localISO(), -1)}); toast('Langganan ditamatkan.'); renderSuper(); },
+  google: async () => { try { const r = await API.google(); if (r) { S.lastEmail = r.email; if (!ONLINE) await enterOwner(r.uid); } } catch (e) { if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') throw e; } },
   goSuper: () => { location.hash = '#super'; renderSuper(); },
   closeModal, tenantForm, shareLink, payForm, cashForm, remindForm, rejectForm, viewProof, receipt,
   tab: id => { closeModal(); S.tab = id; renderOwner(); scrollTo(0, 0); },
@@ -1152,12 +1180,12 @@ const FORMS = {
   async register(d) {
     if (d.pass !== d.pass2) throw new Error('Kata laluan tidak sama.');
     S.lastEmail = d.email.trim(); S.registering = true;
-    try { const uid = await API.register(S.lastEmail, d.pass); await enterOwner(uid, {email: S.lastEmail.toLowerCase(), tab: 'settings'}); toast('Akaun dicipta ✅ Sila lengkapkan maklumat anda di Tetapan.'); }
+    try { const uid = await API.register(S.lastEmail, d.pass); await enterOwner(uid); }
     catch (e) { throw new Error(authMsg(e)); } finally { S.registering = false; }
   },
   async forgot(d) { try { await API.resetPass(d.email.trim()); toast(ONLINE ? 'Pautan tetapan semula telah dihantar ke emel anda.' : 'Mod peranti: tiada emel dihantar.'); S.authView = 'login'; S.lastEmail = d.email.trim(); renderLogin(); } catch (e) { throw new Error(authMsg(e)); } },
   async trial(d) { await API.setConfig({trialDays: Math.max(0, Math.min(365, +d.days || 0))}); S.config.trialDays = +d.days; toast('Tempoh percubaan: ' + trialDays() + ' hari.'); renderSuper(); },
-  async password(d) { try { await API.changePass(d.pass); toast('Kata laluan ditukar.'); } catch (e) { throw new Error(authMsg(e)); } },
+  async password(d) { if (d.pass !== d.pass2) throw new Error('Kata laluan tidak sama.'); try { await API.changePass(d.pass); S.auth = await API.authInfo(); toast('Kata laluan disimpan ✅'); renderOwner(); } catch (e) { throw new Error(authMsg(e)); } },
   async profile(d) { await API.setOwner(S.uid, {name: d.name.trim(), phone: d.phone.trim(), bankName: d.bankName.trim(), bankAcc: d.bankAcc.trim(), accName: d.accName.trim()}); toast('Profil disimpan.'); await refresh(); },
   async settings(d) { await API.setOwner(S.uid, {settings: {autoOn: !!d.autoOn, autoDays: Math.max(0, +d.autoDays || 0), autoTime: d.autoTime || '09:00', overdueOn: !!d.overdueOn}}); toast('Tetapan disimpan.'); await refresh(); },
   async tenant(d) {
