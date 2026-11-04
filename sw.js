@@ -1,5 +1,5 @@
 // ProSewa service worker — membolehkan app di-install & dibuka laju
-const CACHE = 'prosewa-v8';
+const CACHE = 'prosewa-v9';
 const SHELL = ['./', './index.html', './penyewa.html', './manifest.webmanifest', './manifest-penyewa.webmanifest', './icon-192.png', './icon-512.png', './icon-t-192.png', './icon-t-512.png'];
 
 self.addEventListener('install', e => {
@@ -22,6 +22,7 @@ self.addEventListener('push', e => {
   const n = p.notification || {}, d = p.data || {};
   const title = n.title || d.title || 'ProSewa', body = n.body || d.body || '';
   const tenant = /penyewa/.test(d.url || '');
+  if (self.navigator && self.navigator.setAppBadge) self.navigator.setAppBadge().catch(() => {});   // titik pada ikon app
   e.waitUntil(self.registration.showNotification(title, {body, icon: tenant ? 'icon-t-192.png' : 'icon-192.png', badge: 'icon-192.png', data: {url: d.url || './'}, tag: title + body}));
 });
 self.addEventListener('notificationclick', e => {

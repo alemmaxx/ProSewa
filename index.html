@@ -406,6 +406,8 @@ const I18N_RX = [
   [/Link (\S+) disalin/g, "$1's link copied"],
   [/Ditambah (\d+) hari/g, 'Added $1 days'],
   [/Salam, /g, 'Hi, '],
+  [/(\d+) notifikasi belum dibaca/g, '$1 unread notification(s)'],
+  [/(\d+) bukti bayaran menunggu semakan/g, '$1 payment proof(s) awaiting review'],
   [/(\d+) kod promo dijana/g, '$1 promo code(s) generated'],
   [/Padam kod (\S+)\?/g, 'Delete code $1?'],
   [/Kod promo berjaya! \+(\d+) hari, aktif sehingga ([^.]+)\./g, 'Promo code applied! +$1 days, active until $2.'],
@@ -1011,6 +1013,7 @@ function tenantDown() {
 function renderOwner() {
   if (S.mode !== 'owner') return;
   const pend = S.payments.filter(p => p.status === 'pending').length;
+  setBadge(pend, `${pend} bukti bayaran menunggu semakan`);
   const v = {tenants: oTenants, status: oStatus, report: oReport, sub: oSub, settings: oSettings}[S.tab] || oTenants;
   const si = subInfo(), warn = si && si.days <= 5;
   $('#app').innerHTML = v() + nav([['tenants', '👥', 'Penyewa'], ['status', '💳', 'Status', pend], ['report', '📊', 'Laporan'], ['sub', '💎', 'Langganan', warn ? '!' : 0], ['settings', '⚙️', 'Tetapan']], S.tab);
@@ -1229,7 +1232,7 @@ function renderTenant() {
   const unread = S.tTab === 'notif' ? 0 : notifs.filter(n => !seenBefore.includes(n.id)).length;
   const v = {home: tHome, notif: tNotif, history: tHistory}[S.tTab] || tHome;
   $('#app').innerHTML = v(notifs, unread, seenBefore) + nav([['home', '🏠', 'Utama'], ['notif', '🔔', 'Notifikasi', unread], ['history', '🧾', 'Sejarah']], S.tTab);
-  pushNewTenantNotifs(notifs); scheduleTenantNative(); pushRegister();
+  pushNewTenantNotifs(notifs); scheduleTenantNative(); pushRegister(); setBadge(unread);
 }
 const tenantBtns = unread => instBtn() + hb('lang', LANG === 'en' ? 'BM' : 'EN', 'Bahasa', 0, '', LANG === 'en' ? 'bm' : 'en') + hb('theme', curTheme() === 'dark' ? '☀️' : '🌙', 'Tema', 0, '', curTheme() === 'dark' ? 'light' : 'dark') + hb('ttab', '🔔', 'Notifikasi', unread, '', 'notif');
 function tHome(notifs, unread) {
@@ -1445,6 +1448,40 @@ function phoneNotify(title, body, at) {
   const opt = {body, icon: 'icon-192.png', badge: 'icon-192.png', data: {url: location.href}};
   try { if (swReg) swReg.showNotification(title, opt); else new Notification(title, opt); } catch (e) {}
 }
+/* ---------- Lencana (badge) pada ikon app: phone, tab & laptop ---------- */
+const BASE_TITLE = document.title;
+let _badgeN = -1, _favOrig = null, _favImg = null;
+function favBadge(n) {
+  const link = document.querySelector('link[rel=icon]'); if (!link) return;
+  if (!_favOrig) _favOrig = link.href;
+  if (!n) { link.href = _favOrig; return; }
+  const draw = () => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
+    g.drawImage(_favImg, 0, 0, 64, 64); g.fillStyle = '#e5484d'; g.beginPath(); g.arc(46, 18, 17, 0, 7); g.fill();
+    g.fillStyle = '#fff'; g.font = 'bold 22px system-ui,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(n > 9 ? '9+' : String(n), 46, 19);
+    link.href = c.toDataURL('image/png'); };
+  if (_favImg && _favImg.complete) return draw();
+  _favImg = new Image(); _favImg.onload = draw; _favImg.src = _favOrig;
+}
+async function setBadge(n, label) {
+  n = Math.max(0, n | 0); if (n === _badgeN) return; _badgeN = n;
+  document.title = (n ? `(${n}) ` : '') + BASE_TITLE;
+  favBadge(n);
+  try { if ('setAppBadge' in navigator) { n ? await navigator.setAppBadge(n) : await navigator.clearAppBadge(); } } catch (e) {}   // PWA dipasang: Windows/Mac/ChromeOS/iPhone
+  if (isNative()) {
+    try { const B = CP('Badge'); if (B) n ? await B.set({count: n}) : await B.clear(); } catch (e) {}   // nombor pada ikon (launcher yang menyokong)
+    const LN = CP('LocalNotifications');   // titik pada ikon untuk semua launcher Android: notifikasi senyap ringkasan
+    if (LN && NPERM === 'granted') {
+      if (n) LN.schedule({notifications: [{id: 990001, title: 'ProSewa', body: tr(label || `${n} notifikasi belum dibaca`), channelId: 'badge', smallIcon: 'ic_stat_ps', iconColor: '#d9b44a', autoCancel: true}]}).catch(() => {});
+      else LN.cancel({notifications: [{id: 990001}]}).catch(() => {});
+    }
+  }
+}
+// Android web (tiada Badging API): bila app ditutup / disembunyikan, tinggalkan notifikasi senyap supaya ikon ada titik
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden || isNative() || 'setAppBadge' in navigator || _badgeN <= 0 || !swReg || NPERM !== 'granted') return;
+  swReg.showNotification('ProSewa', {body: tr(S.mode === 'owner' ? `${_badgeN} bukti bayaran menunggu semakan` : `${_badgeN} notifikasi belum dibaca`), tag: 'prosewa-badge', silent: true, icon: IS_TENANT_SITE ? 'icon-t-192.png' : 'icon-192.png', badge: 'icon-192.png', data: {url: location.href}}).catch(() => {});
+});
+
 /* ---------- Push notification (FCM): sampai walaupun app ditutup ---------- */
 const FCM_VAPID = 'BKhLhZl6oEhxwII8FmLcy262N2JRpJYuHRj3CBekzWyJAd3-iWxbpODwxVb9Kz-SK51MpRVL5jp4D3oAp68Uk8Y';   // Firebase Console → Project settings → Cloud Messaging → Web Push certificates → Key pair
 let _pushTok = null, _pushBusy = false;
@@ -1818,6 +1855,7 @@ function nativeInit() {
   if (!isNative()) return;
   document.documentElement.classList.add('native');
   const SB = CP('StatusBar'); if (SB) { SB.setStyle?.({style: curTheme() === 'light' ? 'LIGHT' : 'DARK'}).catch(() => {}); SB.setBackgroundColor?.({color: curTheme() === 'light' ? '#ffffff' : '#0a1210'}).catch(() => {}); }
+  CP('LocalNotifications')?.createChannel?.({id: 'badge', name: 'Belum dibaca', description: 'Lencana pada ikon app', importance: 2, visibility: 1, vibration: false}).catch(() => {});
   const A = CP('App'); if (!A) return;
   A.addListener('backButton', () => {
     if ($('#modal').classList.contains('on')) return closeModal();
