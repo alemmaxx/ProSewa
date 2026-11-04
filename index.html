@@ -158,12 +158,12 @@ table.rep tr.tot td{font-weight:800;border-bottom:0;color:var(--gold)}
 .msgbox{background:var(--card2);padding:10px 12px;border-radius:8px;font-size:14px;margin:8px 0}
 /* resit */
 #receipt{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:8px}
-#receipt .rh{text-align:center;border-bottom:1px dashed var(--line);padding-bottom:12px;margin-bottom:10px}
-#receipt .rh b{display:block;font-size:20px;font-weight:800;color:var(--gold);margin-top:6px;letter-spacing:1px}
-#receipt .rco{display:flex;gap:12px;align-items:flex-start;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--line)}
-#receipt .rco b{display:block;font-size:16px;font-weight:800}
-#receipt .rco .muted{font-size:12px;line-height:1.45}
-#receipt .rlogo{width:64px;height:64px;object-fit:contain;border-radius:10px;background:#fff;flex:none}
+#taxrep .rh,#receipt .rh{text-align:center;border-bottom:1px dashed var(--line);padding-bottom:12px;margin-bottom:10px}
+#taxrep .rh b,#receipt .rh b{display:block;font-size:20px;font-weight:800;color:var(--gold);margin-top:6px;letter-spacing:1px}
+#taxrep .rco,#receipt .rco{display:flex;gap:12px;align-items:flex-start;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--line)}
+#taxrep .rco b,#receipt .rco b{display:block;font-size:16px;font-weight:800}
+#taxrep .rco .muted,#receipt .rco .muted{font-size:12px;line-height:1.45}
+#taxrep .rlogo,#receipt .rlogo{width:64px;height:64px;object-fit:contain;border-radius:10px;background:#fff;flex:none}
 #qrPrev{width:120px;height:120px;border-radius:12px;border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;background:#fff;overflow:hidden;flex:none;text-align:center}
 #qrPrev img{max-width:100%;max-height:100%;object-fit:contain;display:block}
 #qrPrev .muted{font-size:11px;color:#777}
@@ -175,6 +175,7 @@ table.rep tr.tot td{font-weight:800;border-bottom:0;color:var(--gold)}
 #logoPrev img{max-width:100%;max-height:100%;object-fit:contain;display:block}
 #logoPrev .muted{font-size:11px;color:#777}
 #receipt .amt{text-align:center;font-size:34px;font-weight:800;margin:8px 0 10px;color:var(--green);letter-spacing:-1px}
+.stamp.void span{border-color:var(--red)!important;color:var(--red)!important}
 .stamp{text-align:center;margin-top:12px}.stamp span{display:inline-block;border:2px solid var(--green);color:var(--green);font-weight:800;border-radius:8px;padding:3px 14px;transform:rotate(-4deg);letter-spacing:2px}
 /* notifikasi */
 .notif{display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
@@ -273,6 +274,12 @@ table.rep tr.tot td{font-weight:800;border-bottom:0;color:var(--gold)}
   #printArea .rh b{color:#8a6a12!important}
   #printArea .amt{color:#16935f!important}
   #printArea .stamp span{color:#16935f!important;border-color:#16935f!important}
+  #printArea .stamp.void span{color:#c9483a!important;border-color:#c9483a!important}
+  #printArea #taxrep{color:#000;font-size:12px}
+  #printArea #taxrep table.rep th,#printArea #taxrep table.rep td{border-color:#ddd;color:#000;padding:4px}
+  #printArea #taxrep table.rep tr.tot td{color:#000!important}
+  #printArea #taxrep .sec-h{color:#555;margin:14px 0 6px}
+  #printArea #taxrep table{page-break-inside:auto}#printArea #taxrep tr{page-break-inside:avoid}
 }
 </style>
 </head>
@@ -372,6 +379,8 @@ const I18N_RX = [
   [/(\d+) notifikasi/g, '$1 notifications'],
   [/(\d+) peringatan/g, '$1 reminder(s)'],
   [/Tahun (\d{4})/g, 'Year $1'],
+  [/Cukai (\d{4})\./g, 'Tax $1.'],
+  [/Perbelanjaan (\d{4}) \((\d+)\)/g, 'Expenses $1 ($2)'],
   [/Bayar (\d{4})/g, 'Paid $1'],
   [/Kutipan (\d+)% daripada jangkaan/g, 'Collected $1% of expected'],
   [/Link (\S+) disalin/g, "$1's link copied"],
@@ -379,6 +388,22 @@ const I18N_RX = [
   [/Salam, /g, 'Hi, ']
 ];
 Object.assign(I18N, {
+  'Cukai & Perbelanjaan': 'Tax & Expenses', 'Kutipan': 'Collection', 'Perbelanjaan': 'Expenses', '+ Perbelanjaan': '+ Expense', 'Pendapatan sewa bersih untuk e-Filing (Borang BE / B)': 'Net rental income for e-Filing (Form BE / B)',
+  'Sewa kasar': 'Gross rent', 'Bersih': 'Net', 'Ringkasan cukai': 'Tax summary', 'Sewa kasar diterima': 'Gross rent received', 'resit': 'receipts', 'Tolak: perbelanjaan': 'Less: expenses', 'Pendapatan sewa bersih': 'Net rental income',
+  'pendapatan berkanun daripada sewa': 'statutory income from rent', 'Angka "Pendapatan sewa bersih" diisi di ruangan': 'The "Net rental income" figure goes into the', 'dalam e-Filing. Dikira ikut tarikh sewa diterima.': 'field in e-Filing. Counted by date rent was received.',
+  'Excel (CSV)': 'Excel (CSV)', 'Ikut unit': 'By unit', 'Ikut kategori': 'By category', 'Unit': 'Unit', 'Belanja': 'Expense', 'Belum ada perbelanjaan': 'No expenses yet', 'Umum (semua unit)': 'General (all units)', 'Lain-lain alamat': 'Other addresses',
+  'Belum ada perbelanjaan untuk tahun ini. Tekan': 'No expenses for this year yet. Tap', 'Cukai pintu': 'Assessment tax', 'Cukai tanah': 'Quit rent', 'Insurans kebakaran / rumah': 'Fire / home insurance', 'Faedah pinjaman perumahan': 'Housing loan interest',
+  'Pembaikan & penyelenggaraan': 'Repairs & maintenance', 'Yuran penyelenggaraan / pengurusan': 'Maintenance / management fee', 'Komisen ejen (pembaharuan sewa)': 'Agent commission (tenancy renewal)',
+  'Tambah Perbelanjaan': 'Add Expense', 'Edit Perbelanjaan': 'Edit Expense', 'Kategori': 'Category', 'Tukar gambar resit': 'Change receipt image', 'Lampirkan gambar resit (pilihan)': 'Attach receipt image (optional)', 'Resit Perbelanjaan': 'Expense Receipt',
+  'Padam perbelanjaan ini?': 'Delete this expense?', 'Perbelanjaan disimpan': 'Expense saved', 'LAPORAN PENDAPATAN SEWA': 'RENTAL INCOME REPORT', 'Dijana': 'Generated', 'Perbelanjaan ikut kategori': 'Expenses by category', 'Tiada perbelanjaan direkod': 'No expenses recorded',
+  'Senarai resit': 'Receipt list', 'Senarai perbelanjaan': 'Expense list', 'No. resit': 'Receipt no.', 'Umum': 'General',
+  'Laporan ini dijana oleh ProSewa berdasarkan rekod yang dimasukkan oleh pemilik, untuk rujukan pengisian e-Filing (pendapatan berkanun daripada sewa) dan ejen cukai. Sila sahkan perbelanjaan yang dibenarkan dengan LHDN / ejen cukai.': 'This report is generated by ProSewa from records entered by the owner, as a reference for e-Filing (statutory income from rent) and tax agents. Please confirm allowable expenses with LHDN / your tax agent.',
+  'Biasanya boleh ditolak: cukai pintu, cukai tanah, insurans, faedah pinjaman perumahan, pembaikan & penyelenggaraan, yuran pengurusan, komisen ejen untuk pembaharuan sewa.': 'Usually deductible: assessment tax, quit rent, insurance, housing loan interest, repairs & maintenance, management fees, agent commission for renewals.',
+  'Biasanya tidak boleh ditolak: kos ubah suai / naik taraf, bayaran pokok pinjaman, pembelian perabot (modal).': 'Usually not deductible: renovation / upgrade costs, loan principal, furniture purchases (capital).',
+  'Sahkan dengan LHDN atau ejen cukai.': 'Confirm with LHDN or your tax agent.',
+  'Batal resit': 'Void receipt', 'Batal Resit': 'Void Receipt', 'Batalkan resit': 'Void receipt', 'Resit dibatalkan': 'Receipt voided', 'Resit dibatalkan.': 'Receipt voided.', 'Dibatalkan': 'Voided', 'DIBATALKAN': 'VOID', 'Sebab batal': 'Void reason', 'Tarikh batal': 'Voided on',
+  'Resit yang dibatalkan kekal dalam rekod dengan cop DIBATALKAN dan tidak dikira dalam laporan. No. resit tidak akan digunakan semula.': 'A voided receipt stays on record with a VOID stamp and is excluded from reports. The receipt number is never reused.',
+  'Tersilap rekod': 'Recorded by mistake', 'Jumlah salah': 'Wrong amount', 'Bayaran dipulangkan': 'Payment refunded', 'Bulan salah': 'Wrong month', 'dibatalkan:': 'voided:',
   'QR bayaran (DuitNow / e-wallet)': 'Payment QR (DuitNow / e-wallet)', 'Tiada QR': 'No QR', 'Pilih QR': 'Choose QR', 'Screenshot / gambar QR dari app bank. Penyewa boleh imbas atau simpan QR ini.': 'Screenshot / image of the QR from your bank app. Tenants can scan or save it.',
   'Maklumat bank & QR dipaparkan kepada penyewa.': 'Bank details & QR are shown to tenants.', 'QR dipilih. Tekan Simpan profil untuk simpan.': 'QR selected. Tap Save profile to keep it.', 'Tekan Simpan profil untuk buang QR.': 'Tap Save profile to remove the QR.',
   'QR Bayaran': 'Payment QR', 'Simpan QR ke phone': 'Save QR to phone', 'iPhone: tekan lama pada gambar QR → Simpan ke Foto.': 'iPhone: long-press the QR image → Save to Photos.', 'Besarkan': 'Enlarge', 'Simpan QR': 'Save QR',
@@ -602,6 +627,10 @@ const LocalAPI = {
   async delSub(tok, col, id) { delete L.sub[tok][col][id]; lsave(); },
   async listOwners() { return Object.keys(L.priv).map(uid => ({uid, ...clone(L.priv[uid]), name: L.owners[uid]?.name || '', sub: clone(L.subs[uid])})); },
   async listSubPayments(uid) { return L.subPayments.filter(x => x.ownerId === uid).map(clone); },
+  async listExpenses(uid) { return Object.entries(L.expenses || {}).filter(([k, x]) => x.ownerId === uid).map(([k, x]) => ({...clone(x), id: k})); },
+  async addExpense(d) { const id = genId(); (L.expenses = L.expenses || {})[id] = clone(d); lsave(); return id; },
+  async updateExpense(id, d) { Object.assign(L.expenses[id], clone(d)); lsave(); },
+  async delExpense(id) { delete L.expenses[id]; lsave(); },
   async addSubPayment(d) { L.subPayments.push({...clone(d), id: genId()}); lsave(); },
   async idToken() { return 'local'; },
   async nextReceiptSeq(uid) { const o = L.owners[uid] = L.owners[uid] || {}; o.receiptSeq = (+o.receiptSeq || 0) + 1; lsave(); return o.receiptSeq; }
@@ -667,6 +696,10 @@ const FireAPI = {
     await fbInit(); const s = await fb.F.getDocs(fcol('ownerPriv'));
     return Promise.all(s.docs.map(async d => ({uid: d.id, ...d.data(), name: (await this.getOwner(d.id))?.name || '', sub: await this.getSub(d.id)})));
   },
+  async listExpenses(uid) { await fbInit(); const s = await fb.F.getDocs(fb.F.query(fcol('expenses'), fb.F.where('ownerId', '==', uid))); return s.docs.map(d => ({...d.data(), id: d.id})); },
+  async addExpense(d) { await fbInit(); const r = await fb.F.addDoc(fcol('expenses'), d); return r.id; },
+  async updateExpense(id, d) { await fbInit(); await fb.F.updateDoc(fdoc('expenses', id), d); },
+  async delExpense(id) { await fbInit(); await fb.F.deleteDoc(fdoc('expenses', id)); },
   async listSubPayments(uid) { await fbInit(); const s = await fb.F.getDocs(fb.F.query(fcol('subPayments'), fb.F.where('ownerId', '==', uid))); return s.docs.map(d => ({...d.data(), id: d.id})); },
   async addSubPayment(d) { await fbInit(); await fb.F.addDoc(fcol('subPayments'), d); },
   async idToken() { await fbInit(); return fb.auth.currentUser.getIdToken(); },
@@ -714,7 +747,7 @@ function arrears(t, payments) {
   return out;
 }
 const chip = s => `<span class="chip c-${s.code}">${esc(s.label)}</span>`;
-const payChip = p => ({confirmed: '<span class="chip c-paid">Diluluskan</span>', pending: '<span class="chip c-pending">Menunggu</span>', rejected: '<span class="chip c-rejected">Ditolak</span>'}[p.status] || '');
+const payChip = p => ({void: '<span class="chip c-unpaid">Dibatalkan</span>', confirmed: '<span class="chip c-paid">Diluluskan</span>', pending: '<span class="chip c-pending">Menunggu</span>', rejected: '<span class="chip c-rejected">Ditolak</span>'}[p.status] || '');
 const bankText = o => o?.bankAcc ? `Bayaran ke ${o.bankName || ''} ${o.bankAcc} (${o.accName || o.name || ''}).` : '';
 const reminderMsg = (t, ym, o) => LANG === 'en'
   ? `Hi ${t.name}, a friendly reminder: rent for ${monthLabel(ym)} of ${RM(t.rent)} is due by ${dateLabel(dueDate(t, ym))}. ${o?.bankAcc ? `Pay to ${o.bankName || ''} ${o.bankAcc} (${o.accName || o.name || ''}).` : ''} After paying, please upload your payment proof in this app. Thank you — ${o?.name || ''}`
@@ -732,6 +765,7 @@ function tenantNotifs(t, payments, reminders, settings) {
   reminders.filter(r => r.tenantId === t.id && r.at <= now).forEach(r => out.push({id: 'r-' + r.id, at: r.at, ic: '📩', title: 'Mesej dari tuan rumah', body: r.message, raw: true}));
   payments.filter(p => p.tenantId === t.id).forEach(p => {
     if (p.status === 'confirmed' && p.confirmedAt) out.push({id: 'ok-' + p.id, at: p.confirmedAt, ic: '✅', title: 'Bayaran diluluskan', body: `Resit ${p.receiptNo} untuk ${monthLabel(p.month)} sedia. Tekan untuk lihat.`, pay: p.id});
+    if (p.status === 'void') out.push({id: 'vd-' + p.id, at: p.voidAt || p.confirmedAt || p.submittedAt, ic: '🚫', title: 'Resit dibatalkan', body: `Resit ${p.receiptNo} (${monthLabel(p.month)}) dibatalkan: ${p.voidReason || ''}`, pay: p.id});
     if (p.status === 'rejected') out.push({id: 'no-' + p.id, at: p.rejectedAt || p.submittedAt, ic: '❌', title: 'Bukti bayaran ditolak', body: `${monthLabel(p.month)}: ${p.rejectReason || 'Sila hubungi tuan rumah.'}`});
   });
   return out.sort((a, b) => b.at.localeCompare(a.at));
@@ -748,6 +782,7 @@ async function loadOwner() {
   const subs = await Promise.all(S.tenants.map(t => Promise.all([API.listSub(t.id, 'payments'), API.listSub(t.id, 'reminders')])));
   S.payments = subs.flatMap(x => x[0]); S.reminders = subs.flatMap(x => x[1]);
   S.subPayments = await API.listSubPayments(S.uid).catch(() => []);
+  S.expenses = await API.listExpenses(S.uid).catch(() => []);
 }
 async function loadTenant(tok) {
   S.t = await API.getTenant(tok).catch(() => null); S.payments = []; S.reminders = [];
@@ -928,14 +963,58 @@ function reportData(y) {
   const per = S.tenants.map(t => ({t, paid: S.payments.filter(p => p.tenantId === t.id && p.status === 'confirmed' && p.month.startsWith(ys)).reduce((a, p) => a + (+p.amount || 0), 0), arr: t.active !== false ? arrears(t, S.payments) : {sum: 0, months: []}}));
   return {months, inc, exp, per};
 }
+const EXP_CATS = ['Cukai pintu', 'Cukai tanah', 'Insurans kebakaran / rumah', 'Faedah pinjaman perumahan', 'Pembaikan & penyelenggaraan', 'Yuran penyelenggaraan / pengurusan', 'Komisen ejen (pembaharuan sewa)', 'Lain-lain'];
+const normU = a => String(a || '').trim().replace(/\s+/g, ' ');
+function unitList() { const m = new Map(); S.tenants.forEach(t => { const k = normU(t.address); if (k && !m.has(k.toLowerCase())) m.set(k.toLowerCase(), k); }); return [...m.values()]; }
+function taxData(y) {
+  const ys = String(y), units = unitList();
+  const pays = S.payments.filter(p => p.status === 'confirmed' && String(p.paidDate || '').startsWith(ys));
+  const exps = (S.expenses || []).filter(e => String(e.date || '').startsWith(ys));
+  const key = a => normU(a).toLowerCase();
+  const rows = units.map(u => { const inc = pays.filter(p => key(p.address) === key(u)).reduce((a, p) => a + (+p.amount || 0), 0); const ex = exps.filter(e => key(e.unit) === key(u)).reduce((a, e) => a + (+e.amount || 0), 0); return {unit: u, inc, exp: ex, net: inc - ex}; });
+  const other = pays.filter(p => !units.some(u => key(u) === key(p.address))).reduce((a, p) => a + (+p.amount || 0), 0);
+  if (other) rows.push({unit: 'Lain-lain alamat', inc: other, exp: 0, net: other});
+  const gen = exps.filter(e => !e.unit || !units.some(u => key(u) === key(e.unit))).reduce((a, e) => a + (+e.amount || 0), 0);
+  if (gen) rows.push({unit: 'Umum (semua unit)', inc: 0, exp: gen, net: -gen});
+  const byCat = EXP_CATS.map(c => ({c, v: exps.filter(e => e.category === c).reduce((a, e) => a + (+e.amount || 0), 0)})).filter(x => x.v);
+  const gross = pays.reduce((a, p) => a + (+p.amount || 0), 0), totalExp = exps.reduce((a, e) => a + (+e.amount || 0), 0);
+  return {rows, byCat, gross, totalExp, net: gross - totalExp, pays, exps, count: pays.length};
+}
+function taxReportHTML(y) {
+  const d = taxData(y), o = S.owner || {};
+  return `<div id="taxrep"><div class="rco">${o.logo ? `<img class="rlogo" src="${o.logo}" alt="">` : '<img class="rlogo" src="icon-192.png" alt="">'}<div><b data-raw>${esc(o.company || o.name || '')}</b>${o.companyAddr ? `<div class="muted" data-raw style="white-space:pre-line">${esc(o.companyAddr)}</div>` : ''}${o.regNo ? `<div class="muted">No. SSM: <span data-raw>${esc(o.regNo)}</span></div>` : ''}</div></div>
+    <div class="rh"><b>LAPORAN PENDAPATAN SEWA</b><div class="muted">Tahun ${y} (1 Jan – 31 Dis ${y}) · Dijana ${dtLabel(nowStr())}</div></div>
+    <table class="rep"><tr><td>Sewa kasar diterima (${d.count} resit)</td><td><b>${RM(d.gross)}</b></td></tr><tr><td>Tolak: perbelanjaan</td><td><b>(${RM(d.totalExp)})</b></td></tr>
+    <tr class="tot"><td>Pendapatan sewa bersih</td><td>${RM(d.net)}</td></tr></table>
+    <div class="sec-h">Ikut unit</div><table class="rep"><tr><th>Unit</th><th>Sewa</th><th>Belanja</th><th>Bersih</th></tr>${d.rows.map(r => `<tr><td data-raw>${esc(r.unit)}</td><td>${RM(r.inc)}</td><td>${RM(r.exp)}</td><td>${RM(r.net)}</td></tr>`).join('') || '<tr><td colspan="4">Tiada data</td></tr>'}</table>
+    <div class="sec-h">Perbelanjaan ikut kategori</div><table class="rep">${d.byCat.map(x => `<tr><td>${esc(x.c)}</td><td>${RM(x.v)}</td></tr>`).join('') || '<tr><td>Tiada perbelanjaan direkod</td><td></td></tr>'}<tr class="tot"><td>Jumlah</td><td>${RM(d.totalExp)}</td></tr></table>
+    <div class="sec-h">Senarai resit</div><table class="rep small"><tr><th>No. resit</th><th>Tarikh</th><th>Penyewa</th><th>Jumlah</th></tr>${d.pays.sort((a, b) => a.paidDate.localeCompare(b.paidDate)).map(p => `<tr><td>${esc(p.receiptNo)}</td><td>${dateLabel(p.paidDate)}</td><td data-raw>${esc(p.tenantName)}</td><td>${RM(p.amount)}</td></tr>`).join('') || '<tr><td colspan="4">-</td></tr>'}</table>
+    <div class="sec-h">Senarai perbelanjaan</div><table class="rep small"><tr><th>Tarikh</th><th>Kategori</th><th>Unit</th><th>Jumlah</th></tr>${d.exps.sort((a, b) => a.date.localeCompare(b.date)).map(e => `<tr><td>${dateLabel(e.date)}</td><td>${esc(e.category)}</td><td data-raw>${esc(e.unit || 'Umum')}</td><td>${RM(e.amount)}</td></tr>`).join('') || '<tr><td colspan="4">-</td></tr>'}</table>
+    <p class="muted" style="margin-top:14px">Laporan ini dijana oleh ProSewa berdasarkan rekod yang dimasukkan oleh pemilik, untuk rujukan pengisian e-Filing (pendapatan berkanun daripada sewa) dan ejen cukai. Sila sahkan perbelanjaan yang dibenarkan dengan LHDN / ejen cukai.</p></div>`;
+}
 function oReport() {
-  const y = S.year, r = reportData(y);
+  const y = S.year, view = S.repView || 'tax';
+  const years = [...new Set([new Date().getFullYear(), ...S.payments.map(p => +String(p.paidDate || p.month).slice(0, 4)), ...(S.expenses || []).map(e => +String(e.date).slice(0, 4))])].filter(Boolean).sort().reverse();
+  const seg = `<div class="seg"><button class="${view === 'tax' ? 'on' : ''}" data-act="repView" data-id="tax">🧾 Cukai & Perbelanjaan</button><button class="${view === 'coll' ? 'on' : ''}" data-act="repView" data-id="coll">📊 Kutipan</button></div>`;
+  const ysel = `<div class="grid2">${sel('Tahun', 'y', years.map(v => [v, v]), y, 'data-chg="year"')}<div class="fld"><span>&nbsp;</span>${view === 'tax' ? '<button class="btn wide" data-act="expForm">+ Perbelanjaan</button>' : '<button class="btn ghost wide" data-act="csv">⬇ CSV</button>'}</div></div>`;
+  if (view === 'tax') {
+    const d = taxData(y);
+    let h = header('Laporan', `Cukai ${y}.`, 'Pendapatan sewa bersih untuk e-Filing (Borang BE / B)', {btns: ownerBtns(), stats: [[RM(d.gross), 'Sewa kasar', 'g'], [RM(d.totalExp), 'Perbelanjaan', d.totalExp ? 'r' : ''], [RM(d.net), 'Bersih']]}) + `<div class="wrap">${seg}${ysel}
+      <div class="card"><h3>Ringkasan cukai ${y}</h3><table class="rep"><tr><td>Sewa kasar diterima (${d.count} resit)</td><td>${RM(d.gross)}</td></tr><tr><td>Tolak: perbelanjaan</td><td>(${RM(d.totalExp)})</td></tr><tr class="tot"><td>Pendapatan sewa bersih</td><td>${RM(d.net)}</td></tr></table>
+        <p class="muted">Angka "Pendapatan sewa bersih" diisi di ruangan <b>pendapatan berkanun daripada sewa</b> dalam e-Filing. Dikira ikut tarikh sewa diterima.</p>
+        <div class="acts"><button class="btn" data-act="taxPdf">🖨️ Simpan PDF</button><button class="btn ghost" data-act="taxCsv">⬇ Excel (CSV)</button></div></div>
+      <div class="cols"><div class="blk"><div class="sec-h">Ikut unit</div><div class="card"><table class="rep"><tr><th>Unit</th><th>Sewa</th><th>Belanja</th><th>Bersih</th></tr>${d.rows.map(r => `<tr><td data-raw>${esc(r.unit)}</td><td>${RM(r.inc)}</td><td>${RM(r.exp)}</td><td>${RM(r.net)}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">Tiada data</td></tr>'}</table></div></div>
+      <div class="blk"><div class="sec-h">Ikut kategori</div><div class="card"><table class="rep">${d.byCat.map(x => `<tr><td>${esc(x.c)}</td><td>${RM(x.v)}</td></tr>`).join('') || '<tr><td class="muted">Belum ada perbelanjaan</td><td></td></tr>'}</table></div></div></div>
+      <div class="sec-h">Perbelanjaan ${y} (${d.exps.length})</div><div class="card">${d.exps.length ? d.exps.sort((a, b) => b.date.localeCompare(a.date)).map(e => `<div class="row"><div class="av">🧾</div><div class="grow"><div class="t">${esc(e.category)} · ${RM(e.amount)}</div><div class="s">${dateLabel(e.date)} · <span data-raw>${esc(e.unit || 'Umum (semua unit)')}</span></div>${e.note ? `<div class="s" data-raw>${esc(e.note)}</div>` : ''}
+          <div class="acts">${e.proof ? `<button class="btn sm ghost fx" data-act="expProof" data-id="${e.id}">📎 Resit</button>` : ''}<button class="btn sm ghost fx" data-act="expForm" data-id="${e.id}">✏️ Edit</button><button class="btn sm red fx" data-act="delExp" data-id="${e.id}">🗑</button></div></div></div>`).join('') : '<div class="empty">Belum ada perbelanjaan untuk tahun ini. Tekan <b>+ Perbelanjaan</b>.</div>'}</div>
+      <div class="hint">💡 <span>Biasanya boleh ditolak: cukai pintu, cukai tanah, insurans, faedah pinjaman perumahan, pembaikan & penyelenggaraan, yuran pengurusan, komisen ejen untuk pembaharuan sewa.</span><br><span>Biasanya tidak boleh ditolak: kos ubah suai / naik taraf, bayaran pokok pinjaman, pembelian perabot (modal).</span><br><span>Sahkan dengan LHDN atau ejen cukai.</span></div>`;
+    return h + `</div>`;
+  }
+  const r = reportData(y);
   const ti = r.inc.reduce((a, b) => a + b, 0), te = r.exp.reduce((a, b) => a + b, 0), arr = r.per.reduce((a, x) => a + x.arr.sum, 0);
   const max = Math.max(1, ...r.inc, ...r.exp);
-  const years = [...new Set([new Date().getFullYear(), ...S.payments.map(p => +p.month.slice(0, 4))])].sort().reverse();
   const pct = te ? Math.round(ti / te * 100) : 0;
-  let h = header('Laporan', `Tahun ${y}.`, `Kutipan ${pct}% daripada jangkaan ${RM(te)}`, {btns: ownerBtns(), stats: [[RM(ti), 'Diterima', 'g'], [RM(arr), 'Tunggakan', arr ? 'r' : '']]}) + `<div class="wrap">
-    <div class="grid2">${sel('Tahun', 'y', years.map(v => [v, v]), y, 'data-chg="year"')}<div class="fld"><span>&nbsp;</span><button class="btn ghost wide" data-act="csv">⬇ CSV</button></div></div>
+  let h = header('Laporan', `Tahun ${y}.`, `Kutipan ${pct}% daripada jangkaan ${RM(te)}`, {btns: ownerBtns(), stats: [[RM(ti), 'Diterima', 'g'], [RM(arr), 'Tunggakan', arr ? 'r' : '']]}) + `<div class="wrap">${seg}${ysel}
     <div class="sec-h">Kutipan bulanan</div><div class="card"><div class="chart">${r.months.map((m, i) => `<div class="col"><div class="bars"><i class="e" style="height:${r.exp[i] / max * 100}%"></i><i style="height:${r.inc[i] / max * 100}%"></i></div><small>${MONTHS[i]}</small></div>`).join('')}</div>
     <div class="legend"><span><i style="background:var(--line)"></i>Jangkaan</span><span><i style="background:var(--gold)"></i>Diterima</span></div>
     <table class="rep" style="margin-top:10px"><tr><th>Bulan</th><th>Jangkaan</th><th>Diterima</th><th>Baki</th></tr>
@@ -1036,7 +1115,7 @@ function tNotif(notifs, unread, seen) {
 function tHistory(notifs, unread) {
   const list = [...S.payments].sort((a, b) => (b.month + b.submittedAt).localeCompare(a.month + a.submittedAt));
   const ok = list.filter(p => p.status === 'confirmed'), tot = ok.reduce((a, p) => a + (+p.amount || 0), 0);
-  return header('Sejarah', 'Sejarah bayaran.', 'Tekan bayaran yang diluluskan untuk lihat resit.', {btns: tenantBtns(unread), stats: [[RM(tot), 'Jumlah dibayar', 'g'], [ok.length, 'Resit']]}) + `<div class="wrap">${list.length ? '<div class="tcgrid">' + list.map(p => `<div class="tc ${p.status === 'pending' ? 'warn' : p.status === 'rejected' ? 'hot' : ''}" ${p.status === 'confirmed' ? `data-act="receipt" data-id="${p.id}" style="cursor:pointer"` : ''}><div class="t1"><div>${payChip(p)}<h4>${monthLabel(p.month)}</h4>
+  return header('Sejarah', 'Sejarah bayaran.', 'Tekan bayaran yang diluluskan untuk lihat resit.', {btns: tenantBtns(unread), stats: [[RM(tot), 'Jumlah dibayar', 'g'], [ok.length, 'Resit']]}) + `<div class="wrap">${list.length ? '<div class="tcgrid">' + list.map(p => `<div class="tc ${p.status === 'pending' ? 'warn' : p.status === 'rejected' ? 'hot' : p.status === 'void' ? 'past' : ''}" ${['confirmed', 'void'].includes(p.status) ? `data-act="receipt" data-id="${p.id}" style="cursor:pointer"` : ''}><div class="t1"><div>${payChip(p)}<h4>${monthLabel(p.month)}</h4>
       <div class="muted">${esc(p.method)} · dibayar ${dateLabel(p.paidDate)}</div>${p.status === 'confirmed' ? `<div class="muted">Resit ${esc(p.receiptNo)} ›</div>` : ''}${p.status === 'rejected' ? `<div class="muted" style="color:var(--red)">${esc(p.rejectReason || '')}</div>` : ''}</div>
       <div class="cd"><b style="font-size:15px">${RM(p.amount).replace('RM ', '')}</b><small>RM</small></div></div></div>`).join('') + '</div>' : '<div class="empty">Belum ada bayaran.</div>'}</div>`;
 }
@@ -1087,6 +1166,16 @@ function remindForm(id, now = false) {
     <p class="muted" style="margin-top:0">Mesej akan masuk sebagai notifikasi dalam app penyewa (dan notifikasi phone jika penyewa aktifkan).</p>
     <button class="btn wide">🔔 Hantar / Jadualkan</button></form>`);
 }
+function expForm(id) {
+  const e = (S.expenses || []).find(x => x.id === id) || {date: localISO(), category: EXP_CATS[0], unit: ''};
+  openModal(id ? 'Edit Perbelanjaan' : 'Tambah Perbelanjaan', `<form data-form="expense">${hid('id', id)}
+    <div class="grid2">${fld('Tarikh', 'date', e.date, 'date', 'required')}${money('Jumlah (RM)', 'amount', e.amount)}</div>
+    ${sel('Kategori', 'category', EXP_CATS.map(c => [c, c]), e.category)}
+    ${sel('Unit', 'unit', [['', 'Umum (semua unit)'], ...unitList().map(u => [u, u])], normU(e.unit))}
+    ${fld('Nota (pilihan)', 'note', e.note, 'text', 'placeholder="cth: Cukai pintu separuh tahun pertama"')}
+    <label class="filebtn" id="expfile"><input type="file" accept="image/*" data-chg="expPick">📎 ${e.proof ? 'Tukar gambar resit' : 'Lampirkan gambar resit (pilihan)'}</label><div id="exppreview">${e.proof ? `<img class="proofbig" src="${e.proof}" alt="">` : ''}</div>
+    <button class="btn wide" style="margin-top:12px">Simpan</button></form>`);
+}
 function rejectForm(id) {
   openModal('Tolak Bukti Bayaran', `<form data-form="reject">${hid('id', id)}${sel('Sebab', 'reason', [['Jumlah tidak tepat', 'Jumlah tidak tepat'], ['Gambar tidak jelas', 'Gambar tidak jelas'], ['Bayaran belum diterima dalam akaun', 'Bayaran belum diterima dalam akaun'], ['Lain-lain', 'Lain-lain']], 'Jumlah tidak tepat')}
     ${fld('Nota tambahan (pilihan)', 'note', '')}<button class="btn wide red">Tolak</button></form>`);
@@ -1108,12 +1197,19 @@ function receipt(id) {
     <div class="kv"><span>Diterima daripada</span><b>${esc(p.tenantName)}</b></div><div class="kv"><span>Alamat</span><b>${esc(p.address)}</b></div>
     <div class="kv"><span>Sewa bulan</span><b>${monthLabel(p.month)}</b></div><div class="kv"><span>Tarikh dibayar</span><b>${dateLabel(p.paidDate)}</b></div>
     <div class="kv"><span>Kaedah</span><b>${esc(p.method)}${p.ref ? ' (' + esc(p.ref) + ')' : ''}</b></div><div class="kv"><span>Diluluskan oleh</span><b>${esc(o.name || '-')}</b></div><div class="kv"><span>Tarikh lulus</span><b>${dtLabel(p.confirmedAt)}</b></div>
-    <div class="stamp"><span>DIBAYAR</span></div><p class="muted" style="text-align:center;margin:12px 0 0">Dijana oleh ProSewa</p></div>
+    ${p.status === 'void' ? `<div class="kv"><span>Sebab batal</span><b data-raw>${esc(p.voidReason || '-')}</b></div><div class="kv"><span>Tarikh batal</span><b>${dtLabel(p.voidAt)}</b></div><div class="stamp void"><span>DIBATALKAN</span></div>` : '<div class="stamp"><span>DIBAYAR</span></div>'}<p class="muted" style="text-align:center;margin:12px 0 0">Dijana oleh ProSewa</p></div>
     <div class="acts" style="margin-top:12px"><button class="btn ghost" style="flex:1" data-act="print">🖨️ Simpan PDF</button>
     ${p.proof ? `<button class="btn ghost" data-act="viewProof" data-id="${p.id}">Bukti</button>` : ''}
-    ${isOwner ? `<button class="btn red" data-act="delPay" data-id="${p.id}">Padam</button>` : ''}</div>`);
+    ${isOwner && p.status === 'confirmed' ? `<button class="btn red" data-act="voidForm" data-id="${p.id}">Batal resit</button>` : ''}</div>`);
 }
 
+function printHTML(html, title) {   // cetak / simpan PDF kandungan tertentu sahaja
+  let pa = $('#printArea'); if (!pa) { pa = document.createElement('div'); pa.id = 'printArea'; document.body.appendChild(pa); }
+  pa.innerHTML = html; if (LANG === 'en') trNode(pa);
+  const prev = document.title; document.title = title || prev;
+  const done = () => { document.title = prev; pa.innerHTML = ''; removeEventListener('afterprint', done); };
+  addEventListener('afterprint', done); setTimeout(() => window.print(), 60);
+}
 /* ===================== NOTIFIKASI PHONE & INSTALL ===================== */
 let swReg = null, installEvt = null;
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').then(r => swReg = r).catch(() => {});
@@ -1217,7 +1313,8 @@ const ACTIONS = {
   closeModal, tenantForm, shareLink, payForm, cashForm, remindForm, rejectForm, viewProof, receipt,
   tab: id => { closeModal(); S.dirty = false; S.tab = id; renderOwner(); scrollTo(0, 0); },
   ttab: id => { S.tTab = id; renderTenant(); scrollTo(0, 0); },
-  print: () => {   // cetak / simpan PDF: hanya resit, satu muka surat
+  print: () => { const r = $('#receipt'); if (!r) return window.print(); printHTML(r.outerHTML, 'Resit ' + (r.querySelector('.rh .muted')?.textContent || '')); },
+  printOld: () => {   // (lama)
     const r = $('#receipt'); if (!r) return window.print();
     let pa = $('#printArea'); if (!pa) { pa = document.createElement('div'); pa.id = 'printArea'; document.body.appendChild(pa); }
     pa.innerHTML = ''; pa.appendChild(r.cloneNode(true));
@@ -1239,6 +1336,25 @@ const ACTIONS = {
     const p = S.payments.find(x => x.id === id);
     await API.updateSub(p.tenantId, 'payments', id, {status: 'confirmed', receiptNo: await nextRcpt(), confirmedAt: nowStr()});
     closeModal(); await refresh(); receipt(id); toast('Diluluskan. Resit kini ada dalam app penyewa.');
+  },
+  voidForm: id => { const p = S.payments.find(x => x.id === id);
+    openModal('Batal Resit', `<form data-form="voidRcpt">${hid('id', id)}<div class="al hot" style="margin-top:0"><b>Resit ${esc(p.receiptNo)} · ${RM(p.amount)}</b>Resit yang dibatalkan kekal dalam rekod dengan cop DIBATALKAN dan tidak dikira dalam laporan. No. resit tidak akan digunakan semula.</div>
+      ${sel('Sebab', 'reason', [['Tersilap rekod', 'Tersilap rekod'], ['Jumlah salah', 'Jumlah salah'], ['Bayaran dipulangkan', 'Bayaran dipulangkan'], ['Bulan salah', 'Bulan salah'], ['Lain-lain', 'Lain-lain']], 'Tersilap rekod')}
+      ${fld('Nota (pilihan)', 'note', '')}<button class="btn wide red" style="margin-top:12px">Batalkan resit</button></form>`); },
+  repView: id => { S.repView = id; renderOwner(); },
+  expForm: id => expForm(id),
+  expProof: id => { const e = S.expenses.find(x => x.id === id); openModal('Resit Perbelanjaan', `<img class="proofbig" src="${e.proof}" alt=""><div class="kv"><span>${esc(e.category)}</span><b>${RM(e.amount)}</b></div><div class="kv"><span>Tarikh</span><b>${dateLabel(e.date)}</b></div>`); },
+  delExp: async id => { if (!confirm('Padam perbelanjaan ini?')) return; await API.delExpense(id); toast('Dipadam.'); await refresh(); },
+  taxPdf: () => printHTML(taxReportHTML(S.year), 'Laporan Sewa ' + S.year),
+  taxCsv: () => {
+    const y = S.year, d = taxData(y), o = S.owner || {};
+    const rows = [['Laporan Pendapatan Sewa ' + y], ['Pemilik', o.company || o.name || ''], [], ['Sewa kasar diterima', d.gross.toFixed(2)], ['Perbelanjaan', d.totalExp.toFixed(2)], ['Pendapatan sewa bersih', d.net.toFixed(2)], [],
+      ['Ikut unit'], ['Unit', 'Sewa', 'Belanja', 'Bersih'], ...d.rows.map(r => [r.unit, r.inc.toFixed(2), r.exp.toFixed(2), r.net.toFixed(2)]), [],
+      ['Perbelanjaan ikut kategori'], ...d.byCat.map(x => [x.c, x.v.toFixed(2)]), [],
+      ['Senarai resit'], ['No. resit', 'Tarikh dibayar', 'Bulan sewa', 'Penyewa', 'Alamat', 'Kaedah', 'Jumlah'], ...d.pays.map(p => [p.receiptNo, p.paidDate, p.month, p.tenantName, p.address, p.method, (+p.amount).toFixed(2)]), [],
+      ['Senarai perbelanjaan'], ['Tarikh', 'Kategori', 'Unit', 'Nota', 'Jumlah'], ...d.exps.map(e => [e.date, e.category, e.unit || 'Umum', e.note || '', (+e.amount).toFixed(2)])];
+    const csv = '\ufeff' + rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type: 'text/csv'})); a.download = `ProSewa-Cukai-${y}.csv`; a.click();
   },
   delPay: async id => { if (!confirm('Padam rekod bayaran ini?')) return; await API.delSub(tokOfPay(id), 'payments', id); closeModal(); toast('Dipadam.'); await refresh(); },
   delReminder: async id => { const r = S.reminders.find(x => x.id === id); await API.delSub(r.tenantId, 'reminders', id); toast('Peringatan dibatalkan.'); await refresh(); },
@@ -1278,6 +1394,11 @@ const CHANGES = {
   logoPick: async el => {
     const f = el.files[0]; if (!f) return; S.dirty = true;
     try { const d = await compressLogo(f); el.form.dataset.logo = d; $('#logoPrev').innerHTML = `<img src="${d}" alt="logo">`; toast('Logo dipilih. Tekan Simpan untuk simpan.'); }
+    catch (e) { toast(e.message, 'err'); el.value = ''; }
+  },
+  expPick: async el => {
+    const f = el.files[0]; if (!f) return;
+    try { const d = await compressImage(f, 1000, .68); el.form.dataset.proof = d; $('#exppreview').innerHTML = `<img class="proofbig" src="${d}" alt="">`; }
     catch (e) { toast(e.message, 'err'); el.value = ''; }
   },
   proofPick: async el => {
@@ -1335,6 +1456,13 @@ const FORMS = {
     for (const t of targets) await API.addSub(t.id, 'reminders', {ownerId: S.uid, tenantId: t.id, at, message: d.tenantId === '__all' ? d.message.replace(/^(Salam|Hi),/, (m0, w) => `${w} ${t.name},`) : d.message, createdAt: nowStr(), ownerNotified: isNow});
     closeModal(); toast(isNow ? `Peringatan dihantar ke app ${targets.length} penyewa.` : `${targets.length} peringatan dijadualkan pada ${dtLabel(at)}.`); await refresh();
   },
+  async expense(d, f) {
+    const data = {ownerId: S.uid, date: d.date, amount: Math.round(+d.amount * 100) / 100, category: d.category, unit: normU(d.unit), note: (d.note || '').trim()};
+    if (f.dataset.proof !== undefined) data.proof = f.dataset.proof;
+    if (d.id) await API.updateExpense(d.id, data); else await API.addExpense({...data, proof: data.proof || '', createdAt: nowStr()});
+    closeModal(); toast('Perbelanjaan disimpan ✅'); S.year = +d.date.slice(0, 4); await refresh();
+  },
+  async voidRcpt(d) { const p = S.payments.find(x => x.id === d.id); await API.updateSub(p.tenantId, 'payments', d.id, {status: 'void', voidReason: d.reason + (d.note ? ' — ' + d.note.trim() : ''), voidAt: nowStr()}); closeModal(); toast('Resit dibatalkan.'); await refresh(); receipt(d.id); },
   async reject(d) { await API.updateSub(tokOfPay(d.id), 'payments', d.id, {status: 'rejected', rejectReason: d.reason + (d.note ? ' — ' + d.note : ''), rejectedAt: nowStr()}); closeModal(); toast('Bukti ditolak. Penyewa akan dimaklumkan.'); await refresh(); }
 };
 

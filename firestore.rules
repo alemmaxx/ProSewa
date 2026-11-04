@@ -53,6 +53,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Perbelanjaan owner (untuk laporan cukai)
+    match /expenses/{id} {
+      allow read, update, delete: if signedIn() && (resource.data.ownerId == request.auth.uid || isSuper());
+      allow create: if signedIn() && request.resource.data.ownerId == request.auth.uid
+        && (!('proof' in request.resource.data) || request.resource.data.proof.size() < 900000);
+    }
+
     // Penyewa — ID dokumen = token link penyewa (rahsia). Penyewa buka tanpa login.
     match /tenants/{tok} {
       allow get: if true;
@@ -73,7 +80,9 @@ service cloud.firestore {
           && request.resource.data.proof is string
           && request.resource.data.proof.size() < 900000
         );
-        allow update, delete: if ownsTenant(tok);
+        allow update: if ownsTenant(tok);
+        // resit yang sah / dibatalkan tidak boleh dipadam (rekod audit)
+        allow delete: if ownsTenant(tok) && !(resource.data.status in ['confirmed', 'void']);
       }
 
       // Peringatan dari owner kepada penyewa
