@@ -90,6 +90,13 @@ service cloud.firestore {
         && request.resource.data.get('contact', '').size() <= 120;
     }
 
+    // Hartanah (rumah & bilik) owner
+    match /properties/{id} {
+      allow read, delete: if signedIn() && (resource.data.ownerId == request.auth.uid || isSuper());
+      allow update: if signedIn() && (resource.data.ownerId == request.auth.uid || isSuper()) && request.resource.data.ownerId == resource.data.ownerId;
+      allow create: if signedIn() && request.resource.data.ownerId == request.auth.uid;
+    }
+
     // Perbelanjaan owner (untuk laporan cukai)
     match /expenses/{id} {
       allow read, update, delete: if signedIn() && (resource.data.ownerId == request.auth.uid || isSuper());
