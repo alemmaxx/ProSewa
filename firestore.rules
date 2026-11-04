@@ -106,6 +106,21 @@ service cloud.firestore {
         );
       }
 
+      // Aduan kerosakan: penyewa (tanpa login) boleh hantar aduan baru; owner kemas kini status
+      match /issues/{iid} {
+        allow read: if true;
+        allow create: if ownsTenant(tok) || (
+          request.resource.data.status == 'new'
+          && request.resource.data.tenantId == tok
+          && request.resource.data.ownerId == tenant(tok).ownerId
+          && tenant(tok).active == true
+          && request.resource.data.title is string && request.resource.data.title.size() <= 80
+          && request.resource.data.updates.size() == 0
+          && (!('photo' in request.resource.data) || request.resource.data.photo.size() < 900000)
+        );
+        allow update, delete: if ownsTenant(tok);
+      }
+
       // Peringatan dari owner kepada penyewa
       match /reminders/{rid} {
         allow read: if true;

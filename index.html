@@ -406,6 +406,7 @@ const I18N_RX = [
   [/Link (\S+) disalin/g, "$1's link copied"],
   [/Ditambah (\d+) hari/g, 'Added $1 days'],
   [/Salam, /g, 'Hi, '],
+  [/(\d+) perkara perlu tindakan \(bukti bayaran & aduan\)/g, '$1 item(s) need action (payment proofs & requests)'],
   [/(\d+) notifikasi belum dibaca/g, '$1 unread notification(s)'],
   [/(\d+) bukti bayaran menunggu semakan/g, '$1 payment proof(s) awaiting review'],
   [/(\d+) kod promo dijana/g, '$1 promo code(s) generated'],
@@ -422,7 +423,15 @@ const I18N_RX = [
   [/Sewa (.+?) (RM [\d,.]+) belum dibayar\./g, 'Rent for $1 ($2) is unpaid.']
 ];
 Object.assign(I18N, {
-  'LAPORAN KUTIPAN SEWA': 'RENT COLLECTION REPORT', 'Rekod Bayaran': 'Record Payment', 'Rekod bayaran': 'Record payment', 'Untuk penyewa yang bayar tunai atau tidak guna app. Anda boleh muat naik slip bayaran sendiri sebagai bukti.': "For tenants who pay cash or don't use the app. You can upload the payment slip yourself as proof.",
+  'LAPORAN KUTIPAN SEWA': 'RENT COLLECTION REPORT', 'Promosi': 'Promotion', 'Promosi ProSewa': 'ProSewa promotion', 'Landing page': 'Landing page', 'Buka kit promosi': 'Open promo kit', 'Kit Promosi ProSewa': 'ProSewa Promo Kit', 'Salin link': 'Copy link', 'Kongsi': 'Share', 'Buka landing page': 'Open landing page', 'Muat turun poster': 'Download poster',
+  'Teks iklan': 'Ad copy', 'Bahasa teks': 'Copy language', 'Sertakan kod promo': 'Include promo code', '— Tiada —': '— None —', 'Kod promo hanya boleh digunakan sekali. Untuk hebahan umum, kongsi link tanpa kod. Owner baru terus dapat percubaan percuma': 'Promo codes can only be used once. For public posts, share the link without a code. New owners automatically get a free trial of', 'Aduan': 'Requests', 'Aduan kerosakan.': 'Maintenance requests.', 'Laporan kerosakan daripada penyewa': 'Damage reports from tenants', 'Baru': 'New', 'Dalam tindakan': 'In progress', 'Selesai': 'Resolved', 'Belum selesai': 'Open',
+  'Tiada aduan.': 'No requests.', 'Penyewa boleh hantar aduan kerosakan (dengan gambar) dari app mereka.': 'Tenants can send maintenance requests (with photos) from their app.', 'Laporkan kerosakan rumah kepada tuan rumah': 'Report problems in the house to your landlord',
+  'Buat aduan baru': 'New request', 'Belum ada aduan.': 'No requests yet.', 'Ada paip bocor, lampu rosak atau kunci bermasalah? Tekan butang di atas.': 'Leaking pipe, broken light or faulty lock? Tap the button above.',
+  'Aduan Kerosakan': 'Maintenance Request', 'Tajuk ringkas': 'Short title', 'cth: Paip sinki dapur bocor': 'e.g. Kitchen sink pipe leaking', 'Penerangan (pilihan)': 'Description (optional)', 'cth: Air menitis bawah sinki sejak semalam.': 'e.g. Water dripping under the sink since yesterday.',
+  'Tambah gambar (pilihan)': 'Add photo (optional)', 'Hantar aduan': 'Send request', 'Perkembangan': 'Progress', 'Kemas Kini Aduan': 'Update Request', 'Nota untuk penyewa (pilihan)': 'Note for tenant (optional)', 'cth: Tukang paip akan datang Sabtu 10 pagi.': 'e.g. The plumber will come on Saturday at 10am.',
+  'Simpan & maklumkan penyewa': 'Save & notify tenant', 'Kemas kini status': 'Update status', 'Lihat butiran': 'View details', 'Nota anda': 'Your note', 'Gambar Aduan': 'Request Photo', 'Aduan selesai': 'Request resolved', 'Aduan sedang diuruskan': 'Request in progress',
+  'Aduan kerosakan baru': 'New maintenance request', 'Aduan dihantar ✅ Tuan rumah akan dimaklumkan.': 'Request sent ✅ Your landlord will be notified.', 'Aduan dikemas kini. Penyewa akan dimaklumkan.': 'Request updated. The tenant will be notified.', 'Sila isi tajuk aduan.': 'Please enter a title.',
+  'Paip / air': 'Pipes / water', 'Elektrik / lampu': 'Electrical / lights', 'Pintu / kunci / tingkap': 'Doors / locks / windows', 'Aircond / kipas': 'Air-con / fans', 'Bumbung / bocor': 'Roof / leaks', 'Tandas / bilik air': 'Toilet / bathroom', 'Perabot / peralatan': 'Furniture / appliances', 'Serangga / kebersihan': 'Pests / cleanliness', 'Rekod Bayaran': 'Record Payment', 'Rekod bayaran': 'Record payment', 'Untuk penyewa yang bayar tunai atau tidak guna app. Anda boleh muat naik slip bayaran sendiri sebagai bukti.': "For tenants who pay cash or don't use the app. You can upload the payment slip yourself as proof.",
   'cth: no. transaksi bank': 'e.g. bank transaction no.', 'Muat naik slip bayaran (pilihan)': 'Upload payment slip (optional)', 'Kod promo': 'Promo code', 'Bilangan kod': 'Number of codes', 'Hari langganan percuma': 'Free subscription days', 'Guna sebelum (pilihan)': 'Use before (optional)', 'guna sebelum': 'use before',
   'Setiap kod hanya boleh digunakan': 'Each code can only be used', 'sekali': 'once', 'oleh seorang owner. Selepas digunakan, kod itu tidak sah lagi.': 'by one owner. Once used, the code is no longer valid.',
   'Jana kod promo': 'Generate promo codes', 'Belum guna': 'Unused', 'Digunakan': 'Used', 'Tamat tempoh': 'Expired', 'Semua': 'All', 'Salin semua kod belum guna': 'Copy all unused codes', 'Salin': 'Copy', 'Tiada kod promo.': 'No promo codes.',
@@ -682,7 +691,7 @@ const LocalAPI = {
   async addTenant(d) { const tok = genToken(); L.tenants[tok] = clone(d); L.sub[tok] = {payments: {}, reminders: {}}; lsave(); return tok; },
   async updateTenant(tok, d) { Object.assign(L.tenants[tok], clone(d)); lsave(); },
   async rekeyTenant(tok) { const nt = genToken(); L.tenants[nt] = L.tenants[tok]; const sb = L.sub[tok] || {payments: {}, reminders: {}};
-    Object.values(sb.payments).forEach(p => p.tenantId = nt); Object.values(sb.reminders).forEach(r => r.tenantId = nt); L.sub[nt] = sb; delete L.tenants[tok]; delete L.sub[tok]; lsave(); return nt; },
+    Object.values(sb.payments).forEach(p => p.tenantId = nt); Object.values(sb.reminders).forEach(r => r.tenantId = nt); Object.values(sb.issues || {}).forEach(r => r.tenantId = nt); L.sub[nt] = sb; delete L.tenants[tok]; delete L.sub[tok]; lsave(); return nt; },
   async listSub(tok, col) { return Object.entries((L.sub[tok] || {})[col] || {}).map(([id, x]) => ({...clone(x), id})); },
   async addSub(tok, col, d) { const id = genId(); ((L.sub[tok] = L.sub[tok] || {payments: {}, reminders: {}})[col] = L.sub[tok][col] || {})[id] = clone(d); lsave(); return id; },
   async updateSub(tok, col, id, d) { Object.assign(L.sub[tok][col][id], clone(d)); lsave(); },
@@ -758,12 +767,12 @@ const FireAPI = {
     await fbInit(); const nt = genToken(), F = fb.F;
     const t = fsnap(await F.getDoc(fdoc('tenants', tok))); delete t.movedTo; await F.setDoc(fdoc('tenants', nt), t);
     const subs = {};
-    for (const col of ['payments', 'reminders']) {   // salin dahulu ke link baru
+    for (const col of ['payments', 'reminders', 'issues']) {   // salin dahulu ke link baru
       subs[col] = (await F.getDocs(fcol('tenants', tok, col))).docs;
       for (const d of subs[col]) await F.setDoc(fdoc('tenants', nt, col, d.id), {...d.data(), tenantId: nt});
     }
     await F.updateDoc(fdoc('tenants', tok), {movedTo: nt});   // rules benarkan padam resit lama hanya bila salinan wujud di link baru
-    for (const col of ['payments', 'reminders']) for (const d of subs[col]) await F.deleteDoc(d.ref);
+    for (const col of ['payments', 'reminders', 'issues']) for (const d of subs[col]) await F.deleteDoc(d.ref);
     await F.deleteDoc(fdoc('tenants', tok)); return nt;
   },
   async listSub(tok, col) { await fbInit(); const s = await fb.F.getDocs(fcol('tenants', tok, col)); return s.docs.map(d => ({...d.data(), id: d.id})); },
@@ -854,6 +863,7 @@ function tenantNotifs(t, payments, reminders, settings) {
     if (now >= at) out.push({id: `due-${cm}`, at, ic: '🔔', title: 'Peringatan bayar sewa', body: `Sewa ${monthLabel(cm)} ${RM(t.rent)} perlu dibayar sebelum ${dateLabel(s.due)}.`});
   }
   if (settings.overdueOn) { const a = arrears(t, payments); if (a.sum > 0) out.push({id: `arr-${a.months.join('_')}`, at: `${addDays(dueDate(t, a.months[a.months.length - 1]), 1)}T${settings.autoTime || '09:00'}`, ic: '⚠️', title: 'Sewa tertunggak', body: `Tunggakan ${RM(a.sum)} (${a.months.map(monthLabel).join(', ')}).`}); }
+  (S.issues || []).filter(i => i.tenantId === t.id).forEach(i => (i.updates || []).forEach((u, k) => out.push({id: `is-${i.id}-${k}`, at: u.at, ic: u.status === 'done' ? '✅' : '🛠️', title: u.status === 'done' ? 'Aduan selesai' : 'Aduan sedang diuruskan', body: `${i.title}${u.note ? ' — ' + u.note : ''}`, raw: true, issue: i.id})));
   if (t.contractEnd) { const at = `${addDays(t.contractEnd, -30)}T09:00`; if (now >= at && t.contractEnd >= now.slice(0, 10)) out.push({id: 'ct-' + t.contractEnd, at, ic: '📄', title: 'Kontrak sewa hampir tamat', body: `Kontrak sewa anda tamat pada ${dateLabel(t.contractEnd)}. Sila hubungi tuan rumah untuk pembaharuan.`}); }
   reminders.filter(r => r.tenantId === t.id && r.at <= now).forEach(r => out.push({id: 'r-' + r.id, at: r.at, ic: '📩', title: 'Mesej dari tuan rumah', body: r.message, raw: true}));
   payments.filter(p => p.tenantId === t.id).forEach(p => {
@@ -872,17 +882,17 @@ async function loadOwner() {
   const [owner, sub, config] = await Promise.all([API.getOwner(S.uid), API.getSub(S.uid), API.getConfig()]);
   S.owner = owner || {}; S.settings = {...DEFAULT_SETTINGS, ...(S.owner.settings || {})}; S.sub = sub; S.config = config || {};
   S.tenants = await API.listTenants(S.uid);
-  const subs = await Promise.all(S.tenants.map(t => Promise.all([API.listSub(t.id, 'payments'), API.listSub(t.id, 'reminders')])));
-  S.payments = subs.flatMap(x => x[0]); S.reminders = subs.flatMap(x => x[1]);
+  const subs = await Promise.all(S.tenants.map(t => Promise.all([API.listSub(t.id, 'payments'), API.listSub(t.id, 'reminders'), t.active === false ? [] : API.listSub(t.id, 'issues').catch(() => [])])));
+  S.payments = subs.flatMap(x => x[0]); S.reminders = subs.flatMap(x => x[1]); S.issues = subs.flatMap(x => x[2]);
   S.subPayments = await API.listSubPayments(S.uid).catch(() => []);
   S.expenses = await API.listExpenses(S.uid).catch(() => []);
 }
 async function loadTenant(tok) {
   S.t = await API.getTenant(tok).catch(() => null); S.payments = []; S.reminders = [];
   if (!S.t) return;
-  const [owner, sub, config, pays, rems] = await Promise.all([API.getOwner(S.t.ownerId), API.getSub(S.t.ownerId), API.getConfig(), API.listSub(tok, 'payments'), API.listSub(tok, 'reminders')]);
+  const [owner, sub, config, pays, rems, iss] = await Promise.all([API.getOwner(S.t.ownerId), API.getSub(S.t.ownerId), API.getConfig(), API.listSub(tok, 'payments'), API.listSub(tok, 'reminders'), API.listSub(tok, 'issues').catch(() => [])]);
   S.owner = owner || {}; S.settings = {...DEFAULT_SETTINGS, ...(S.owner.settings || {})}; S.sub = sub; S.config = config || {};
-  S.payments = pays; S.reminders = rems;
+  S.payments = pays; S.reminders = rems; S.issues = iss;
 }
 let _refreshing = false;
 // selepas pulang dari ToyyibPay: semak langganan setiap 3 saat (callback mungkin lambat beberapa saat)
@@ -977,14 +987,42 @@ async function renderSuper() {
       <div class="kvs"><div class="kv"><span>Pelan</span><b>${esc(si.planName)}</b></div><div class="kv"><span>Tamat</span><b>${si.end ? dateLabel(si.end) : '-'}</b></div><div class="kv"><span>Daftar</span><b>${o.createdAt ? dtLabel(o.createdAt) : '-'}</b></div></div>
       <div class="acts"><button class="btn sm" data-act="superAdd" data-id="${o.uid}|30">+30 hari</button><button class="btn sm ghost" data-act="superAdd" data-id="${o.uid}|365">+1 tahun</button></div>
       <div class="acts"><button class="btn sm ghost" data-act="superTrial" data-id="${o.uid}">Set semula percubaan</button><button class="btn sm red" data-act="superExpire" data-id="${o.uid}">Tamatkan sekarang</button></div></div>`; }).join('');
-  $('#app').innerHTML = header('Super Admin', 'Kawalan sistem.', 'Tetapan percubaan & langganan owner', {btns: '<span style="margin-left:auto"></span>' + langSeg(), stats: [[owners.length, 'Owner'], [owners.filter(o => subInfo(fsub(o.sub))?.active).length, 'Aktif', 'g']]}) + `<div class="wrap">
+  $('#app').innerHTML = header('Super Admin', 'Kawalan sistem.', 'Tetapan percubaan & langganan owner', {btns: '<span style="margin-left:auto"></span><button class="btn sm" style="margin-right:8px" data-act="promoKit">📣 Promosi</button>' + langSeg(), stats: [[owners.length, 'Owner'], [owners.filter(o => subInfo(fsub(o.sub))?.active).length, 'Aktif', 'g']]}) + `<div class="wrap">
     <div class="sec-h">Harga pakej</div><form class="card" data-form="prices">${plans().map(p => `<div class="grid2">${fld(p.name + ' (RM)', 'price_' + p.id, p.price.toFixed(2), 'number', 'step="0.01" min="1" required inputmode="decimal"')}${fld('Label', 'tag_' + p.id, p.tag, 'text', 'placeholder="cth: Jimat 17%"')}</div>`).join('')}
       <p class="muted">Harga ini dipaparkan kepada owner dan digunakan semasa cipta bil ToyyibPay.</p><button class="btn wide">Simpan harga</button></form>
     <div class="sec-h">Tempoh percubaan</div><form class="card" data-form="trial">${fld('Hari percubaan percuma', 'days', trialDays(), 'number', 'min="0" max="365" required')}
       <p class="muted">Berkuat kuasa serta-merta untuk owner yang masih dalam percubaan.</p><button class="btn wide">Simpan</button></form>
+    <div class="sec-h">Promosi ProSewa</div><div class="card"><div class="kv"><span>Landing page</span><b data-raw>${esc(LANDING.replace('https://', ''))}</b></div>
+      <div class="acts"><button class="btn" style="flex:1" data-act="promoKit">📣 Buka kit promosi</button><a class="btn ghost fx" href="${LANDING}" target="_blank" rel="noopener">👁</a></div></div>
     ${promoSection(promos)}
     <div class="sec-h">Owner (${owners.length})</div>${owners.length ? `<div class="tcgrid">${rows}</div>` : '<div class="empty">Belum ada owner.</div>'}
     <button class="btn wide ghost" style="margin-top:12px" data-act="exitSuper">‹ Kembali ke app</button></div>`;
+}
+const LANDING = WEB_BASE + 'promo.html';
+const promoCaps = (l, code, days) => {
+  const t = trialDays(), link = LANDING + (l === 'en' ? '?lang=en' : '');
+  const cB = code ? `\n🎟️ Kod promo: ${code} (+${days} hari percuma, sekali guna)` : '', cE = code ? `\n🎟️ Promo code: ${code} (+${days} free days, single use)` : '';
+  return l === 'en' ? [
+    ['WhatsApp / Facebook', `🏠 Own a rental house or room? Tired of chasing rent every month?\n\nProSewa helps landlords manage everything in one app:\n✅ Tenants upload payment proof, receipts are issued automatically\n🔔 Rent reminders & notifications straight to tenants' phones\n📊 Collection & tax reports (ready for e-Filing)\n📄 Tenancy, deposit & maintenance requests\n📱 Web + Android app, tenants don't need to log in\n\nTry it FREE for ${t} days 👉 ${link}${cE}`],
+    ['TikTok / Instagram', `Landlords, stop chasing rent on WhatsApp 😅 ProSewa: automatic receipts, rent reminders, tax reports & maintenance requests. Free ${t}-day trial, link in bio 🏠${cE}\n\n#rentalproperty #landlordmalaysia #roomforrent #propertymalaysia #prosewa`],
+    ['Ringkas / Short', `ProSewa: the rental management app. Automatic receipts, rent reminders & tax reports. Free for ${t} days: ${link}${cE}`]] : [
+    ['WhatsApp / Facebook', `🏠 Ada rumah / bilik sewa? Penat kejar sewa setiap bulan?\n\nProSewa bantu tuan rumah urus semuanya dalam satu app:\n✅ Penyewa muat naik bukti bayaran, resit keluar automatik\n🔔 Peringatan sewa & notifikasi terus ke phone penyewa\n📊 Laporan kutipan & cukai (sedia untuk e-Filing)\n📄 Kontrak, deposit & aduan kerosakan\n📱 Web + App Android, penyewa tak perlu login\n\nCuba PERCUMA ${t} hari 👉 ${link}${cB}`],
+    ['TikTok / Instagram', `Tuan rumah, stop kejar sewa dalam WhatsApp 😅 ProSewa: resit automatik, peringatan sewa, laporan cukai & aduan kerosakan. Percuma ${t} hari, link di bio 🏠${cB}\n\n#rumahsewa #tuanrumah #sewarumah #biliksewa #landlordmalaysia #prosewa`],
+    ['Ringkas', `ProSewa: app urus rumah sewa. Resit automatik, peringatan sewa & laporan cukai. Percuma ${t} hari: ${link}${cB}`]];
+};
+function promoKit() {
+  const l = S.kitLang || 'bm', today = localISO(), unused = (S.promos || []).filter(p => !p.used && !(p.expires && p.expires < today));
+  const pc = unused.find(p => p.code === S.kitCode), caps = promoCaps(l, pc?.code, pc?.days);
+  S.kitCaps = caps.map(c => c[1]);
+  openModal('Kit Promosi ProSewa', `<div class="linkbox" data-raw>${esc(LANDING)}</div>
+    <div class="acts"><button class="btn" style="flex:1" data-act="copy" data-id="${esc(LANDING)}">📋 Salin link</button><button class="btn ghost" style="flex:1" data-act="kitShare">📤 Kongsi</button></div>
+    <div class="acts"><a class="btn wa" style="flex:1" href="https://wa.me/?text=${encodeURIComponent(caps[0][1])}" target="_blank" rel="noopener">WhatsApp</a><a class="btn ghost" style="flex:1" href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(LANDING)}" target="_blank" rel="noopener">Facebook</a><a class="btn ghost" style="flex:1" href="https://t.me/share/url?url=${encodeURIComponent(LANDING)}&text=${encodeURIComponent(caps[2][1])}" target="_blank" rel="noopener">Telegram</a></div>
+    <div class="acts"><a class="btn ghost" style="flex:1" href="${LANDING}" target="_blank" rel="noopener">👁 Buka landing page</a><button class="btn ghost" style="flex:1" data-act="kitPoster">🖼️ Muat turun poster</button></div>
+    <div class="sec-h">Teks iklan</div>
+    <div class="grid2"><label class="fld"><span>Bahasa teks</span><select data-chg="kitLang"><option value="bm" ${l === 'bm' ? 'selected' : ''}>BM</option><option value="en" ${l === 'en' ? 'selected' : ''}>EN</option></select></label>
+      <label class="fld"><span>Sertakan kod promo</span><select data-chg="kitCode"><option value="">— Tiada —</option>${unused.map(p => `<option value="${esc(p.code)}" ${p.code === pc?.code ? 'selected' : ''}>${esc(p.code)} (+${p.days})</option>`).join('')}</select></label></div>
+    ${caps.map(([t, c], k) => `<div class="card" style="margin-top:10px"><div class="kv" style="border:0;padding-top:0"><span><b data-raw>${t}</b></span><button class="btn sm" data-act="kitCopy" data-id="${k}">📋 Salin</button></div><div class="muted" data-raw style="white-space:pre-line;font-size:13.5px">${esc(c)}</div></div>`).join('')}
+    <p class="muted" style="margin-top:10px">Kod promo hanya boleh digunakan sekali. Untuk hebahan umum, kongsi link tanpa kod. Owner baru terus dapat percubaan percuma ${trialDays()} hari.</p>`);
 }
 function promoSection(promos) {
   const f = S.promoFilter || 'unused', today = localISO();
@@ -1014,10 +1052,12 @@ function tenantDown() {
 function renderOwner() {
   if (S.mode !== 'owner') return;
   const pend = S.payments.filter(p => p.status === 'pending').length;
-  setBadge(pend, `${pend} bukti bayaran menunggu semakan`);
-  const v = {tenants: oTenants, status: oStatus, report: oReport, sub: oSub, settings: oSettings}[S.tab] || oTenants;
+  const newIss = (S.issues || []).filter(i => i.status === 'new').length;
+  setBadge(pend + newIss, newIss ? `${pend + newIss} perkara perlu tindakan (bukti bayaran & aduan)` : `${pend} bukti bayaran menunggu semakan`);
+  const v = {tenants: oTenants, status: oStatus, issues: oIssues, report: oReport, sub: oSub, settings: oSettings}[S.tab] || oTenants;
+  const isNew = (S.issues || []).filter(i => i.status === 'new').length;
   const si = subInfo(), warn = si && si.days <= 5;
-  $('#app').innerHTML = v() + nav([['tenants', '👥', 'Penyewa'], ['status', '💳', 'Status', pend], ['report', '📊', 'Laporan'], ['sub', '💎', 'Langganan', warn ? '!' : 0], ['settings', '⚙️', 'Tetapan']], S.tab);
+  $('#app').innerHTML = v() + nav([['tenants', '👥', 'Penyewa'], ['status', '💳', 'Status', pend], ['issues', '🛠️', 'Aduan', isNew], ['report', '📊', 'Laporan'], ['sub', '💎', 'Langganan', warn ? '!' : 0], ['settings', '⚙️', 'Tetapan']], S.tab);
   if (si && S.tab !== 'sub' && warn) { const w = $('.wrap'); if (w) w.insertAdjacentHTML('afterbegin', `<div class="al ${si.active ? '' : 'hot'}" data-act="tab" data-id="sub" style="cursor:pointer"><b>${si.active ? `💎 Langganan tamat dalam ${si.days} hari` : '⛔ Langganan ProSewa telah tamat'}</b>${si.active ? 'Perbaharui sekarang supaya tiada gangguan.' : 'Anda tidak boleh tambah penyewa baru. Tekan untuk perbaharui.'}</div>`); }
 }
 const activeT = () => S.tenants.filter(t => t.active !== false);
@@ -1213,6 +1253,57 @@ const notifBlock = perm => `${perm === 'granted' ? '<div class="kv"><span>Notifi
   <div class="acts" style="margin-top:8px"><button class="btn ghost" style="flex:1" data-act="testNotif">🧪 Uji notifikasi</button>${isNative() ? '<button class="btn ghost" style="flex:1" data-act="testNotif" data-id="10">⏱️ Uji dalam 10 saat</button>' : ''}</div>
   ${isNative() ? '<p class="muted" style="margin:6px 0 0">"Uji dalam 10 saat": tekan, kemudian tutup app untuk pastikan notifikasi tetap sampai.</p>' : ''}`;
 
+/* ===================== ADUAN KEROSAKAN ===================== */
+const ISSUE_CATS = ['Paip / air', 'Elektrik / lampu', 'Pintu / kunci / tingkap', 'Aircond / kipas', 'Bumbung / bocor', 'Tandas / bilik air', 'Perabot / peralatan', 'Serangga / kebersihan', 'Lain-lain'];
+const ISSUE_ST = {new: ['Baru', 'c-overdue'], progress: ['Dalam tindakan', 'c-pending'], done: ['Selesai', 'c-paid']};
+const issueChip = i => `<span class="chip ${ISSUE_ST[i.status]?.[1] || ''}">${ISSUE_ST[i.status]?.[0] || i.status}</span>`;
+const issueSort = (a, b) => ({new: 0, progress: 1, done: 2}[a.status] - {new: 0, progress: 1, done: 2}[b.status]) || String(b.createdAt).localeCompare(String(a.createdAt));
+function issueCard(i, owner) {
+  const last = (i.updates || []).filter(u => u.note).slice(-1)[0];
+  return `<div class="tc ${i.status === 'new' ? 'hot' : i.status === 'progress' ? 'warn' : 'past'}"><div class="row" style="padding:0;border:0">${i.photo ? `<img class="proof" src="${i.photo}" data-act="issuePhoto" data-id="${i.id}" alt="">` : '<div class="proof" style="display:grid;place-items:center;font-size:26px">🛠️</div>'}
+    <div class="grow">${issueChip(i)}<h4 data-raw>${esc(i.title)}</h4><div class="s">${esc(i.category)} · ${dtLabel(i.createdAt)}</div>${owner ? `<div class="s"><span data-raw>${esc(i.tenantName)}</span> · <span data-raw>${esc(i.address || '')}</span></div>` : ''}</div></div>
+    ${i.desc ? `<p class="muted" data-raw style="margin:8px 0 0;white-space:pre-line">${esc(i.desc)}</p>` : ''}
+    ${last ? `<div class="al" style="margin:8px 0 0"><b>💬 ${owner ? 'Nota anda' : 'Tuan rumah'}</b><span data-raw>${esc(last.note)}</span></div>` : ''}
+    <div class="acts">${owner ? `<button class="btn sm" data-act="issueForm" data-id="${i.id}">✏️ Kemas kini status</button>${(S.tenants.find(t => t.id === i.tenantId) || {}).phone ? `<a class="btn sm wa fx" href="${waLink(S.tenants.find(t => t.id === i.tenantId).phone, `Salam ${i.tenantName}, berkenaan aduan "${i.title}": `)}" target="_blank" rel="noopener">💬</a>` : ''}` : `<button class="btn sm ghost" data-act="issueView" data-id="${i.id}">Lihat butiran</button>`}</div></div>`;
+}
+function oIssues() {
+  const f = S.issueFilter || 'open', all = [...(S.issues || [])].sort(issueSort);
+  const list = all.filter(i => f === 'all' || (f === 'open' ? i.status !== 'done' : i.status === f));
+  const n = k => all.filter(i => i.status === k).length;
+  let h = header('Aduan', 'Aduan kerosakan.', 'Laporan kerosakan daripada penyewa', {btns: ownerBtns(), stats: [[n('new'), 'Baru', n('new') ? 'r' : ''], [n('progress'), 'Dalam tindakan'], [n('done'), 'Selesai', 'g']]}) + `<div class="wrap">`;
+  h += `<div class="seg">${[['open', 'Belum selesai'], ['done', 'Selesai'], ['all', 'Semua']].map(([k, l]) => `<button class="${f === k ? 'on' : ''}" data-act="issueFilter" data-id="${k}">${l}</button>`).join('')}</div>`;
+  h += list.length ? `<div class="tcgrid">${list.map(i => issueCard(i, true)).join('')}</div>` : '<div class="empty">Tiada aduan.<br>Penyewa boleh hantar aduan kerosakan (dengan gambar) dari app mereka.</div>';
+  return h + `</div>`;
+}
+function tIssues(notifs, unread) {
+  const list = [...(S.issues || [])].sort(issueSort);
+  let h = header('Aduan', 'Aduan kerosakan.', 'Laporkan kerosakan rumah kepada tuan rumah', {btns: tenantBtns(unread)}) + `<div class="wrap">
+    <button class="btn wide" data-act="issueNew">🛠️ Buat aduan baru</button><div style="height:12px"></div>`;
+  h += list.length ? `<div class="tcgrid">${list.map(i => issueCard(i, false)).join('')}</div>` : '<div class="empty">Belum ada aduan.<br>Ada paip bocor, lampu rosak atau kunci bermasalah? Tekan butang di atas.</div>';
+  return h + `</div>`;
+}
+function issueNew() {
+  openModal('Aduan Kerosakan', `<form data-form="issue">${sel('Kategori', 'category', ISSUE_CATS.map(c => [c, c]), ISSUE_CATS[0])}
+    ${fld('Tajuk ringkas', 'title', '', 'text', 'required maxlength="80" placeholder="cth: Paip sinki dapur bocor"')}
+    ${area('Penerangan (pilihan)', 'desc', '', 'maxlength="800" placeholder="cth: Air menitis bawah sinki sejak semalam."')}
+    <label class="filebtn" id="filebtn"><input type="file" accept="image/*" data-chg="proofPick">📷 Tambah gambar (pilihan)</label><div id="preview"></div>
+    <button class="btn wide" style="margin-top:10px">Hantar aduan</button></form>`);
+}
+function issueView(id) {
+  const i = S.issues.find(x => x.id === id); if (!i) return;
+  openModal('Aduan Kerosakan', `${issueChip(i)}<h3 data-raw style="margin:6px 0 2px">${esc(i.title)}</h3><p class="muted" style="margin:0">${esc(i.category)} · ${dtLabel(i.createdAt)}</p>
+    ${i.desc ? `<p data-raw style="white-space:pre-line">${esc(i.desc)}</p>` : ''}${i.photo ? `<img class="proofbig" src="${i.photo}" alt="">` : ''}
+    <div class="sec-h">Perkembangan</div><div class="card">${[{at: i.createdAt, status: 'new', note: ''}, ...(i.updates || [])].map(u => `<div class="row"><div class="grow"><div class="t">${ISSUE_ST[u.status]?.[0] || ''}</div><div class="s">${dtLabel(u.at)}</div>${u.note ? `<div class="s" data-raw>${esc(u.note)}</div>` : ''}</div></div>`).join('')}</div>`);
+}
+function issueForm(id) {
+  const i = S.issues.find(x => x.id === id); if (!i) return;
+  openModal('Kemas Kini Aduan', `<form data-form="issueUpd">${hid('id', id)}<p style="margin-top:0"><b data-raw>${esc(i.title)}</b><br><span class="muted"><span data-raw>${esc(i.tenantName)}</span> · ${esc(i.category)}</span></p>
+    ${i.desc ? `<p class="muted" data-raw style="white-space:pre-line">${esc(i.desc)}</p>` : ''}${i.photo ? `<img class="proofbig" src="${i.photo}" alt="">` : ''}
+    ${sel('Status', 'status', Object.entries(ISSUE_ST).map(([k, v]) => [k, v[0]]), i.status === 'new' ? 'progress' : i.status)}
+    ${area('Nota untuk penyewa (pilihan)', 'note', '', 'maxlength="500" placeholder="cth: Tukang paip akan datang Sabtu 10 pagi."')}
+    <button class="btn wide" style="margin-top:10px">Simpan & maklumkan penyewa</button></form>`);
+}
+
 /* ===================== PENYEWA ===================== */
 function renderTenant() {
   if (S.mode !== 'tenant') return;
@@ -1232,8 +1323,8 @@ function renderTenant() {
   const seenBefore = lsGet(seenKey, []);
   if (S.tTab === 'notif') lsSet(seenKey, notifs.map(n => n.id));
   const unread = S.tTab === 'notif' ? 0 : notifs.filter(n => !seenBefore.includes(n.id)).length;
-  const v = {home: tHome, notif: tNotif, history: tHistory}[S.tTab] || tHome;
-  $('#app').innerHTML = v(notifs, unread, seenBefore) + nav([['home', '🏠', 'Utama'], ['notif', '🔔', 'Notifikasi', unread], ['history', '🧾', 'Sejarah']], S.tTab);
+  const v = {home: tHome, notif: tNotif, history: tHistory, issues: tIssues}[S.tTab] || tHome;
+  $('#app').innerHTML = v(notifs, unread, seenBefore) + nav([['home', '🏠', 'Utama'], ['notif', '🔔', 'Notifikasi', unread], ['history', '🧾', 'Sejarah'], ['issues', '🛠️', 'Aduan']], S.tTab);
   pushNewTenantNotifs(notifs); scheduleTenantNative(); pushRegister(); setBadge(unread);
 }
 const tenantBtns = unread => instBtn() + hb('lang', LANG === 'en' ? 'BM' : 'EN', 'Bahasa', 0, '', LANG === 'en' ? 'bm' : 'en') + hb('theme', curTheme() === 'dark' ? '☀️' : '🌙', 'Tema', 0, '', curTheme() === 'dark' ? 'light' : 'dark') + hb('ttab', '🔔', 'Notifikasi', unread, '', 'notif');
@@ -1546,6 +1637,8 @@ async function ownerTick() {
     phoneNotify('🔔 Peringatan dihantar', `Peringatan berjadual telah masuk ke app ${t.name}.`);
     toast(`🔔 Peringatan berjadual dihantar kepada ${t.name}.`);
   }
+  const ki = 'prosewa_seeniss_' + S.uid, si = lsGet(ki, []), fi = (S.issues || []).filter(i => i.status === 'new' && !si.includes(i.id));
+  if (fi.length) { if (!_pushTok) fi.slice(0, 3).forEach(i => phoneNotify('🛠️ Aduan kerosakan baru', `${i.tenantName}: ${i.title}`)); lsSet(ki, [...si, ...fi.map(i => i.id)].slice(-300)); }
   const k = 'prosewa_seenproof_' + S.uid, seen = lsGet(k, []), fresh = S.payments.filter(p => p.status === 'pending' && !seen.includes(p.id));
   if (fresh.length) { if (!_pushTok) fresh.slice(0, 3).forEach(p => phoneNotify('🧾 Bukti bayaran baru', `${p.tenantName} · ${monthLabel(p.month)} · ${RM(p.amount)}`)); lsSet(k, [...seen, ...fresh.map(p => p.id)].slice(-300)); }
 }
@@ -1607,9 +1700,16 @@ const ACTIONS = {
     closeModal(); toast('Langganan diaktifkan ✅'); await enterOwner(S.uid, {tab: 'sub'});
   },
   exitSuper: () => { history.replaceState(null, '', baseDir() + 'index.html'); S.uid ? enterOwner(S.uid) : renderLogin(); },
+  issueNew: () => issueNew(), issueView: id => issueView(id), issueForm: id => issueForm(id),
+  issueFilter: id => { S.issueFilter = id; renderOwner(); },
+  issuePhoto: id => { const i = S.issues.find(x => x.id === id); if (i?.photo) openModal('Gambar Aduan', `<img class="proofbig" src="${i.photo}" alt="">`); },
   renewForm: id => renewForm(id), endForm: id => endForm(id), depStatement: id => depStatement(id),
   depPdf: id => { const t = S.tenants.find(x => x.id === id) || S.t; printHTML(depStatementHTML(t), tr('Penyata Deposit') + ' ' + t.name); },
   promoFilter: id => { S.promoFilter = id; renderSuper(); },
+  promoKit: () => promoKit(),
+  kitCopy: async k => { const c = S.kitCaps[+k]; try { await navigator.clipboard.writeText(c); toast('Disalin.'); } catch (e) { prompt('Salin:', c); } },
+  kitShare: async () => { const d = {title: 'ProSewa', text: S.kitCaps[2], url: LANDING}; if (navigator.share) { try { await navigator.share(d); } catch (e) {} } else { try { await navigator.clipboard.writeText(S.kitCaps[0]); toast('Disalin.'); } catch (e) {} } },
+  kitPoster: async () => { let r = await fetch('shots/og.jpg').catch(() => null); if (!r || !r.ok) r = await fetch(WEB_BASE + 'shots/og.jpg'); const b = await r.blob(); await saveFile('ProSewa-poster.jpg', b, 'image/jpeg'); },
   promoCopyAll: async () => { const t = localISO(), c = (S.promos || []).filter(p => !p.used && !(p.expires && p.expires < t)).map(p => p.code).join('\n'); try { await navigator.clipboard.writeText(c); toast('Disalin.'); } catch (e) { prompt('Salin:', c); } },
   promoEdit: code => { const p = S.promos.find(x => x.code === code); openModal('Edit Kod Promo', `<form data-form="promoEdit">${hid('code', code)}<div class="linkbox" data-raw>${esc(code)}</div>
       ${fld('Hari langganan percuma', 'days', p.days, 'number', 'min="1" max="3650" required')}${fld('Guna sebelum (pilihan)', 'expires', p.expires || '', 'date')}${fld('Nota (pilihan)', 'note', p.note || '')}<button class="btn wide" style="margin-top:10px">Simpan</button></form>`); },
@@ -1716,6 +1816,7 @@ const ACTIONS = {
   }
 };
 const CHANGES = {
+  kitLang: el => { S.kitLang = el.value; promoKit(); }, kitCode: el => { S.kitCode = el.value; promoKit(); },
   endCalc: el => { const f = el.closest('form'), t = S.tenants.find(x => x.id === f.elements.id.value), c = depCalc(t, Object.fromEntries(new FormData(f))); const b = $('#endRefund'); if (b) { b.textContent = c.due > 0 ? `${tr('Baki perlu dibayar penyewa')}: ${RM(c.due)}` : RM(c.refund); b.style.color = c.due > 0 ? 'var(--red)' : 'var(--green)'; } },
   remindWhen: el => { $('#whenBox').style.display = el.value === 'later' ? '' : 'none'; },
   month: el => { S.month = el.value; renderOwner(); },
@@ -1762,6 +1863,16 @@ const FORMS = {
   },
   async forgot(d) { try { await API.resetPass(d.email.trim()); toast(ONLINE ? 'Pautan tetapan semula telah dihantar ke emel anda.' : 'Mod peranti: tiada emel dihantar.'); S.authView = 'login'; S.lastEmail = d.email.trim(); renderLogin(); } catch (e) { throw new Error(authMsg(e)); } },
   async prices(d) { const list = PLANS.map(p => ({id: p.id, price: Math.max(1, Math.round((+d['price_' + p.id] || p.price) * 100) / 100), tag: (d['tag_' + p.id] || '').trim()})); await API.setConfig({plans: list}); S.config.plans = list; toast('Harga pakej disimpan ✅'); renderSuper(); },
+  async issue(d, f) {
+    const t = S.t; if (!d.title.trim()) throw new Error('Sila isi tajuk aduan.');
+    await API.addSub(t.id, 'issues', {ownerId: t.ownerId, tenantId: t.id, tenantName: t.name, address: t.address, category: d.category, title: d.title.trim().slice(0, 80), desc: (d.desc || '').trim().slice(0, 800), photo: f.dataset.proof || '', status: 'new', createdAt: nowStr(), updates: []});
+    closeModal(); toast('Aduan dihantar ✅ Tuan rumah akan dimaklumkan.'); S.tTab = 'issues'; await refresh();
+  },
+  async issueUpd(d) {
+    const i = S.issues.find(x => x.id === d.id), u = {at: nowStr(), status: d.status, note: (d.note || '').trim().slice(0, 500)};
+    await API.updateSub(i.tenantId, 'issues', i.id, {status: d.status, updates: [...(i.updates || []), u], ...(d.status === 'done' ? {doneAt: u.at} : {})});
+    closeModal(); toast('Aduan dikemas kini. Penyewa akan dimaklumkan.'); await refresh();
+  },
   async renew(d) {
     const t = S.tenants.find(x => x.id === d.id), nr = +d.rent || +t.rent, hist = [...(t.rentHist || [])];
     if (nr !== +t.rent) hist.push({from: addMonths(curMonth(), 1), prev: +t.rent, rent: nr});
@@ -1892,6 +2003,7 @@ function nativeInit() {
   if (!IS_TENANT_SITE) {
     if (tok) { location.replace(baseDir() + 'penyewa.html?t=' + encodeURIComponent(tok)); return; }   // link lama → website penyewa
     const q = new URLSearchParams(location.search); let tab = null;
+    if (q.has('daftar')) { S.authView = 'register'; history.replaceState(null, '', location.pathname); }   // dari landing page
     if (q.has('status_id') && q.has('billcode')) {   // pulang dari ToyyibPay
       history.replaceState(null, '', baseDir() + 'index.html'); tab = 'sub'; if (q.get('status_id') === '1') S.pollSub = 10;
       setTimeout(() => toast(q.get('status_id') === '1' ? 'Bayaran berjaya ✅ Langganan akan aktif sebentar lagi.' : 'Bayaran tidak berjaya / dibatalkan.', q.get('status_id') === '1' ? '' : 'err'), 800);

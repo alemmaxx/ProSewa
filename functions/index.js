@@ -7,6 +7,7 @@
  * prosewaRedeemPromo : owner guna kod promo (sekali guna) → tambah hari langganan
  * prosewaOnPayment   : bukti bayaran baru / lulus / tolak → push notification
  * prosewaOnReminder  : mesej owner → push kepada penyewa
+ * prosewaOnIssue     : aduan kerosakan baru → owner; kemas kini status → penyewa
  * prosewaPushTick    : setiap 15 minit → peringatan berjadual, tarikh bayar, tunggakan, kontrak tamat
  *
  * Secret key ToyyibPay TIDAK ditulis dalam kod. Simpan sekali melalui CMD:
@@ -216,6 +217,15 @@ exports.prosewaOnPayment = onDocumentWritten({document: 'tenants/{tok}/payments/
     return toTenant(tok, l => l === 'en' ? {title: '❌ Payment proof rejected', body: `${ml(a.month, l)}: ${a.rejectReason || 'Please contact your landlord.'}`} : {title: '❌ Bukti bayaran ditolak', body: `${ml(a.month, l)}: ${a.rejectReason || 'Sila hubungi tuan rumah.'}`});
   if (a.status === 'void' && was !== 'void')
     return toTenant(tok, l => l === 'en' ? {title: '🚫 Receipt voided', body: `Receipt ${a.receiptNo}: ${a.voidReason || ''}`} : {title: '🚫 Resit dibatalkan', body: `Resit ${a.receiptNo}: ${a.voidReason || ''}`});
+});
+
+exports.prosewaOnIssue = onDocumentWritten({document: 'tenants/{tok}/issues/{iid}', database: 'prosewa', region: DB_REGION}, async ev => {
+  const b = ev.data.before.exists ? ev.data.before.data() : null, a = ev.data.after.exists ? ev.data.after.data() : null;
+  if (!a) return;
+  if (!b) return toOwner(a.ownerId, l => l === 'en' ? {title: '🛠️ New maintenance request', body: `${a.tenantName}: ${a.title}`} : {title: '🛠️ Aduan kerosakan baru', body: `${a.tenantName}: ${a.title}`});
+  const nb = (b.updates || []).length, na = (a.updates || []).length;
+  if (na > nb) { const u = a.updates[na - 1], done = u.status === 'done';
+    return toTenant(ev.params.tok, l => l === 'en' ? {title: done ? '✅ Request resolved' : '🛠️ Request in progress', body: `${a.title}${u.note ? ' — ' + u.note : ''}`} : {title: done ? '✅ Aduan selesai' : '🛠️ Aduan sedang diuruskan', body: `${a.title}${u.note ? ' — ' + u.note : ''}`}); }
 });
 
 const msgBuild = r => l => ({title: l === 'en' ? '📩 Message from landlord' : '📩 Mesej dari tuan rumah', body: String(r.message || '').slice(0, 240)});
