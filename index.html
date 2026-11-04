@@ -1446,7 +1446,7 @@ function phoneNotify(title, body, at) {
   try { if (swReg) swReg.showNotification(title, opt); else new Notification(title, opt); } catch (e) {}
 }
 /* ---------- Push notification (FCM): sampai walaupun app ditutup ---------- */
-const FCM_VAPID = '';   // Firebase Console → Project settings → Cloud Messaging → Web Push certificates → Key pair
+const FCM_VAPID = 'BKhLhZl6oEhxwII8FmLcy262N2JRpJYuHRj3CBekzWyJAd3-iWxbpODwxVb9Kz-SK51MpRVL5jp4D3oAp68Uk8Y';   // Firebase Console → Project settings → Cloud Messaging → Web Push certificates → Key pair
 let _pushTok = null, _pushBusy = false;
 const pushWho = () => S.mode === 'tenant' && S.t && !(lsGet('prosewa_owner_dev') && !isNative()) ?   // browser owner yang buka paparan penyewa: jangan ambil alih notifikasi owner
    {tok: S.t.token} : (S.uid && ['owner', 'locked'].includes(S.mode) ? {uid: S.uid} : null);
