@@ -176,6 +176,10 @@ table.rep tr.tot td{font-weight:800;border-bottom:0;color:var(--gold)}
 .lang button{border:1px solid var(--line);background:none;color:var(--muted);padding:6px 14px;font:700 12px var(--f);cursor:pointer}
 .lang button:first-child{border-radius:10px 0 0 10px}.lang button:last-child{border-radius:0 10px 10px 0;border-left:0}
 .lang button.on{background:var(--ink);color:var(--bg)}
+.pw{position:relative}.pw input{padding-right:50px}
+.pw .eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:42px;height:38px;border:0;border-radius:8px;background:none;font-size:18px;cursor:pointer;opacity:.7}
+.pw .eye.on{opacity:1;background:var(--soft)}
+.authlinks{display:flex;justify-content:space-between;gap:10px;margin-top:14px;font-size:14px}
 .link{background:none;border:0;color:var(--gold);font-weight:700;cursor:pointer;padding:0;text-decoration:underline;font-size:inherit;font-family:var(--f)}
 .hint{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:var(--blue2);color:var(--ink);font-size:13px;line-height:1.45;border:1px solid var(--line);text-align:left}
 /* tema putih (sama seperti ProTender) */
@@ -333,6 +337,19 @@ const I18N_RX = [
   [/Salam, /g, 'Hi, ']
 ];
 Object.assign(I18N, {
+  'Daftar baru': 'Sign up', 'Lupa kata laluan?': 'Forgot password?', 'Daftar': 'Sign Up', 'Ulang kata laluan': 'Repeat password', 'Daftar akaun owner baru': 'Create a new owner account',
+  'Log masuk untuk teruskan': 'Sign in to continue', 'Masukkan emel anda. Kami akan hantar pautan untuk tetapkan kata laluan baru.': "Enter your email. We'll send a link to set a new password.",
+  'Hantar pautan': 'Send link', 'Kembali ke log masuk': 'Back to sign in', 'Sudah ada akaun?': 'Already have an account?', 'Log masuk': 'Sign in', 'Tunjuk kata laluan': 'Show password',
+  'Mod peranti (ujian): Firebase belum disambung, data disimpan dalam browser ini sahaja.': 'Device mode (testing): Firebase not connected, data is stored in this browser only.',
+  'Memuatkan…': 'Loading…', 'Tiada akses': 'No access', 'Panel ini hanya untuk akaun Super Admin. Sila log masuk dengan akaun tersebut.': 'This panel is only for the Super Admin account. Please sign in with that account.',
+  'Owner': 'Owners', 'Belum ada owner.': 'No owners yet.', 'Panel Super Admin': 'Super Admin Panel', 'Lengkapkan maklumat anda': 'Complete your details',
+  'Akaun dicipta': 'Account created', 'Sila lengkapkan maklumat anda di Tetapan.': 'Please complete your details in Settings.',
+  'Pautan tetapan semula telah dihantar ke emel anda.': 'A reset link has been sent to your email.', 'Mod peranti: tiada emel dihantar.': 'Device mode: no email sent.', 'Kata laluan tidak sama.': 'Passwords do not match.',
+  'Emel tidak berdaftar.': 'Email not registered.', 'Format emel tidak sah.': 'Invalid email format.', 'Emel ini sudah didaftarkan. Sila log masuk.': 'This email is already registered. Please sign in.',
+  'Kata laluan terlalu lemah (sekurang-kurangnya 6 aksara).': 'Password too weak (at least 6 characters).', 'Terlalu banyak cubaan. Cuba lagi sebentar.': 'Too many attempts. Try again shortly.',
+  'Tiada sambungan internet.': 'No internet connection.', 'Sila log keluar & log masuk semula, kemudian cuba lagi.': 'Please sign out & sign in again, then retry.', 'Tiada kebenaran. Sila log masuk semula.': 'No permission. Please sign in again.',
+  'Bayaran online (ToyyibPay) akan dibuka tidak lama lagi. Buat masa ini, sila hubungi admin ProSewa untuk aktifkan langganan.': 'Online payment (ToyyibPay) is coming soon. For now, please contact ProSewa admin to activate your subscription.',
+  'Bukti bayaran baru': 'New payment proof', 'Tidak dapat sambung': 'Cannot connect', 'Bayaran': 'Payment',
   'Januari': 'January', 'Februari': 'February', 'Mac': 'Mar', 'Mei': 'May', 'Julai': 'July', 'Ogos': 'August', 'Oktober': 'October', 'Disember': 'December',
   'Ogo': 'Aug', 'Okt': 'Oct', 'Dis': 'Dec',
   'Asal': 'Dark', 'Putih': 'Light', 'Bahasa': 'Language', 'Tema': 'Theme', 'Paparan': 'Display',
@@ -452,88 +469,142 @@ function setLang(l) { LANG = l === 'en' ? 'en' : 'bm'; lsSet('prosewa_lang', LAN
 const langSeg = () => `<div class="lang" style="margin-right:6px"><button class="${LANG === 'bm' ? 'on' : ''}" data-act="lang" data-id="bm">BM</button><button class="${LANG === 'en' ? 'on' : ''}" data-act="lang" data-id="en">EN</button></div>`;
 document.documentElement.lang = LANG === 'en' ? 'en' : 'ms'; _obs.observe(document.body, {childList: true, subtree: true});
 
-/* ---------- Lapisan data (localStorage) — tukar ke Firebase kemudian ---------- */
-const KEY = 'prosewa_data_v2';
-let mem = lsGet(KEY) || {owner: null, settings: null, tenants: [], payments: [], reminders: []};
-const save = () => { if (!lsSet(KEY, mem)) toast('Storan peranti penuh. Padam beberapa bukti bayaran lama.', 'err'); };
-const DB = {
-  async getOwner() { return mem.owner; },
-  async setOwner(o) { mem.owner = o; save(); },
-  async getSettings() { return mem.settings || (mem.settings = {autoOn: true, autoDays: 3, autoTime: '09:00', overdueOn: true}); },
-  async setSettings(s) { mem.settings = s; save(); },
-  async list(col, where = []) { return (mem[col] || []).filter(r => where.every(([k, v]) => r[k] === v)).map(r => ({...r})); },
-  async get(col, id) { const r = (mem[col] || []).find(r => r.id === id); return r ? {...r} : null; },
-  async add(col, data) { const r = {...data, id: genId()}; (mem[col] = mem[col] || []).push(r); save(); return r.id; },
-  async update(col, id, data) { const r = (mem[col] || []).find(r => r.id === id); if (!r) throw new Error('Rekod tidak dijumpai.'); Object.assign(r, data); save(); },
-  async remove(col, id) { mem[col] = (mem[col] || []).filter(r => r.id !== id); save(); },
-  async tenantByToken(tok) { const r = mem.tenants.find(t => t.token === tok); return r ? {...r} : null; }
+/* =====================================================================
+   FIREBASE — isi config projek kukusanmy di bawah. Kalau kosong, app guna
+   "mod peranti" (data dalam browser sahaja) untuk ujian.
+   ===================================================================== */
+const FIREBASE_CONFIG = {
+  apiKey: "",
+  authDomain: "",
+  projectId: "",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: ""
 };
-// muat semula bila tab lain ubah data (cth: buka link penyewa dalam tab lain)
-addEventListener('storage', e => { if (e.key === KEY) { mem = lsGet(KEY) || mem; refresh(); } });
+const FIRESTORE_DB = 'prosewa';                       // database berasingan dalam projek yang sama
+const SUPER_UID = 'D3U6Dxs5joZQq5EYRdjZQUmRV773';     // akaun Super Admin (pemilik sistem)
+const ONLINE = !!FIREBASE_CONFIG.apiKey;
+const FB_VER = '10.12.2';
+const DEFAULT_SETTINGS = {autoOn: true, autoDays: 3, autoTime: '09:00', overdueOn: true};
 
-/* ---------- Langganan ProSewa (owner bayar untuk guna app) ----------
-   Tukar harga di sini. Butiran ToyyibPay akan disambung melalui Firebase Cloud Function
-   (secret key TIDAK boleh diletak dalam fail ini). */
+/* ---------- Langganan ProSewa (owner bayar untuk guna app) ---------- */
 const PLANS = [
   {id: 'monthly', name: 'Bulanan', months: 1, price: 19.90, tag: ''},
   {id: 'half', name: '6 Bulan', months: 6, price: 99.00, tag: 'Jimat 17%'},
   {id: 'yearly', name: 'Setahun', months: 12, price: 179.00, tag: 'Paling jimat'}
 ];
-const TRIAL_DAYS = 14;        // tempoh percubaan asal (hari) — boleh diubah juga di panel Super Admin (#super)
-const SUPER_PIN = '2580';     // PIN panel Super Admin: buka .../ProSewa/#super  (TUKAR PIN INI)
-const trialDays = () => +(mem.config && mem.config.trialDays) || TRIAL_DAYS;
-const TOYYIBPAY = {
-  createBillUrl: ''   // nanti: URL Cloud Function yang cipta bil ToyyibPay & pulangkan {billCode}
-};
+const TRIAL_DAYS = 14;   // asal; Super Admin boleh ubah dalam panel #super (disimpan dalam config/app)
+const TOYYIBPAY = {createBillUrl: ''};   // nanti: URL Cloud Function yang cipta bil ToyyibPay
 const addMonthsISO = (iso, n) => { const [y, m, d] = iso.split('-').map(Number); const last = new Date(y, m - 1 + n + 1, 0).getDate(); return localISO(new Date(y, m - 1 + n, Math.min(d, last))); };
-function ensureSub() { if (!mem.subscription) { mem.subscription = {plan: 'trial', start: localISO(), end: ''}; mem.subPayments = mem.subPayments || []; save(); } }
-function subInfo() {
-  const s = mem.subscription; if (!s) return null;
-  const end = s.plan === 'trial' ? addDays(s.start, trialDays()) : s.end;   // percubaan ikut tetapan hari semasa
+const trialDays = () => +(S.config && S.config.trialDays) || TRIAL_DAYS;
+const isSuper = () => S.uid === SUPER_UID;
+function subInfo(s = S.sub) {
+  if (!s) return null;
+  const end = s.plan === 'trial' ? addDays(s.start, trialDays()) : s.end;
   const diff = new Date(end + 'T23:59:59') - new Date(), active = diff >= 0, days = active ? Math.floor(diff / 864e5) : -Math.ceil(-diff / 864e5);
   return {...s, end, days, active, planName: s.plan === 'trial' ? 'Percubaan percuma' : (PLANS.find(p => p.id === s.plan)?.name || s.plan)};
 }
-function activateSub(planId, ref) {
-  const pl = PLANS.find(p => p.id === planId), cur = subInfo();
-  const from = cur && cur.active && cur.end > localISO() ? cur.end : localISO();
-  const end = addMonthsISO(from, pl.months);
-  mem.subscription = {plan: pl.id, start: cur && cur.active ? cur.start : localISO(), end};
-  (mem.subPayments = mem.subPayments || []).push({id: genId(), date: nowStr(), plan: pl.id, months: pl.months, amount: pl.price, ref, until: end});
-  save();
+const extendFrom = si => si && si.active && si.end > localISO() ? si.end : localISO();
+
+/* ---------- API: mod peranti (localStorage) ---------- */
+const LKEY = 'prosewa_local_v3';
+let L = lsGet(LKEY) || {users: {}, session: null, owners: {}, priv: {}, subs: {}, config: {}, tenants: {}, sub: {}, subPayments: []};
+const lsave = () => { if (!lsSet(LKEY, L)) toast('Storan peranti penuh. Padam beberapa bukti bayaran lama.', 'err'); };
+const clone = o => o == null ? o : JSON.parse(JSON.stringify(o));
+const authErr = code => Object.assign(new Error(code), {code});
+const LocalAPI = {
+  async onAuth(cb) { cb(L.session); },
+  async register(email, pass) { email = email.toLowerCase(); if (L.users[email]) throw authErr('auth/email-already-in-use'); const uid = email === 'super@local' ? SUPER_UID : genId() + genId(); L.users[email] = {uid, pass: await hashPass(pass)}; L.session = uid; lsave(); return uid; },
+  async login(email, pass) { const u = L.users[email.toLowerCase()]; if (!u || u.pass !== await hashPass(pass)) throw authErr('auth/invalid-credential'); L.session = u.uid; lsave(); return u.uid; },
+  async logout() { L.session = null; lsave(); },
+  async resetPass(email) { if (!L.users[email.toLowerCase()]) throw authErr('auth/user-not-found'); },
+  async changePass(p) { const e = Object.keys(L.users).find(k => L.users[k].uid === L.session); L.users[e].pass = await hashPass(p); lsave(); },
+  async getOwner(uid) { return clone(L.owners[uid] || null); },
+  async setOwner(uid, d) { L.owners[uid] = {...(L.owners[uid] || {}), ...clone(d)}; lsave(); },
+  async setPriv(uid, d) { L.priv[uid] = {...(L.priv[uid] || {}), ...clone(d)}; lsave(); },
+  async getSub(uid) { return clone(L.subs[uid] || null); },
+  async createTrial(uid) { L.subs[uid] = {plan: 'trial', start: localISO()}; lsave(); },
+  async setSub(uid, d) { L.subs[uid] = clone(d); lsave(); },
+  async getConfig() { return clone(L.config || {}); },
+  async setConfig(d) { L.config = {...L.config, ...d}; lsave(); },
+  async listTenants(ownerId) { return Object.entries(L.tenants).filter(([k, t]) => t.ownerId === ownerId).map(([k, t]) => ({...clone(t), id: k, token: k})); },
+  async getTenant(tok) { const t = L.tenants[tok]; return t ? {...clone(t), id: tok, token: tok} : null; },
+  async addTenant(d) { const tok = genToken(); L.tenants[tok] = clone(d); L.sub[tok] = {payments: {}, reminders: {}}; lsave(); return tok; },
+  async updateTenant(tok, d) { Object.assign(L.tenants[tok], clone(d)); lsave(); },
+  async rekeyTenant(tok) { const nt = genToken(); L.tenants[nt] = L.tenants[tok]; const sb = L.sub[tok] || {payments: {}, reminders: {}};
+    Object.values(sb.payments).forEach(p => p.tenantId = nt); Object.values(sb.reminders).forEach(r => r.tenantId = nt); L.sub[nt] = sb; delete L.tenants[tok]; delete L.sub[tok]; lsave(); return nt; },
+  async listSub(tok, col) { return Object.entries((L.sub[tok] || {})[col] || {}).map(([id, x]) => ({...clone(x), id})); },
+  async addSub(tok, col, d) { const id = genId(); ((L.sub[tok] = L.sub[tok] || {payments: {}, reminders: {}})[col] = L.sub[tok][col] || {})[id] = clone(d); lsave(); return id; },
+  async updateSub(tok, col, id, d) { Object.assign(L.sub[tok][col][id], clone(d)); lsave(); },
+  async delSub(tok, col, id) { delete L.sub[tok][col][id]; lsave(); },
+  async listOwners() { return Object.keys(L.priv).map(uid => ({uid, ...clone(L.priv[uid]), name: L.owners[uid]?.name || '', sub: clone(L.subs[uid])})); },
+  async listSubPayments(uid) { return L.subPayments.filter(x => x.ownerId === uid).map(clone); },
+  async addSubPayment(d) { L.subPayments.push({...clone(d), id: genId()}); lsave(); }
+};
+addEventListener('storage', e => { if (!ONLINE && e.key === LKEY) { L = lsGet(LKEY) || L; refresh(); } });
+
+/* ---------- API: Firebase (Auth + Firestore database "prosewa") ---------- */
+let fb = null;
+async function fbInit() {
+  if (fb) return fb;
+  const b = `https://www.gstatic.com/firebasejs/${FB_VER}/`;
+  const [A, U, F] = await Promise.all([import(b + 'firebase-app.js'), import(b + 'firebase-auth.js'), import(b + 'firebase-firestore.js')]);
+  const app = A.initializeApp(FIREBASE_CONFIG);
+  return fb = {U, F, auth: U.getAuth(app), db: F.getFirestore(app, FIRESTORE_DB)};
+}
+const fdoc = (...p) => fb.F.doc(fb.db, ...p);
+const fcol = (...p) => fb.F.collection(fb.db, ...p);
+const fsnap = s => s.exists() ? s.data() : null;
+const fsub = d => { if (!d) return null; const o = {...d}; if (o.startTs && o.startTs.toDate) o.start = localISO(o.startTs.toDate()); delete o.startTs; return o; };
+const FireAPI = {
+  async onAuth(cb) { await fbInit(); fb.U.onAuthStateChanged(fb.auth, u => cb(u ? u.uid : null)); },
+  async register(email, pass) { await fbInit(); const c = await fb.U.createUserWithEmailAndPassword(fb.auth, email, pass); return c.user.uid; },
+  async login(email, pass) { await fbInit(); const c = await fb.U.signInWithEmailAndPassword(fb.auth, email, pass); return c.user.uid; },
+  async logout() { await fbInit(); await fb.U.signOut(fb.auth); },
+  async resetPass(email) { await fbInit(); fb.auth.languageCode = LANG === 'en' ? 'en' : 'ms'; await fb.U.sendPasswordResetEmail(fb.auth, email); },
+  async changePass(p) { await fbInit(); await fb.U.updatePassword(fb.auth.currentUser, p); },
+  async getOwner(uid) { await fbInit(); return fsnap(await fb.F.getDoc(fdoc('owners', uid))); },
+  async setOwner(uid, d) { await fbInit(); await fb.F.setDoc(fdoc('owners', uid), d, {merge: true}); },
+  async setPriv(uid, d) { await fbInit(); await fb.F.setDoc(fdoc('ownerPriv', uid), d, {merge: true}); },
+  async getSub(uid) { await fbInit(); return fsub(fsnap(await fb.F.getDoc(fdoc('subs', uid)))); },
+  async createTrial(uid) { await fbInit(); await fb.F.setDoc(fdoc('subs', uid), {plan: 'trial', startTs: fb.F.serverTimestamp()}); },
+  async setSub(uid, d) { await fbInit(); const x = {...d}; if (x.plan === 'trial') { delete x.start; x.startTs = fb.F.serverTimestamp(); } await fb.F.setDoc(fdoc('subs', uid), x); },
+  async getConfig() { await fbInit(); return fsnap(await fb.F.getDoc(fdoc('config', 'app'))) || {}; },
+  async setConfig(d) { await fbInit(); await fb.F.setDoc(fdoc('config', 'app'), d, {merge: true}); },
+  async listTenants(ownerId) { await fbInit(); const s = await fb.F.getDocs(fb.F.query(fcol('tenants'), fb.F.where('ownerId', '==', ownerId))); return s.docs.map(d => ({...d.data(), id: d.id, token: d.id})); },
+  async getTenant(tok) { await fbInit(); const s = await fb.F.getDoc(fdoc('tenants', tok)); return s.exists() ? {...s.data(), id: tok, token: tok} : null; },
+  async addTenant(d) { await fbInit(); const tok = genToken(); await fb.F.setDoc(fdoc('tenants', tok), d); return tok; },
+  async updateTenant(tok, d) { await fbInit(); await fb.F.updateDoc(fdoc('tenants', tok), d); },
+  async rekeyTenant(tok) {
+    await fbInit(); const nt = genToken(), F = fb.F;
+    const t = fsnap(await F.getDoc(fdoc('tenants', tok))); await F.setDoc(fdoc('tenants', nt), t);
+    for (const col of ['payments', 'reminders']) {
+      const s = await F.getDocs(fcol('tenants', tok, col));
+      for (const d of s.docs) { await F.setDoc(fdoc('tenants', nt, col, d.id), {...d.data(), tenantId: nt}); await F.deleteDoc(d.ref); }
+    }
+    await F.deleteDoc(fdoc('tenants', tok)); return nt;
+  },
+  async listSub(tok, col) { await fbInit(); const s = await fb.F.getDocs(fcol('tenants', tok, col)); return s.docs.map(d => ({...d.data(), id: d.id})); },
+  async addSub(tok, col, d) { await fbInit(); const r = await fb.F.addDoc(fcol('tenants', tok, col), d); return r.id; },
+  async updateSub(tok, col, id, d) { await fbInit(); await fb.F.updateDoc(fdoc('tenants', tok, col, id), d); },
+  async delSub(tok, col, id) { await fbInit(); await fb.F.deleteDoc(fdoc('tenants', tok, col, id)); },
+  async listOwners() {
+    await fbInit(); const s = await fb.F.getDocs(fcol('ownerPriv'));
+    return Promise.all(s.docs.map(async d => ({uid: d.id, ...d.data(), name: (await this.getOwner(d.id))?.name || '', sub: await this.getSub(d.id)})));
+  },
+  async listSubPayments(uid) { await fbInit(); const s = await fb.F.getDocs(fb.F.query(fcol('subPayments'), fb.F.where('ownerId', '==', uid))); return s.docs.map(d => ({...d.data(), id: d.id})); },
+  async addSubPayment(d) { await fbInit(); await fb.F.addDoc(fcol('subPayments'), d); }
+};
+const API = ONLINE ? FireAPI : LocalAPI;
+function authMsg(e) {
+  const m = {'auth/invalid-credential': 'Emel atau kata laluan salah.', 'auth/wrong-password': 'Emel atau kata laluan salah.', 'auth/user-not-found': 'Emel tidak berdaftar.',
+    'auth/invalid-email': 'Format emel tidak sah.', 'auth/email-already-in-use': 'Emel ini sudah didaftarkan. Sila log masuk.', 'auth/weak-password': 'Kata laluan terlalu lemah (sekurang-kurangnya 6 aksara).',
+    'auth/too-many-requests': 'Terlalu banyak cubaan. Cuba lagi sebentar.', 'auth/network-request-failed': 'Tiada sambungan internet.', 'auth/requires-recent-login': 'Sila log keluar & log masuk semula, kemudian cuba lagi.',
+    'permission-denied': 'Tiada kebenaran. Sila log masuk semula.', 'unavailable': 'Tiada sambungan internet.'};
+  return m[e?.code] || e?.message || 'Ralat berlaku.';
 }
 
-/* ---------- Data contoh ---------- */
-async function seedDemo() {
-  const cm = curMonth();
-  const T = [
-    {name: 'Siti Nurhaliza binti Ali', phone: '0123456789', address: 'No. 12, Jalan Mawar 3, Seksyen 7, Shah Alam', rent: 1300, deposit: 2600, dueDay: 5, startDate: addMonths(cm, -6) + '-01'},
-    {name: 'Muhammad Faiz', phone: '0198765432', address: 'Bilik A, No. 8 Jalan 2/3, Bandar Baru Bangi', rent: 550, deposit: 550, dueDay: 1, startDate: addMonths(cm, -4) + '-01'},
-    {name: 'Lim Wei Jie', phone: '0167788990', address: 'Bilik B, No. 8 Jalan 2/3, Bandar Baru Bangi', rent: 450, deposit: 450, dueDay: 7, startDate: addMonths(cm, -2) + '-01'}
-  ];
-  mem = {owner: {name: 'Encik Ahmad', email: 'admin@demo.com', pass: await hashPass('1234'), phone: '0131234567', bankName: 'Maybank', bankAcc: '1122 3344 5566', accName: 'Ahmad bin Hassan'},
-    settings: {autoOn: true, autoDays: 3, autoTime: '09:00', overdueOn: true}, tenants: [], payments: [], reminders: [], subscription: {plan: 'trial', start: localISO(), end: ''}, subPayments: [], config: mem.config || {}};
-  T.forEach(t => mem.tenants.push({...t, id: genId(), token: genToken(), active: true, notes: '', createdAt: nowStr()}));
-  const [a, b, c] = mem.tenants;
-  const pay = (t, ym, extra = {}) => mem.payments.push({id: genId(), tenantId: t.id, tenantName: t.name, address: t.address, month: ym, amount: t.rent, paidDate: ym + '-0' + Math.max(1, t.dueDay - 1),
-    method: 'DuitNow', ref: '', proof: '', status: 'confirmed', receiptNo: rcptNo(ym), submittedAt: ym + '-01T10:00', confirmedAt: ym + '-0' + t.dueDay + 'T20:00', ...extra});
-  for (let i = -6; i <= -1; i++) pay(a, addMonths(cm, i));
-  for (let i = -4; i <= -2; i++) pay(b, addMonths(cm, i), {method: 'Tunai'});
-  for (let i = -2; i <= -1; i++) pay(c, addMonths(cm, i));
-  pay(a, cm, {status: 'pending', receiptNo: '', confirmedAt: '', ref: 'MBB 88213', submittedAt: nowStr(), paidDate: localISO(), proof: demoProof(a.name, 1300)});
-  mem.reminders.push({id: genId(), tenantId: b.id, at: nowStr(new Date(Date.now() - 3600e3)), message: `Salam ${b.name}, sewa bulan lepas masih tertunggak. Mohon jelaskan segera. Terima kasih.`, createdAt: nowStr(), ownerNotified: true});
-  mem.reminders.push({id: genId(), tenantId: c.id, at: `${addDays(localISO(), 1)}T09:00`, message: `Salam ${c.name}, peringatan mesra sewa ${monthLabel(cm)} ${RM(c.rent)} perlu dibayar sebelum ${dateLabel(dueDate(c, cm))}.`, createdAt: nowStr(), ownerNotified: false});
-  save();
-}
-function demoProof(name, amt) {
-  const c = document.createElement('canvas'); c.width = 360; c.height = 520; const g = c.getContext('2d');
-  g.fillStyle = '#fff'; g.fillRect(0, 0, 360, 520); g.fillStyle = '#ffc800'; g.fillRect(0, 0, 360, 70);
-  g.fillStyle = '#222'; g.font = 'bold 22px sans-serif'; g.fillText('Transfer Successful', 70, 44);
-  g.fillStyle = '#1a9b4b'; g.beginPath(); g.arc(180, 140, 36, 0, 7); g.fill(); g.fillStyle = '#fff'; g.font = 'bold 40px sans-serif'; g.fillText('✓', 165, 154);
-  g.fillStyle = '#111'; g.font = 'bold 30px sans-serif'; g.fillText('RM ' + amt.toFixed(2), 105, 230);
-  g.font = '16px sans-serif'; g.fillStyle = '#555';
-  [['From', name.split(' ')[0]], ['To', 'Ahmad bin Hassan'], ['Bank', 'Maybank'], ['Ref', 'MBB 88213'], ['Date', dateLabel(localISO())]].forEach(([k, v], i) => { g.fillText(k, 30, 290 + i * 36); g.fillText(v, 150, 290 + i * 36); });
-  return c.toDataURL('image/jpeg', .7);
-}
+/* ---------- Data contoh dibuang: owner mula dengan akaun kosong ---------- */
 
 /* ---------- Logik sewa ---------- */
 const rcptNo = ym => `PS-${ym.replace('-', '')}-${genToken().slice(0, 4).toUpperCase()}`;
@@ -581,22 +652,35 @@ function tenantNotifs(t, payments, reminders, settings) {
 }
 
 /* ---------- State ---------- */
-const S = {mode: null, tab: 'tenants', month: curMonth(), year: new Date().getFullYear(), owner: null, settings: null,
-  tenants: [], payments: [], reminders: [], t: null, tTab: 'home'};
+const S = {mode: null, tab: 'tenants', month: curMonth(), year: new Date().getFullYear(), uid: null, owner: null, settings: DEFAULT_SETTINGS, sub: null, config: {}, subPayments: [],
+  tenants: [], payments: [], reminders: [], t: null, tTab: 'home', authView: 'login'};
 
 async function loadOwner() {
-  S.owner = await DB.getOwner(); S.settings = await DB.getSettings();
-  [S.tenants, S.payments, S.reminders] = await Promise.all([DB.list('tenants'), DB.list('payments'), DB.list('reminders')]);
+  const [owner, sub, config] = await Promise.all([API.getOwner(S.uid), API.getSub(S.uid), API.getConfig()]);
+  S.owner = owner || {}; S.settings = {...DEFAULT_SETTINGS, ...(S.owner.settings || {})}; S.sub = sub; S.config = config || {};
+  S.tenants = await API.listTenants(S.uid);
+  const subs = await Promise.all(S.tenants.map(t => Promise.all([API.listSub(t.id, 'payments'), API.listSub(t.id, 'reminders')])));
+  S.payments = subs.flatMap(x => x[0]); S.reminders = subs.flatMap(x => x[1]);
+  S.subPayments = await API.listSubPayments(S.uid).catch(() => []);
 }
 async function loadTenant(tok) {
-  S.t = await DB.tenantByToken(tok);
-  S.owner = await DB.getOwner(); S.settings = await DB.getSettings();
-  if (S.t) { [S.payments, S.reminders] = await Promise.all([DB.list('payments', [['tenantId', S.t.id]]), DB.list('reminders', [['tenantId', S.t.id]])]); }
+  S.t = await API.getTenant(tok).catch(() => null); S.payments = []; S.reminders = [];
+  if (!S.t) return;
+  const [owner, sub, config, pays, rems] = await Promise.all([API.getOwner(S.t.ownerId), API.getSub(S.t.ownerId), API.getConfig(), API.listSub(tok, 'payments'), API.listSub(tok, 'reminders')]);
+  S.owner = owner || {}; S.settings = {...DEFAULT_SETTINGS, ...(S.owner.settings || {})}; S.sub = sub; S.config = config || {};
+  S.payments = pays; S.reminders = rems;
 }
+let _refreshing = false;
 async function refresh() {
-  if (S.mode === 'owner') { await loadOwner(); renderOwner(); }
-  else if (S.mode === 'tenant') { await loadTenant(S.token); renderTenant(); }
+  if (_refreshing || $('#modal').classList.contains('on')) return;
+  _refreshing = true;
+  try {
+    if (S.mode === 'owner' || S.mode === 'locked') { await loadOwner(); (S.uid !== SUPER_UID && !subInfo()?.active) ? renderLocked() : (S.mode === 'locked' ? (S.mode = 'owner', renderOwner()) : renderOwner()); }
+    else if (S.mode === 'tenant') { await loadTenant(S.token); renderTenant(); }
+  } catch (e) { console.error(e); } finally { _refreshing = false; }
 }
+setInterval(() => { if (!document.hidden) refresh(); }, 45000);   // ambil data baru setiap 45 saat
+function renderLoading() { $('#app').innerHTML = `<div class="login"><div class="lbox"><img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa</h2><p class="muted">Memuatkan…</p></div></div>`; }
 
 /* ---------- Komponen ---------- */
 const fld = (label, name, val = '', type = 'text', extra = '') => `<label class="fld"><span>${label}</span><input name="${name}" type="${type}" value="${esc(val)}" ${extra}></label>`;
@@ -627,51 +711,57 @@ function cdBox(s) {
 }
 const tcCls = s => s.code === 'paid' ? '' : s.code === 'overdue' || (s.code === 'partial' && s.late) ? 'hot' : s.code === 'pending' ? 'warn' : daysTo(s.due) <= 3 ? 'warn' : '';
 
-/* ===================== OWNER: LOGIN ===================== */
+/* ===================== LOGIN / DAFTAR / LUPA KATA LALUAN ===================== */
+const pwFld = (label, name, ac) => `<label class="fld"><span>${label}</span><div class="pw"><input name="${name}" type="password" required minlength="6" autocomplete="${ac}" placeholder="${label}"><button type="button" class="eye" data-act="eye" aria-label="Tunjuk kata laluan">👁️</button></div></label>`;
 function renderLogin() {
   S.mode = 'login';
-  const has = !!mem.owner;
-  const body = has
-    ? `<form data-form="login">${fld('Emel', 'email', '', 'email', 'required autocomplete="username" placeholder="cth: nama@email.com"')}${fld('Kata laluan', 'pass', '', 'password', 'required autocomplete="current-password" placeholder="Kata laluan anda"')}
-       <button class="btn wide" style="margin-top:14px">Log Masuk</button></form>
-       <p class="muted" style="margin:12px 0 0">Data contoh: admin@demo.com / 1234 · <button class="link" data-act="resetAll">Set semula</button></p>`
-    : `<form data-form="setup">${fld('Nama', 'name', '', 'text', 'required placeholder="Nama anda"')}${fld('No. telefon', 'phone', '', 'tel', 'required placeholder="012-3456789"')}${fld('Emel', 'email', '', 'email', 'required autocomplete="username" placeholder="cth: nama@email.com"')}${fld('Kata laluan', 'pass', '', 'password', 'required minlength="4" autocomplete="new-password" placeholder="Min 4 aksara"')}
-       <button class="btn wide" style="margin-top:14px">Cipta Akaun Admin</button></form>
-       <button class="btn wide ghost" style="margin-top:8px" data-act="useDemo">✨ Cuba dengan data contoh</button>`;
-  $('#app').innerHTML = `<div class="login"><div class="lbox">${langSeg()}${themeSeg()}<br>${isStandalone() ? '' : `<div class="instbig"><div><b>Pasang app ProSewa Admin</b><span class="muted">Buka terus dari skrin utama phone</span></div><button class="btn sm" data-act="install">⬇ Pasang</button></div>`}<img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa</h2>
-    <p class="muted" style="margin:0 0 6px">${has ? 'Log masuk admin untuk teruskan' : 'Cipta akaun admin (owner)'}</p>${body}
-    <div class="hint">Versi percubaan: data disimpan dalam peranti ini. Selepas sambung Firebase, link penyewa boleh dibuka di phone penyewa.</div></div></div>`;
+  const v = S.authView;
+  const inst = isStandalone() ? '' : `<div class="instbig"><div><b>Pasang app ProSewa Admin</b><span class="muted">Buka terus dari skrin utama phone</span></div><button class="btn sm" data-act="install">⬇ Pasang</button></div>`;
+  const email = fld('Emel', 'email', S.lastEmail || '', 'email', 'required autocomplete="username" placeholder="nama@email.com"');
+  let body;
+  if (v === 'register') body = `<p class="muted" style="margin:0 0 6px">Daftar akaun owner baru</p><form data-form="register">${email}${pwFld('Kata laluan', 'pass', 'new-password')}${pwFld('Ulang kata laluan', 'pass2', 'new-password')}
+      <button class="btn wide" style="margin-top:14px">Daftar</button></form><p class="muted" style="margin:12px 0 0">Sudah ada akaun? <button class="link" data-act="authView" data-id="login">Log masuk</button></p>`;
+  else if (v === 'forgot') body = `<p class="muted" style="margin:0 0 6px">Masukkan emel anda. Kami akan hantar pautan untuk tetapkan kata laluan baru.</p><form data-form="forgot">${email}
+      <button class="btn wide" style="margin-top:14px">Hantar pautan</button></form><p class="muted" style="margin:12px 0 0"><button class="link" data-act="authView" data-id="login">‹ Kembali ke log masuk</button></p>`;
+  else body = `<p class="muted" style="margin:0 0 6px">Log masuk untuk teruskan</p><form data-form="login">${email}${pwFld('Kata laluan', 'pass', 'current-password')}
+      <button class="btn wide" style="margin-top:14px">Log Masuk</button></form>
+      <div class="authlinks"><button class="link" data-act="authView" data-id="register">Daftar baru</button><button class="link" data-act="authView" data-id="forgot">Lupa kata laluan?</button></div>`;
+  $('#app').innerHTML = `<div class="login"><div class="lbox">${langSeg()}${themeSeg()}<br>${inst}<img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa</h2>${body}
+    ${ONLINE ? '' : '<div class="hint">Mod peranti (ujian): Firebase belum disambung, data disimpan dalam browser ini sahaja.</div>'}</div></div>`;
 }
 
 /* ===================== LANGGANAN TAMAT (owner dikunci) ===================== */
 function renderLocked() {
   S.mode = 'locked';
-  const si = subInfo();
+  const si = subInfo() || {end: localISO()};
   $('#app').innerHTML = `<div class="login"><div class="lbox">${langSeg()}${themeSeg()}<br><img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa</h2>
     <div class="al hot" style="text-align:left"><b>⛔ Langganan telah tamat</b>Langganan anda tamat pada ${dateLabel(si.end)}. Sila buat bayaran untuk log masuk semula. Penyewa anda juga tidak dapat membuka app sehingga bayaran dibuat.</div>
     <div style="text-align:left">${PLANS.map(p => `<div class="instbig" style="margin-bottom:8px"><div><b>${p.name}${p.tag ? ` · <span style="font-weight:600">${p.tag}</span>` : ''}</b><span class="muted">${p.months} bulan · ${RM(p.price)}</span></div><button class="btn sm" data-act="buyPlan" data-id="${p.id}">Bayar</button></div>`).join('')}</div>
     <button class="btn wide ghost" style="margin-top:6px" data-act="logout">Log Keluar</button></div></div>`;
 }
 
-/* ===================== SUPER ADMIN (#super) — untuk pemilik sistem ===================== */
-function renderSuper() {
-  S.mode = 'super';
-  if (!S.superOk) {
-    $('#app').innerHTML = `<div class="login"><div class="lbox">${langSeg()}<br><img src="icon-192.png" alt="" class="llogo"><h2 class="lh">Super Admin</h2><p class="muted">Panel pemilik sistem ProSewa</p>
-      <form data-form="superpin">${fld('PIN', 'pin', '', 'password', 'required inputmode="numeric" autocomplete="off"')}<button class="btn wide" style="margin-top:14px">Masuk</button></form>
-      <button class="btn wide ghost" style="margin-top:8px" data-act="exitSuper">‹ Kembali</button></div></div>`;
+/* ===================== SUPER ADMIN (#super) — pemilik sistem sahaja ===================== */
+async function renderSuper() {
+  if (!isSuper()) {
+    S.mode = 'super';
+    $('#app').innerHTML = `<div class="login"><div class="lbox">${langSeg()}<br><img src="icon-192.png" alt="" class="llogo"><h2 class="lh">Super Admin</h2>
+      <div class="al hot" style="text-align:left"><b>Tiada akses</b>Panel ini hanya untuk akaun Super Admin. Sila log masuk dengan akaun tersebut.</div>
+      <button class="btn wide ghost" data-act="exitSuper">‹ Kembali</button></div></div>`;
     return;
   }
-  ensureSub(); const si = subInfo(), o = mem.owner;
-  $('#app').innerHTML = header('Super Admin', 'Kawalan sistem.', 'Tetapan percubaan & langganan owner', {btns: '<span style="margin-left:auto"></span>' + langSeg()}) + `<div class="wrap">
+  S.mode = 'super'; renderLoading();
+  const [config, owners] = await Promise.all([API.getConfig(), API.listOwners()]);
+  S.config = config || {}; S.owners = owners;
+  const rows = owners.map(o => { const si = subInfo(fsub(o.sub)) || {planName: '-', end: '', active: false, days: 0};
+    return `<div class="tc ${si.active ? (si.days <= 5 ? 'warn' : '') : 'hot'}"><div class="t1"><div>${si.active ? `<span class="chip c-paid">Aktif · ${si.days} hari lagi</span>` : '<span class="chip c-overdue">Tamat</span>'}<h4 data-raw>${esc(o.name || o.email || o.uid)}</h4><div class="muted" data-raw>${esc(o.email || '')}</div></div></div>
+      <div class="kvs"><div class="kv"><span>Pelan</span><b>${esc(si.planName)}</b></div><div class="kv"><span>Tamat</span><b>${si.end ? dateLabel(si.end) : '-'}</b></div><div class="kv"><span>Daftar</span><b>${o.createdAt ? dtLabel(o.createdAt) : '-'}</b></div></div>
+      <div class="acts"><button class="btn sm" data-act="superAdd" data-id="${o.uid}|30">+30 hari</button><button class="btn sm ghost" data-act="superAdd" data-id="${o.uid}|365">+1 tahun</button></div>
+      <div class="acts"><button class="btn sm ghost" data-act="superTrial" data-id="${o.uid}">Set semula percubaan</button><button class="btn sm red" data-act="superExpire" data-id="${o.uid}">Tamatkan sekarang</button></div></div>`; }).join('');
+  $('#app').innerHTML = header('Super Admin', 'Kawalan sistem.', 'Tetapan percubaan & langganan owner', {btns: '<span style="margin-left:auto"></span>' + langSeg(), stats: [[owners.length, 'Owner'], [owners.filter(o => subInfo(fsub(o.sub))?.active).length, 'Aktif', 'g']]}) + `<div class="wrap">
     <div class="sec-h">Tempoh percubaan</div><form class="card" data-form="trial">${fld('Hari percubaan percuma', 'days', trialDays(), 'number', 'min="0" max="365" required')}
       <p class="muted">Berkuat kuasa serta-merta untuk owner yang masih dalam percubaan.</p><button class="btn wide">Simpan</button></form>
-    <div class="sec-h">Owner</div><div class="card"><div class="kv"><span>Owner</span><b>${esc(o?.name || '(belum daftar)')}</b></div><div class="kv"><span>Emel</span><b>${esc(o?.email || '-')}</b></div>
-      <div class="kv"><span>Pelan</span><b>${esc(si.planName)}</b></div><div class="kv"><span>Tamat</span><b>${dateLabel(si.end)}</b></div>
-      <div class="kv"><span>Status</span><b>${si.active ? `<span class="chip c-paid">Aktif · ${si.days} hari lagi</span>` : '<span class="chip c-overdue">Tamat</span>'}</b></div>
-      <div class="acts"><button class="btn sm" data-act="superAdd" data-id="30">+30 hari</button><button class="btn sm ghost" data-act="superAdd" data-id="365">+1 tahun</button></div>
-      <div class="acts"><button class="btn sm ghost" data-act="superTrial">Set semula percubaan</button><button class="btn sm red" data-act="superExpire">Tamatkan sekarang</button></div></div>
-    <button class="btn wide ghost" data-act="exitSuper">‹ Kembali ke app</button></div>`;
+    <div class="sec-h">Owner (${owners.length})</div>${owners.length ? `<div class="tcgrid">${rows}</div>` : '<div class="empty">Belum ada owner.</div>'}
+    <button class="btn wide ghost" style="margin-top:12px" data-act="exitSuper">‹ Kembali ke app</button></div>`;
 }
 function tenantDown() {
   $('#app').innerHTML = `<div class="login"><div class="lbox">${langSeg()}<br><img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa</h2>
@@ -765,7 +855,7 @@ function oReport() {
 }
 
 function oSub() {
-  const si = subInfo() || {}, hist = [...(mem.subPayments || [])].reverse();
+  const si = subInfo() || {}, hist = [...(S.subPayments || [])].sort((a, b) => b.date.localeCompare(a.date));
   const perMonth = p => RM(p.price / p.months).replace('RM ', 'RM');
   let h = header('Langganan', 'Pakej ProSewa.', si.active ? `${si.planName} · aktif sehingga ${dateLabel(si.end)}` : `Tamat pada ${dateLabel(si.end)} — sila perbaharui`,
     {btns: ownerBtns(), stats: [[si.active ? si.days : 0, 'Hari lagi', si.active ? (si.days <= 5 ? 'r' : 'g') : 'r'], [esc(si.planName || '-'), 'Pelan semasa']]}) + `<div class="wrap">`;
@@ -782,7 +872,7 @@ function oSub() {
 function oSettings() {
   const o = S.owner, s = S.settings;
   const perm = 'Notification' in window ? Notification.permission : 'unsupported';
-  return header('Tetapan', 'Tetapan.', o.email, {btns: ownerBtns()}) + `<div class="wrap"><div class="cols">
+  return header('Tetapan', 'Tetapan.', o.name ? `${o.name}${o.phone ? ' · ' + o.phone : ''}` : 'Lengkapkan maklumat anda', {btns: ownerBtns()}) + `<div class="wrap"><div class="cols">
     <div class="blk"><div class="sec-h">Paparan</div><div class="card"><div class="switch">Bahasa ${langSeg()}</div><div class="switch">Tema ${themeSeg()}</div></div></div>
     <div class="blk"><div class="sec-h">Profil & maklumat bayaran</div><form class="card" data-form="profile">${fld('Nama', 'name', o.name, 'text', 'required')}${fld('No. telefon', 'phone', o.phone, 'tel')}
       ${fld('Bank / e-wallet', 'bankName', o.bankName, 'text', 'placeholder="cth: Maybank"')}${fld('No. akaun / DuitNow', 'bankAcc', o.bankAcc)}${fld('Nama pemegang akaun', 'accName', o.accName)}
@@ -794,13 +884,13 @@ function oSettings() {
       <button class="btn wide" style="margin-top:8px">Simpan</button></form></div>
     <div class="blk"><div class="sec-h">App</div><div class="card"><button class="btn wide ghost" data-act="enableNotif">${perm === 'granted' ? '✅ Notifikasi phone aktif' : '🔔 Aktifkan notifikasi phone'}</button><div style="height:8px"></div><button class="btn wide ghost" data-act="install">⬇ Install app ProSewa</button></div></div>
     <div class="blk"><div class="sec-h">Keselamatan</div><form class="card" data-form="password">${fld('Kata laluan baru', 'pass', '', 'password', 'required minlength="4" autocomplete="new-password"')}<button class="btn wide ink" style="margin-top:12px">Tukar kata laluan</button></form></div></div>
-    <button class="btn wide red lo" data-act="logout">Log Keluar</button></div>`;
+    ${isSuper() ? '<button class="btn wide ink lo" style="margin-bottom:10px" data-act="goSuper">🛡️ Panel Super Admin</button>' : ''}<button class="btn wide red lo" data-act="logout">Log Keluar</button></div>`;
 }
 
 /* ===================== PENYEWA ===================== */
 function renderTenant() {
   if (S.mode !== 'tenant') return;
-  if (mem.owner && subInfo() && !subInfo().active) return tenantDown();
+  if (S.t && S.sub && S.t.ownerId !== SUPER_UID && !subInfo()?.active) return tenantDown();
   if (!S.t || S.t.active === false) {
     $('#app').innerHTML = `<div class="login"><div class="lbox">${langSeg()}${themeSeg()}<br><img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa Penyewa</h2>
       <p class="muted">${S.token ? 'Link ini tidak sah atau sewaan telah tamat.' : 'Sila buka link khas yang dihantar oleh tuan rumah anda.'}<br>Hubungi tuan rumah untuk dapatkan link baru.</p></div></div>`;
@@ -927,27 +1017,44 @@ function pushNewTenantNotifs(notifs) {
   const fresh = notifs.filter(n => !done.includes(n.id));
   if (fresh.length) { fresh.slice(0, 3).forEach(n => phoneNotify(n.title, n.body)); lsSet(k, [...done, ...fresh.map(n => n.id)].slice(-200)); }
 }
-// Owner: semak peringatan yang sampai masa setiap 30 saat
+// Owner: makluman bila peringatan berjadual sampai masa, dan bila ada bukti bayaran baru
 async function ownerTick() {
   if (S.mode !== 'owner') return;
-  const now = nowStr(), due = mem.reminders.filter(r => r.at <= now && !r.ownerNotified);
+  const now = nowStr(), due = S.reminders.filter(r => r.at <= now && !r.ownerNotified);
   for (const r of due) {
-    await DB.update('reminders', r.id, {ownerNotified: true});
+    await API.updateSub(r.tenantId, 'reminders', r.id, {ownerNotified: true}).catch(() => {});
+    r.ownerNotified = true;
     const t = S.tenants.find(x => x.id === r.tenantId); if (!t) continue;
     phoneNotify('🔔 Peringatan dihantar', `Peringatan berjadual telah masuk ke app ${t.name}.`);
     toast(`🔔 Peringatan berjadual dihantar kepada ${t.name}.`);
   }
-  if (due.length) { await loadOwner(); renderOwner(); }
+  const k = 'prosewa_seenproof_' + S.uid, seen = lsGet(k, []), fresh = S.payments.filter(p => p.status === 'pending' && !seen.includes(p.id));
+  if (fresh.length) { fresh.slice(0, 3).forEach(p => phoneNotify('🧾 Bukti bayaran baru', `${p.tenantName} · ${monthLabel(p.month)} · ${RM(p.amount)}`)); lsSet(k, [...seen, ...fresh.map(p => p.id)].slice(-300)); }
 }
 setInterval(ownerTick, 30000);
 
+/* ===================== MASUK SEBAGAI OWNER ===================== */
+async function enterOwner(uid, opts = {}) {
+  S.uid = uid; renderLoading();
+  let owner = await API.getOwner(uid);
+  if (!owner) { owner = {name: (S.lastEmail || '').split('@')[0] || 'Owner', phone: '', bankName: '', bankAcc: '', accName: '', settings: DEFAULT_SETTINGS}; await API.setOwner(uid, owner); }
+  if (opts.email) await API.setPriv(uid, {email: opts.email, createdAt: nowStr()}).catch(() => {});
+  if (!(await API.getSub(uid))) await API.createTrial(uid);
+  await loadOwner();
+  if (!isSuper() && !subInfo()?.active) { renderLocked(); return; }
+  S.mode = 'owner'; S.tab = opts.tab || S.tab || 'tenants'; renderOwner(); ownerTick();
+}
+
 /* ===================== TINDAKAN ===================== */
+const tokOfPay = id => S.payments.find(x => x.id === id)?.tenantId;
 const ACTIONS = {
   remindNow: id => remindForm(id, true),
   theme: id => { setTheme(id); rerender(); },
   lang: id => { setLang(id); rerender(); },
+  authView: id => { const e = $('form [name=email]'); if (e) S.lastEmail = e.value; S.authView = id; renderLogin(); },
+  eye: (id, el) => { const i = el.parentElement.querySelector('input'); const show = i.type === 'password'; i.type = show ? 'text' : 'password'; el.classList.toggle('on', show); },
   buyPlan: id => {
-    const p = PLANS.find(x => x.id === id), si = subInfo(), from = si && si.active ? si.end : localISO();
+    const p = PLANS.find(x => x.id === id), from = extendFrom(subInfo());
     openModal('Sahkan Pakej', `<div class="card" style="margin:8px 0"><div class="kv"><span>Pakej</span><b>${p.name}</b></div><div class="kv"><span>Tempoh</span><b>${p.months} bulan</b></div>
       <div class="kv"><span>Aktif sehingga</span><b>${dateLabel(addMonthsISO(from, p.months))}</b></div><div class="kv"><span>Jumlah</span><b style="color:var(--gold);font-size:17px">${RM(p.price)}</b></div></div>
       <button class="btn wide" data-act="payToyyib" data-id="${p.id}">💳 Bayar ${RM(p.price)} dengan ToyyibPay</button>
@@ -957,46 +1064,57 @@ const ACTIONS = {
     const p = PLANS.find(x => x.id === id);
     if (TOYYIBPAY.createBillUrl) {
       const r = await fetch(TOYYIBPAY.createBillUrl, {method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({plan: p.id, amount: p.price, name: S.owner.name, email: S.owner.email, phone: S.owner.phone, returnUrl: baseDir() + 'index.html'})});
+        body: JSON.stringify({uid: S.uid, plan: p.id, name: S.owner.name, phone: S.owner.phone, returnUrl: baseDir() + 'index.html'})});
       const j = await r.json(); if (!j.billCode) throw new Error('Gagal cipta bil ToyyibPay.');
       location.href = 'https://toyyibpay.com/' + j.billCode; return;
     }
+    if (ONLINE) return openModal('Bayaran', `<p style="margin-top:0">Bayaran online (ToyyibPay) akan dibuka tidak lama lagi. Buat masa ini, sila hubungi admin ProSewa untuk aktifkan langganan.</p>`);
     openModal('Mod Demo', `<p style="margin-top:0">ToyyibPay belum disambung. Ini <b>simulasi</b> supaya anda boleh lihat aliran selepas bayaran berjaya.</p>
       <button class="btn wide" data-act="demoPaid" data-id="${p.id}">✓ Simulasi bayaran berjaya</button>`);
   },
-  demoPaid: async id => { activateSub(id, 'DEMO-' + genToken().slice(0, 6).toUpperCase()); closeModal(); toast('Langganan diaktifkan ✅'); if (S.mode === 'locked') { await enterOwner(); } else renderOwner(); },
-  exitSuper: () => { S.superOk = false; history.replaceState(null, '', baseDir() + 'index.html'); S.mode = null; lsGet('prosewa_session', false) && mem.owner ? enterOwner() : renderLogin(); },
-  superAdd: async n => { ensureSub(); const si = subInfo(); const from = si.active ? si.end : localISO(); mem.subscription = {plan: si.plan === 'trial' ? 'monthly' : si.plan, start: si.start, end: addDays(from, +n)}; (mem.subPayments = mem.subPayments || []).push({id: genId(), date: nowStr(), plan: 'manual', months: 0, amount: 0, ref: `SUPER +${n} hari`, until: mem.subscription.end}); save(); toast(`Ditambah ${n} hari.`); renderSuper(); },
-  superTrial: () => { mem.subscription = {plan: 'trial', start: localISO(), end: ''}; save(); toast('Percubaan diset semula.'); renderSuper(); },
-  superExpire: () => { if (!confirm('Tamatkan langganan owner sekarang? (untuk uji)')) return; mem.subscription = {plan: mem.subscription?.plan === 'trial' ? 'monthly' : (mem.subscription?.plan || 'monthly'), start: mem.subscription?.start || localISO(), end: addDays(localISO(), -1)}; save(); toast('Langganan ditamatkan.'); renderSuper(); },
+  demoPaid: async id => {   // mod peranti sahaja
+    const p = PLANS.find(x => x.id === id), si = subInfo(), end = addMonthsISO(extendFrom(si), p.months);
+    await API.setSub(S.uid, {plan: p.id, start: si?.start || localISO(), end});
+    await API.addSubPayment({ownerId: S.uid, date: nowStr(), plan: p.id, months: p.months, amount: p.price, ref: 'DEMO-' + genToken().slice(0, 6).toUpperCase(), until: end});
+    closeModal(); toast('Langganan diaktifkan ✅'); await enterOwner(S.uid, {tab: 'sub'});
+  },
+  exitSuper: () => { history.replaceState(null, '', baseDir() + 'index.html'); S.uid ? enterOwner(S.uid) : renderLogin(); },
+  superAdd: async v => {
+    const [uid, n] = v.split('|'); const o = S.owners.find(x => x.uid === uid), si = subInfo(fsub(o.sub));
+    const end = addDays(extendFrom(si), +n);
+    await API.setSub(uid, {plan: si && si.plan !== 'trial' ? si.plan : 'monthly', start: si?.start || localISO(), end});
+    await API.addSubPayment({ownerId: uid, date: nowStr(), plan: 'manual', months: 0, amount: 0, ref: `SUPER +${n} hari`, until: end});
+    toast(`Ditambah ${n} hari.`); renderSuper();
+  },
+  superTrial: async uid => { await API.setSub(uid, {plan: 'trial', start: localISO()}); toast('Percubaan diset semula.'); renderSuper(); },
+  superExpire: async uid => { if (!confirm('Tamatkan langganan owner sekarang? (untuk uji)')) return; const o = S.owners.find(x => x.uid === uid), si = subInfo(fsub(o.sub)); await API.setSub(uid, {plan: si && si.plan !== 'trial' ? si.plan : 'monthly', start: si?.start || localISO(), end: addDays(localISO(), -1)}); toast('Langganan ditamatkan.'); renderSuper(); },
+  goSuper: () => { location.hash = '#super'; renderSuper(); },
   closeModal, tenantForm, shareLink, payForm, cashForm, remindForm, rejectForm, viewProof, receipt,
   tab: id => { closeModal(); S.tab = id; renderOwner(); scrollTo(0, 0); },
   ttab: id => { S.tTab = id; renderTenant(); scrollTo(0, 0); },
   print: () => window.print(),
   copyLink: async id => { const t = S.tenants.find(x => x.id === id); const u = tenantUrl(t); try { await navigator.clipboard.writeText(u); toast(`Link ${t.name.split(' ')[0]} disalin ✅`); } catch (e) { shareLink(id); } },
   copy: async v => { try { await navigator.clipboard.writeText(v); toast('Disalin.'); } catch (e) { prompt('Salin:', v); } },
-  useDemo: async () => { await seedDemo(); await enterOwner(); toast('Data contoh dimuatkan. Log masuk: admin@demo.com / 1234'); },
-  resetAll: async () => { if (!confirm('Padam SEMUA data dalam peranti ini?')) return; mem = {owner: null, settings: null, tenants: [], payments: [], reminders: []}; save(); renderLogin(); },
-  logout: () => { lsSet('prosewa_session', false); S.mode = null; renderLogin(); },
+  logout: async () => { await API.logout(); S.uid = null; S.mode = null; S.authView = 'login'; renderLogin(); },
   delTenant: async id => {
     const t = S.tenants.find(x => x.id === id);
     if (!confirm(`Padam ${t.name}? Link penyewa akan dimatikan. Rekod bayaran lama kekal dalam laporan.`)) return;
-    await DB.update('tenants', id, {active: false, endedAt: curMonth(), token: 'x-' + genToken()});
+    await API.updateTenant(id, {active: false, endedAt: curMonth()});
     toast('Penyewa dibuang.'); await refresh();
   },
-  newToken: async id => { if (!confirm('Tukar link? Link lama tidak boleh digunakan lagi.')) return; await DB.update('tenants', id, {token: genToken()}); await loadOwner(); shareLink(id); toast('Link baru dijana.'); },
+  newToken: async id => { if (!confirm('Tukar link? Link lama tidak boleh digunakan lagi.')) return; closeModal(); renderLoading(); const nt = await API.rekeyTenant(id); await loadOwner(); renderOwner(); shareLink(nt); toast('Link baru dijana.'); },
   approve: async id => {
     const p = S.payments.find(x => x.id === id);
-    await DB.update('payments', id, {status: 'confirmed', receiptNo: rcptNo(p.month), confirmedAt: nowStr()});
-    await refresh(); receipt(id); toast('Diluluskan. Resit kini ada dalam app penyewa.');
+    await API.updateSub(p.tenantId, 'payments', id, {status: 'confirmed', receiptNo: rcptNo(p.month), confirmedAt: nowStr()});
+    closeModal(); await refresh(); receipt(id); toast('Diluluskan. Resit kini ada dalam app penyewa.');
   },
-  delPay: async id => { if (!confirm('Padam rekod bayaran ini?')) return; await DB.remove('payments', id); closeModal(); toast('Dipadam.'); await refresh(); },
-  delReminder: async id => { await DB.remove('reminders', id); toast('Peringatan dibatalkan.'); await refresh(); },
+  delPay: async id => { if (!confirm('Padam rekod bayaran ini?')) return; await API.delSub(tokOfPay(id), 'payments', id); closeModal(); toast('Dipadam.'); await refresh(); },
+  delReminder: async id => { const r = S.reminders.find(x => x.id === id); await API.delSub(r.tenantId, 'reminders', id); toast('Peringatan dibatalkan.'); await refresh(); },
   enableNotif: async () => {
     if (!('Notification' in window)) return toast('Phone/browser ini tidak sokong notifikasi. Install app dahulu.', 'err');
     const r = await Notification.requestPermission();
     if (r === 'granted') { phoneNotify('ProSewa', 'Notifikasi diaktifkan ✅'); toast('Notifikasi diaktifkan.'); } else toast('Kebenaran notifikasi ditolak.', 'err');
-    S.mode === 'owner' ? renderOwner() : renderTenant();
+    rerender();
   },
   install: async () => {
     if (installEvt) { installEvt.prompt(); const r = await installEvt.userChoice; installEvt = null; if (r.outcome === 'accepted') toast('App sedang dipasang ✅'); return; }
@@ -1022,46 +1140,50 @@ const CHANGES = {
     m.value = t ? reminderMsg(t, S.month, S.owner) : (LANG === 'en' ? `Hi, a friendly reminder: rent for ${monthLabel(S.month)} is due soon. After paying, please upload your payment proof in the app. Thank you — ${S.owner.name}` : `Salam, peringatan mesra: sewa ${monthLabel(S.month)} perlu dibayar sebelum tarikh akhir. ${bankText(S.owner)} Selepas bayar, sila muat naik resit di link penyewa anda. Terima kasih — ${S.owner.name}`); },
   proofPick: async el => {
     const f = el.files[0]; if (!f) return;
-    try { const d = await compressImage(f); el.form.dataset.proof = d; $('#preview').innerHTML = `<img class="proofbig" src="${d}" alt="">`; $('#filebtn').lastChild.textContent = ' Tukar gambar'; }
+    try { const d = await compressImage(f, 1000, .68); el.form.dataset.proof = d; $('#preview').innerHTML = `<img class="proofbig" src="${d}" alt="">`; $('#filebtn').lastChild.textContent = ' Tukar gambar'; }
     catch (e) { toast(e.message, 'err'); el.value = ''; }
   }
 };
 
 /* ===================== BORANG ===================== */
-async function enterOwner() { ensureSub(); lsSet('prosewa_session', true); if (!subInfo().active) { S.mode = 'locked'; await loadOwner(); renderLocked(); return; } S.mode = 'owner'; S.tab = 'tenants'; await loadOwner(); renderOwner(); ownerTick(); }
 const FORMS = {
-  async superpin(d) { if (String(d.pin) !== SUPER_PIN) throw new Error('PIN salah.'); S.superOk = true; renderSuper(); },
-  async trial(d) { mem.config = {...(mem.config || {}), trialDays: Math.max(0, Math.min(365, +d.days || 0))}; save(); toast('Tempoh percubaan: ' + trialDays() + ' hari.'); renderSuper(); },
-  async setup(d) { await DB.setOwner({name: d.name.trim(), phone: d.phone.trim(), email: d.email.trim().toLowerCase(), pass: await hashPass(d.pass), bankName: '', bankAcc: '', accName: d.name.trim()}); await enterOwner(); toast('Akaun dicipta. Isi maklumat bank di Tetapan.'); },
-  async login(d) { const o = await DB.getOwner(); if (!o || o.email !== d.email.trim().toLowerCase() || o.pass !== await hashPass(d.pass)) throw new Error('Emel atau kata laluan salah.'); await enterOwner(); },
-  async password(d) { await DB.setOwner({...S.owner, pass: await hashPass(d.pass)}); toast('Kata laluan ditukar.'); await refresh(); },
-  async profile(d) { await DB.setOwner({...S.owner, name: d.name.trim(), phone: d.phone.trim(), bankName: d.bankName.trim(), bankAcc: d.bankAcc.trim(), accName: d.accName.trim()}); toast('Profil disimpan.'); await refresh(); },
-  async settings(d) { await DB.setSettings({autoOn: !!d.autoOn, autoDays: Math.max(0, +d.autoDays || 0), autoTime: d.autoTime || '09:00', overdueOn: !!d.overdueOn}); toast('Tetapan disimpan.'); await refresh(); },
+  async login(d) { S.lastEmail = d.email.trim(); try { const uid = await API.login(S.lastEmail, d.pass); if (!ONLINE) await enterOwner(uid); } catch (e) { throw new Error(authMsg(e)); } },
+  async register(d) {
+    if (d.pass !== d.pass2) throw new Error('Kata laluan tidak sama.');
+    S.lastEmail = d.email.trim(); S.registering = true;
+    try { const uid = await API.register(S.lastEmail, d.pass); await enterOwner(uid, {email: S.lastEmail.toLowerCase(), tab: 'settings'}); toast('Akaun dicipta ✅ Sila lengkapkan maklumat anda di Tetapan.'); }
+    catch (e) { throw new Error(authMsg(e)); } finally { S.registering = false; }
+  },
+  async forgot(d) { try { await API.resetPass(d.email.trim()); toast(ONLINE ? 'Pautan tetapan semula telah dihantar ke emel anda.' : 'Mod peranti: tiada emel dihantar.'); S.authView = 'login'; S.lastEmail = d.email.trim(); renderLogin(); } catch (e) { throw new Error(authMsg(e)); } },
+  async trial(d) { await API.setConfig({trialDays: Math.max(0, Math.min(365, +d.days || 0))}); S.config.trialDays = +d.days; toast('Tempoh percubaan: ' + trialDays() + ' hari.'); renderSuper(); },
+  async password(d) { try { await API.changePass(d.pass); toast('Kata laluan ditukar.'); } catch (e) { throw new Error(authMsg(e)); } },
+  async profile(d) { await API.setOwner(S.uid, {name: d.name.trim(), phone: d.phone.trim(), bankName: d.bankName.trim(), bankAcc: d.bankAcc.trim(), accName: d.accName.trim()}); toast('Profil disimpan.'); await refresh(); },
+  async settings(d) { await API.setOwner(S.uid, {settings: {autoOn: !!d.autoOn, autoDays: Math.max(0, +d.autoDays || 0), autoTime: d.autoTime || '09:00', overdueOn: !!d.overdueOn}}); toast('Tetapan disimpan.'); await refresh(); },
   async tenant(d) {
     const data = {name: d.name.trim(), phone: d.phone.trim(), address: d.address.trim(), rent: +d.rent, deposit: +d.deposit || 0, dueDay: Math.min(31, Math.max(1, +d.dueDay || 1)), startDate: d.startDate, notes: d.notes || ''};
-    if (d.id) { await DB.update('tenants', d.id, data); closeModal(); toast('Penyewa dikemas kini.'); await refresh(); return; }
-    const id = await DB.add('tenants', {...data, token: genToken(), active: true, createdAt: nowStr()});
+    if (d.id) { await API.updateTenant(d.id, data); closeModal(); toast('Penyewa dikemas kini.'); await refresh(); return; }
+    const id = await API.addTenant({...data, ownerId: S.uid, active: true, createdAt: nowStr()});
     closeModal(); await refresh(); shareLink(id); toast('Penyewa ditambah. Hantar link kepada penyewa.');
   },
   async tpay(d, f) {
     if (!f.dataset.proof) throw new Error('Sila pilih gambar bukti bayaran.');
     const t = S.t;
-    await DB.add('payments', {tenantId: t.id, tenantName: t.name, address: t.address, month: d.month, amount: +d.amount, paidDate: d.paidDate, method: d.method, ref: d.ref || '', proof: f.dataset.proof, status: 'pending', receiptNo: '', submittedAt: nowStr(), confirmedAt: ''});
+    await API.addSub(t.id, 'payments', {ownerId: t.ownerId, tenantId: t.id, tenantName: t.name, address: t.address, month: d.month, amount: +d.amount, paidDate: d.paidDate, method: d.method, ref: d.ref || '', proof: f.dataset.proof, status: 'pending', receiptNo: '', submittedAt: nowStr(), confirmedAt: ''});
     closeModal(); toast('Bukti dihantar! Tunggu tuan rumah luluskan.'); await refresh();
   },
   async cash(d) {
     const t = S.tenants.find(x => x.id === d.tenantId);
-    const id = await DB.add('payments', {tenantId: t.id, tenantName: t.name, address: t.address, month: d.month, amount: +d.amount, paidDate: d.paidDate, method: d.method, ref: '', proof: '', status: 'confirmed', receiptNo: rcptNo(d.month), submittedAt: nowStr(), confirmedAt: nowStr()});
+    const id = await API.addSub(t.id, 'payments', {ownerId: S.uid, tenantId: t.id, tenantName: t.name, address: t.address, month: d.month, amount: +d.amount, paidDate: d.paidDate, method: d.method, ref: '', proof: '', status: 'confirmed', receiptNo: rcptNo(d.month), submittedAt: nowStr(), confirmedAt: nowStr()});
     closeModal(); await refresh(); receipt(id); toast('Bayaran direkod.');
   },
   async remind(d) {
     const isNow = d.when === 'now', at = isNow ? nowStr() : `${d.date}T${d.time}`;
     if (!isNow && (!d.date || !d.time || at <= nowStr())) throw new Error('Pilih tarikh & masa akan datang.');
     const targets = d.tenantId === '__all' ? activeT().filter(t => monthStatus(t, S.month, S.payments).code !== 'paid') : [S.tenants.find(x => x.id === d.tenantId)];
-    for (const t of targets) await DB.add('reminders', {tenantId: t.id, at, message: d.tenantId === '__all' ? d.message.replace(/^(Salam|Hi),/, (m0, w) => `${w} ${t.name},`) : d.message, createdAt: nowStr(), ownerNotified: isNow});
+    for (const t of targets) await API.addSub(t.id, 'reminders', {ownerId: S.uid, tenantId: t.id, at, message: d.tenantId === '__all' ? d.message.replace(/^(Salam|Hi),/, (m0, w) => `${w} ${t.name},`) : d.message, createdAt: nowStr(), ownerNotified: isNow});
     closeModal(); toast(isNow ? `Peringatan dihantar ke app ${targets.length} penyewa.` : `${targets.length} peringatan dijadualkan pada ${dtLabel(at)}.`); await refresh();
   },
-  async reject(d) { await DB.update('payments', d.id, {status: 'rejected', rejectReason: d.reason + (d.note ? ' — ' + d.note : ''), rejectedAt: nowStr()}); closeModal(); toast('Bukti ditolak. Penyewa akan dimaklumkan.'); await refresh(); }
+  async reject(d) { await API.updateSub(tokOfPay(d.id), 'payments', d.id, {status: 'rejected', rejectReason: d.reason + (d.note ? ' — ' + d.note : ''), rejectedAt: nowStr()}); closeModal(); toast('Bukti ditolak. Penyewa akan dimaklumkan.'); await refresh(); }
 };
 
 /* ===================== EVENT ===================== */
@@ -1069,7 +1191,7 @@ document.addEventListener('click', async e => {
   const el = e.target.closest('[data-act]'); if (!el) return;
   const fn = ACTIONS[el.dataset.act]; if (!fn) return;
   e.preventDefault();
-  try { await fn(el.dataset.id, el); } catch (err) { console.error(err); toast(err.message || 'Ralat berlaku.', 'err'); }
+  try { await fn(el.dataset.id, el); } catch (err) { console.error(err); toast(authMsg(err), 'err'); }
 });
 $('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
 document.addEventListener('change', e => { const el = e.target.closest('[data-chg]'); if (el && CHANGES[el.dataset.chg]) CHANGES[el.dataset.chg](el); });
@@ -1078,7 +1200,7 @@ document.addEventListener('submit', async e => {
   e.preventDefault();
   const btn = f.querySelector('button:not([type=button])'); if (btn) btn.disabled = true;
   try { await FORMS[f.dataset.form](Object.fromEntries(new FormData(f)), f); }
-  catch (err) { console.error(err); toast(err.message || 'Ralat berlaku.', 'err'); }
+  catch (err) { console.error(err); toast(authMsg(err), 'err'); }
   finally { if (btn && document.body.contains(btn)) btn.disabled = false; }
 });
 addEventListener('hashchange', () => { if (location.hash === '#super' && !IS_TENANT_SITE) renderSuper(); });
@@ -1086,18 +1208,26 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) refr
 
 /* ===================== MULA ===================== */
 (async function boot() {
+  renderLoading();
   const tok = new URLSearchParams(location.search).get('t');
   if (!IS_TENANT_SITE) {
-    if (location.hash === '#super') { renderSuper(); return; }
     if (tok) { location.replace(baseDir() + 'penyewa.html?t=' + encodeURIComponent(tok)); return; }   // link lama → website penyewa
-    const q = new URLSearchParams(location.search);
+    const q = new URLSearchParams(location.search); let tab = null;
     if (q.has('status_id') && q.has('billcode')) {   // pulang dari ToyyibPay
-      history.replaceState(null, '', baseDir() + 'index.html');
-      setTimeout(() => toast(q.get('status_id') === '1' ? 'Bayaran berjaya ✅ Langganan akan aktif sebentar lagi.' : 'Bayaran tidak berjaya / dibatalkan.', q.get('status_id') === '1' ? '' : 'err'), 600);
-      S.tab = 'sub';
+      history.replaceState(null, '', baseDir() + 'index.html'); tab = 'sub';
+      setTimeout(() => toast(q.get('status_id') === '1' ? 'Bayaran berjaya ✅ Langganan akan aktif sebentar lagi.' : 'Bayaran tidak berjaya / dibatalkan.', q.get('status_id') === '1' ? '' : 'err'), 800);
     }
-    if (lsGet('prosewa_session', false) && mem.owner) { const tab = S.tab; await enterOwner(); if (tab === 'sub') { S.tab = 'sub'; renderOwner(); } return; }
-    renderLogin(); return;
+    try {
+      await API.onAuth(async uid => {
+        if (S.registering) return;
+        if (!uid) { S.uid = null; renderLogin(); return; }
+        if (S.uid === uid && S.mode && S.mode !== 'login') return;
+        S.uid = uid;
+        if (location.hash === '#super') { await renderSuper(); return; }
+        await enterOwner(uid, {tab});
+      });
+    } catch (e) { console.error(e); $('#app').innerHTML = `<div class="login"><div class="lbox"><h2 class="lh">ProSewa</h2><div class="al hot" style="text-align:left"><b>Tidak dapat sambung</b>${esc(authMsg(e))}</div></div></div>`; }
+    return;
   }
   if (tok) lsSet('prosewa_tenant_token', tok);
   S.mode = 'tenant'; S.token = tok || lsGet('prosewa_tenant_token');

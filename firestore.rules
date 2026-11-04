@@ -1,0 +1,80 @@
+rules_version = '2';
+// ProSewa — Firestore Security Rules untuk database "prosewa" (projek kukusanmy)
+// Firebase Console → Firestore Database → pilih database "prosewa" → Rules → tampal → Publish
+// (Rules database "(default)" KUKUSAN tidak terlibat.)
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isSuper() { return signedIn() && request.auth.uid == 'D3U6Dxs5joZQq5EYRdjZQUmRV773'; }
+    function isMe(uid) { return signedIn() && request.auth.uid == uid; }
+    function tenant(tok) { return get(/databases/$(database)/documents/tenants/$(tok)).data; }
+    function ownsTenant(tok) { return signedIn() && (tenant(tok).ownerId == request.auth.uid || isSuper()); }
+
+    // Profil awam owner (nama, telefon, bank, tetapan peringatan) — dibaca oleh penyewa
+    match /owners/{uid} {
+      allow get: if true;
+      allow list: if isSuper();
+      allow create, update: if isMe(uid) || isSuper();
+      allow delete: if isSuper();
+    }
+
+    // Maklumat peribadi owner (emel) — owner sendiri & Super Admin sahaja
+    match /ownerPriv/{uid} {
+      allow read, write: if isMe(uid) || isSuper();
+    }
+
+    // Langganan — owner hanya boleh mula percubaan sekali; lain-lain Super Admin (atau Cloud Function ToyyibPay)
+    match /subs/{uid} {
+      allow get: if true;
+      allow list: if isSuper();
+      allow create: if isSuper() || (isMe(uid)
+        && request.resource.data.keys().hasOnly(['plan', 'startTs'])
+        && request.resource.data.plan == 'trial'
+        && request.resource.data.startTs == request.time);
+      allow update, delete: if isSuper();
+    }
+
+    // Tetapan sistem (cth: hari percubaan)
+    match /config/{id} {
+      allow read: if true;
+      allow write: if isSuper();
+    }
+
+    // Sejarah bayaran langganan
+    match /subPayments/{id} {
+      allow read: if isSuper() || (signedIn() && resource.data.ownerId == request.auth.uid);
+      allow write: if isSuper();
+    }
+
+    // Penyewa — ID dokumen = token link penyewa (rahsia). Penyewa buka tanpa login.
+    match /tenants/{tok} {
+      allow get: if true;
+      allow list: if isSuper() || (signedIn() && resource.data.ownerId == request.auth.uid);
+      allow create: if signedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update: if signedIn() && (resource.data.ownerId == request.auth.uid || isSuper())
+        && request.resource.data.ownerId == resource.data.ownerId;
+      allow delete: if signedIn() && (resource.data.ownerId == request.auth.uid || isSuper());
+
+      // Bayaran: penyewa (tanpa login) boleh hantar bukti berstatus 'pending' sahaja
+      match /payments/{pid} {
+        allow read: if true;
+        allow create: if ownsTenant(tok) || (
+          request.resource.data.status == 'pending'
+          && request.resource.data.tenantId == tok
+          && request.resource.data.ownerId == tenant(tok).ownerId
+          && tenant(tok).active == true
+          && request.resource.data.proof is string
+          && request.resource.data.proof.size() < 900000
+        );
+        allow update, delete: if ownsTenant(tok);
+      }
+
+      // Peringatan dari owner kepada penyewa
+      match /reminders/{rid} {
+        allow read: if true;
+        allow write: if ownsTenant(tok);
+      }
+    }
+  }
+}
