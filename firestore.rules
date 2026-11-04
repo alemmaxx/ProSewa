@@ -47,6 +47,12 @@ service cloud.firestore {
       allow write: if isSuper();
     }
 
+    // Pesanan bayaran ToyyibPay (ditulis oleh Cloud Function sahaja)
+    match /subOrders/{id} {
+      allow read: if isSuper() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow write: if false;
+    }
+
     // Penyewa — ID dokumen = token link penyewa (rahsia). Penyewa buka tanpa login.
     match /tenants/{tok} {
       allow get: if true;
