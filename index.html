@@ -273,6 +273,12 @@ table.rep tr.tot td{font-weight:800;border-bottom:0;color:var(--gold)}
 .pdfdoc #receipt{border:0;background:#fff;color:#000;max-width:560px;margin:0 auto;padding:0}
 .pdfdoc #taxrep{color:#000;font-size:12px}.pdfdoc #taxrep table.rep th,.pdfdoc #taxrep table.rep td{border-color:#ddd;color:#000;padding:4px}.pdfdoc #taxrep table.rep tr.tot td{color:#000!important}.pdfdoc #taxrep .sec-h{color:#555;margin:14px 0 6px}
 .promo-in{display:flex;gap:8px;align-items:flex-end}.promo-in .fld{flex:1;margin:0}.promo-in .btn{flex:none;padding-left:22px;padding-right:22px}
+.sysban{position:sticky;top:0;z-index:40;padding:10px 16px;font-size:13.5px;font-weight:600;line-height:1.4;text-align:center;border-bottom:1px solid rgba(0,0,0,.25)}
+.sysban.warn{background:#4a3a0e;color:#f3dc8e}.sysban.down{background:#5a1d1d;color:#ffd9d9}.sysban.info{background:#12352b;color:#c3eedc}
+.manual details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px}
+.manual summary{cursor:pointer;font-weight:700;list-style:none;display:flex;justify-content:space-between;gap:8px}.manual summary::after{content:"+";color:var(--gold);font-size:20px;line-height:1}.manual details[open] summary::after{content:"–"}
+.manual ol,.manual ul{margin:8px 0 0;padding-left:20px;line-height:1.65;font-size:14px}.manual p{margin:8px 0 0;font-size:14px;color:var(--muted)}
+.iss{padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}.iss:last-child{border-bottom:0}
 .dlalt{display:block;text-align:center;font-size:13px;color:var(--muted);margin-top:8px;text-decoration:underline}
 @page{size:A4;margin:14mm}
 @media print{
@@ -296,6 +302,7 @@ table.rep tr.tot td{font-weight:800;border-bottom:0;color:var(--gold)}
 </style>
 </head>
 <body translate="no" class="notranslate">
+<div id="sysban" class="sysban" hidden></div>
 <div id="app"></div>
 <div id="modal"><div class="sheet"><div class="mh"><b id="mt"></b><button class="x" data-act="closeModal">×</button></div><div id="mb"></div></div></div>
 <div id="toast"></div>
@@ -406,6 +413,8 @@ const I18N_RX = [
   [/Link (\S+) disalin/g, "$1's link copied"],
   [/Ditambah (\d+) hari/g, 'Added $1 days'],
   [/Salam, /g, 'Hi, '],
+  [/Amaran ujian dihantar ke (\d+) peranti/g, 'Test alert sent to $1 device(s)'],
+  [/Ralat & laporan pengguna \((\d+)\)/g, 'Errors & user reports ($1)'],
   [/(\d+) perkara perlu tindakan \(bukti bayaran & aduan\)/g, '$1 item(s) need action (payment proofs & requests)'],
   [/(\d+) notifikasi belum dibaca/g, '$1 unread notification(s)'],
   [/(\d+) bukti bayaran menunggu semakan/g, '$1 payment proof(s) awaiting review'],
@@ -423,7 +432,22 @@ const I18N_RX = [
   [/Sewa (.+?) (RM [\d,.]+) belum dibayar\./g, 'Rent for $1 ($2) is unpaid.']
 ];
 Object.assign(I18N, {
-  'LAPORAN KUTIPAN SEWA': 'RENT COLLECTION REPORT', 'Promosi': 'Promotion', 'Promosi ProSewa': 'ProSewa promotion', 'Landing page': 'Landing page', 'Buka kit promosi': 'Open promo kit', 'Kit Promosi ProSewa': 'ProSewa Promo Kit', 'Salin link': 'Copy link', 'Kongsi': 'Share', 'Buka landing page': 'Open landing page', 'Muat turun poster': 'Download poster',
+  'LAPORAN KUTIPAN SEWA': 'RENT COLLECTION REPORT', 'Manual pengguna': 'User manual', 'Lapor masalah': 'Report a problem', 'Lapor Masalah': 'Report a Problem', 'Terangkan apa yang berlaku. Laporan terus dihantar kepada pasukan ProSewa.': 'Describe what happened. Your report goes straight to the ProSewa team.',
+  'Bahagian': 'Area', 'Umum': 'General', 'Penyewa / link': 'Tenants / link', 'Bayaran / resit': 'Payments / receipts', 'Langganan / bayaran ToyyibPay': 'Subscription / ToyyibPay payment', 'App Android': 'Android app', 'Apa masalahnya?': "What's the problem?",
+  'cth: Bila tekan Lulus, keluar ralat dan resit tidak dijana.': 'e.g. When I tap Approve, an error appears and no receipt is created.', 'No. telefon / emel untuk dihubungi (pilihan)': 'Phone / email to contact you (optional)', 'Hantar laporan': 'Send report',
+  'Laporan dihantar ✅ Terima kasih, kami akan semak secepat mungkin.': "Report sent ✅ Thank you, we'll look into it as soon as possible.", 'Sila terangkan masalah anda.': 'Please describe your problem.',
+  '📡 Tiada sambungan internet. Data mungkin tidak terkini.': '📡 No internet connection. Data may not be up to date.', '⚠️ Tidak dapat sambung ke pelayan. Kami akan cuba lagi secara automatik.': "⚠️ Can't connect to the server. We'll keep retrying automatically.",
+  '⚠️ Sistem sedang mengalami gangguan. Data atau notifikasi mungkin lewat. Kami sedang membaikinya.': "⚠️ The system is experiencing a disruption. Data or notifications may be delayed. We're fixing it.",
+  'ℹ️ Sistem agak perlahan sekarang. Data atau notifikasi mungkin lewat sedikit.': 'ℹ️ The system is a little slow right now. Data or notifications may be slightly delayed.',
+  'Status sistem': 'System status', 'Tahap': 'Level', 'Normal': 'Normal', 'Amaran / perlahan': 'Warning / slow', 'Gangguan': 'Disruption', 'Semakan terakhir': 'Last check', 'Pengguna nampak jalur amaran': 'Users see the warning bar',
+  'Pemantau tidak berjalan': 'Monitor not running', 'Semakan terakhir lebih 75 minit lalu. Pastikan function prosewaHealth sudah di-deploy.': 'The last check was more than 75 minutes ago. Make sure the prosewaHealth function is deployed.',
+  'Tiada masalah dikesan.': 'No problems detected.', 'Belum ada semakan. Tekan "Semak sekarang".': 'No checks yet. Tap "Check now".', '👥 = pengguna nampak jalur amaran umum. 🔧 = untuk anda sahaja.': '👥 = users see a general warning bar. 🔧 = for you only.',
+  'Semakan': 'Checks', 'Laman owner': 'Owner site', 'Laman penyewa': 'Tenant site', 'Database': 'Database', 'Penjadual notifikasi': 'Notification scheduler', 'Push (30 minit)': 'Push (30 min)', 'Ralat (30 minit)': 'Errors (30 min)', 'Semak sekarang': 'Check now', 'Uji amaran': 'Test alert',
+  'Pemantau berjalan setiap 30 minit. Bila masalah bermula atau pulih, push notification dihantar ke phone anda (log masuk akaun Super Admin di APK / web dan aktifkan notifikasi).': 'The monitor runs every 30 minutes. When a problem starts or recovers, a push notification is sent to your phone (sign in with the Super Admin account in the APK / web and enable notifications).',
+  'Notis kepada pengguna': 'Notice to users', 'Mesej (kosongkan untuk buang notis)': 'Message (leave empty to remove the notice)', 'cth: Penyelenggaraan sistem malam ini 11 malam – 12 tengah malam.': 'e.g. System maintenance tonight 11pm – 12 midnight.', 'Jenis': 'Type', 'Makluman': 'Information', 'Penyelenggaraan': 'Maintenance',
+  'Papar sehingga (pilihan)': 'Show until (optional)', 'Dipaparkan sebagai jalur di atas skrin semua owner & penyewa.': 'Shown as a bar at the top of the screen for all owners & tenants.', 'Sedang dipaparkan.': 'Currently showing.', 'Simpan notis': 'Save notice', 'Notis disimpan & dipaparkan.': 'Notice saved & shown.', 'Notis dibuang.': 'Notice removed.',
+  'Ralat & laporan pengguna': 'Errors & user reports', 'Laporan pengguna': 'User report', 'Padam semua': 'Delete all', 'Tiada ralat. 👍': 'No errors. 👍', 'Padam semua rekod ralat?': 'Delete all error records?', 'Semakan selesai.': 'Check complete.',
+  'Tiada peranti Super Admin berdaftar. Log masuk di APK / web, aktifkan notifikasi, kemudian cuba lagi.': 'No Super Admin device registered. Sign in on the APK / web, enable notifications, then try again.', 'Promosi': 'Promotion', 'Promosi ProSewa': 'ProSewa promotion', 'Landing page': 'Landing page', 'Buka kit promosi': 'Open promo kit', 'Kit Promosi ProSewa': 'ProSewa Promo Kit', 'Salin link': 'Copy link', 'Kongsi': 'Share', 'Buka landing page': 'Open landing page', 'Muat turun poster': 'Download poster',
   'Teks iklan': 'Ad copy', 'Bahasa teks': 'Copy language', 'Sertakan kod promo': 'Include promo code', '— Tiada —': '— None —', 'Kod promo hanya boleh digunakan sekali. Untuk hebahan umum, kongsi link tanpa kod. Owner baru terus dapat percubaan percuma': 'Promo codes can only be used once. For public posts, share the link without a code. New owners automatically get a free trial of', 'Aduan': 'Requests', 'Aduan kerosakan.': 'Maintenance requests.', 'Laporan kerosakan daripada penyewa': 'Damage reports from tenants', 'Baru': 'New', 'Dalam tindakan': 'In progress', 'Selesai': 'Resolved', 'Belum selesai': 'Open',
   'Tiada aduan.': 'No requests.', 'Penyewa boleh hantar aduan kerosakan (dengan gambar) dari app mereka.': 'Tenants can send maintenance requests (with photos) from their app.', 'Laporkan kerosakan rumah kepada tuan rumah': 'Report problems in the house to your landlord',
   'Buat aduan baru': 'New request', 'Belum ada aduan.': 'No requests yet.', 'Ada paip bocor, lampu rosak atau kunci bermasalah? Tekan butang di atas.': 'Leaking pipe, broken light or faulty lock? Tap the button above.',
@@ -645,6 +669,8 @@ const PLANS = [
   {id: 'yearly', name: 'Setahun', months: 12, price: 179.00, tag: 'Paling jimat'}
 ];
 const TRIAL_DAYS = 14;   // asal; Super Admin boleh ubah dalam panel #super (disimpan dalam config/app)
+const APP_VER = '2026.11.04';
+const HEALTH_URL = 'https://asia-southeast1-kukusanmy.cloudfunctions.net/prosewaHealthNow';
 const PROMO_URL = 'https://asia-southeast1-kukusanmy.cloudfunctions.net/prosewaRedeemPromo';   // Cloud Function kod promo
 const TOYYIBPAY = {createBillUrl: 'https://asia-southeast1-kukusanmy.cloudfunctions.net/prosewaCreateBill'};   // Cloud Function (folder functions/)
 // Harga pakej boleh diubah oleh Super Admin (disimpan dalam config/app.plans); PLANS di atas ialah nilai asal.
@@ -717,6 +743,13 @@ const LocalAPI = {
     L.subPayments.push({id: genId(), ownerId: uid, date: nowStr(), plan: 'promo', months: 0, days: +p.days, amount: 0, ref: code, until: end}); lsave(); return {days: +p.days, end};
   },
   async saveDevice() {},
+  async getStatus() { return clone((L.config || {}).status || {}); },
+  async setStatus(d) { L.config = L.config || {}; L.config.status = {...(L.config.status || {}), ...clone(d)}; lsave(); },
+  async getHealth() { return clone(L.health || null); },
+  async healthNow(body) { if (body?.test) return {sent: 0}; L.health = {level: 'ok', pubLevel: 'ok', at: nowStr(), src: 'manual', issues: [], checks: {db: {ok: true, ms: 5}}}; lsave(); return clone(L.health); },
+  async addError(d) { (L.sysErrors = L.sysErrors || []).push({...clone(d), id: genId()}); L.sysErrors = L.sysErrors.slice(-60); lsave(); },
+  async listErrors() { return clone([...(L.sysErrors || [])].reverse().slice(0, 40)); },
+  async clearErrors() { L.sysErrors = []; lsave(); },
   async nextReceiptSeq(uid) { const o = L.owners[uid] = L.owners[uid] || {}; o.receiptSeq = (+o.receiptSeq || 0) + 1; lsave(); return o.receiptSeq; }
 };
 addEventListener('storage', e => { if (!ONLINE && e.key === LKEY) { L = lsGet(LKEY) || L; refresh(); } });
@@ -797,6 +830,17 @@ const FireAPI = {
     if (!r) throw new Error('Tiada sambungan internet.');
     const j = await r.json().catch(() => ({})); if (!r.ok || j.error) throw new Error(j.error || 'Ralat berlaku.'); return j;
   },
+  async getStatus() { await fbInit(); return fsnap(await fb.F.getDoc(fdoc('config', 'status'))) || {}; },
+  async setStatus(d) { await fbInit(); await fb.F.setDoc(fdoc('config', 'status'), d, {merge: true}); },
+  async getHealth() { await fbInit(); return fsnap(await fb.F.getDoc(fdoc('health', 'admin'))); },
+  async healthNow(body) {
+    const token = await this.idToken();
+    const r = await fetch(HEALTH_URL, {method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token}, body: JSON.stringify(body || {})}).catch(() => null);
+    if (!r) throw new Error('Tiada sambungan internet.'); const j = await r.json().catch(() => ({})); if (!r.ok || j.error) throw new Error(j.error || 'Ralat berlaku.'); return j;
+  },
+  async addError(d) { await fbInit(); await fb.F.addDoc(fcol('sysErrors'), d); },
+  async listErrors() { await fbInit(); const s = await fb.F.getDocs(fb.F.query(fcol('sysErrors'), fb.F.orderBy('at', 'desc'), fb.F.limit(40))); return s.docs.map(d => ({...d.data(), id: d.id})); },
+  async clearErrors(list) { await fbInit(); for (const e of list) await fb.F.deleteDoc(fdoc('sysErrors', e.id)).catch(() => {}); },
   async saveDevice(token, d) { await fbInit(); await fb.F.setDoc(fdoc('devices', token), {...d, at: nowStr()}); },
   async listSubPayments(uid) { await fbInit(); const s = await fb.F.getDocs(fb.F.query(fcol('subPayments'), fb.F.where('ownerId', '==', uid))); return s.docs.map(d => ({...d.data(), id: d.id})); },
   async addSubPayment(d) { await fbInit(); await fb.F.addDoc(fcol('subPayments'), d); },
@@ -905,7 +949,8 @@ async function refresh() {
   try {
     if (S.mode === 'owner' || S.mode === 'locked') { await loadOwner(); (S.uid !== SUPER_UID && !subInfo()?.active) ? renderLocked() : (S.mode === 'locked' ? (S.mode = 'owner', renderOwner()) : renderOwner()); }
     else if (S.mode === 'tenant') { await loadTenant(S.token); renderTenant(); }
-  } catch (e) { console.error(e); } finally { _refreshing = false; }
+    if (_connErr) { _connErr = false; showSysBan(); }
+  } catch (e) { console.error(e); if (/unavailable|network|offline|fetch/i.test(String(e.code || e.message))) { _connErr = true; showSysBan(); } else reportErr(e.stack || e.message, 'refresh'); } finally { _refreshing = false; checkSys(); }
 }
 setInterval(() => { if (!document.hidden) refresh(); }, 45000);   // ambil data baru setiap 45 saat
 function renderLoading() { $('#app').innerHTML = `<div class="login"><div class="lbox"><img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa</h2><p class="muted">Memuatkan…</p></div></div>`; }
@@ -980,14 +1025,15 @@ async function renderSuper() {
     return;
   }
   S.mode = 'super'; renderLoading();
-  const [config, owners, promos] = await Promise.all([API.getConfig(), API.listOwners(), API.listPromos().catch(() => [])]);
-  S.config = config || {}; S.owners = owners; S.promos = promos;
+  const [config, owners, promos, health, errs, st] = await Promise.all([API.getConfig(), API.listOwners(), API.listPromos().catch(() => []), API.getHealth().catch(() => null), API.listErrors().catch(() => []), API.getStatus().catch(() => ({}))]);
+  S.config = config || {}; S.owners = owners; S.promos = promos; S.health = health; S.sysErrs = errs; SYS = st || {};
   const rows = owners.map(o => { const si = subInfo(fsub(o.sub)) || {planName: '-', end: '', active: false, days: 0};
     return `<div class="tc ${si.active ? (si.days <= 5 ? 'warn' : '') : 'hot'}"><div class="t1"><div>${si.active ? `<span class="chip c-paid">Aktif · ${si.days} hari lagi</span>` : '<span class="chip c-overdue">Tamat</span>'}<h4 data-raw>${esc(o.name || o.email || o.uid)}</h4><div class="muted" data-raw>${esc(o.email || '')}</div></div></div>
       <div class="kvs"><div class="kv"><span>Pelan</span><b>${esc(si.planName)}</b></div><div class="kv"><span>Tamat</span><b>${si.end ? dateLabel(si.end) : '-'}</b></div><div class="kv"><span>Daftar</span><b>${o.createdAt ? dtLabel(o.createdAt) : '-'}</b></div></div>
       <div class="acts"><button class="btn sm" data-act="superAdd" data-id="${o.uid}|30">+30 hari</button><button class="btn sm ghost" data-act="superAdd" data-id="${o.uid}|365">+1 tahun</button></div>
       <div class="acts"><button class="btn sm ghost" data-act="superTrial" data-id="${o.uid}">Set semula percubaan</button><button class="btn sm red" data-act="superExpire" data-id="${o.uid}">Tamatkan sekarang</button></div></div>`; }).join('');
   $('#app').innerHTML = header('Super Admin', 'Kawalan sistem.', 'Tetapan percubaan & langganan owner', {btns: '<span style="margin-left:auto"></span><button class="btn sm" style="margin-right:8px" data-act="promoKit">📣 Promosi</button>' + langSeg(), stats: [[owners.length, 'Owner'], [owners.filter(o => subInfo(fsub(o.sub))?.active).length, 'Aktif', 'g']]}) + `<div class="wrap">
+    ${healthSection()}
     <div class="sec-h">Harga pakej</div><form class="card" data-form="prices">${plans().map(p => `<div class="grid2">${fld(p.name + ' (RM)', 'price_' + p.id, p.price.toFixed(2), 'number', 'step="0.01" min="1" required inputmode="decimal"')}${fld('Label', 'tag_' + p.id, p.tag, 'text', 'placeholder="cth: Jimat 17%"')}</div>`).join('')}
       <p class="muted">Harga ini dipaparkan kepada owner dan digunakan semasa cipta bil ToyyibPay.</p><button class="btn wide">Simpan harga</button></form>
     <div class="sec-h">Tempoh percubaan</div><form class="card" data-form="trial">${fld('Hari percubaan percuma', 'days', trialDays(), 'number', 'min="0" max="365" required')}
@@ -997,6 +1043,30 @@ async function renderSuper() {
     ${promoSection(promos)}
     <div class="sec-h">Owner (${owners.length})</div>${owners.length ? `<div class="tcgrid">${rows}</div>` : '<div class="empty">Belum ada owner.</div>'}
     <button class="btn wide ghost" style="margin-top:12px" data-act="exitSuper">‹ Kembali ke app</button></div>`;
+}
+function healthSection() {
+  const h = S.health || {}, lv = {ok: ['🟢', 'Normal'], warn: ['🟠', 'Amaran / perlahan'], down: ['🔴', 'Gangguan']}[h.level || 'ok'] || ['⚪', '-'], c = h.checks || {}, en = LANG === 'en';
+  const ms = x => x ? (x.ok ? `<span style="color:var(--green)">✓</span> ${x.ms != null ? (x.ms / 1000).toFixed(1) + 's' : ''}` : `<span style="color:var(--red)">✕ ${esc(x.status || x.err || '')}</span>`) : '-';
+  const stale = h.at && (new Date() - new Date(h.at.replace(' ', 'T') + ':00')) > 75 * 60e3;
+  const errs = S.sysErrs || [], now = nowStr(), noticeOn = SYS.notice && (!SYS.noticeUntil || SYS.noticeUntil > now);
+  return `<div class="sec-h">🩺 Status sistem</div><div class="card">
+    <div class="kv"><span>Tahap</span><b>${lv[0]} ${lv[1]}</b></div>
+    <div class="kv"><span>Semakan terakhir</span><b>${h.at ? dtLabel(h.at) : '-'} ${h.src === 'manual' ? '(manual)' : ''}</b></div>
+    <div class="kv"><span>Pengguna nampak jalur amaran</span><b>${(h.pubLevel && h.pubLevel !== 'ok') || noticeOn ? '✓' : '✕'}</b></div>
+    ${stale ? '<div class="al hot" style="margin:8px 0 0"><b>⚠️ Pemantau tidak berjalan</b>Semakan terakhir lebih 75 minit lalu. Pastikan function prosewaHealth sudah di-deploy.</div>' : ''}
+    ${(h.issues || []).length ? h.issues.map(i => `<div class="iss">${i.pub ? '👥' : '🔧'} <span data-raw>${esc(en && i.en ? i.en : i.msg)}</span></div>`).join('') : `<p class="muted" style="margin:8px 0 0">${h.at ? 'Tiada masalah dikesan.' : 'Belum ada semakan. Tekan "Semak sekarang".'}</p>`}
+    <p class="muted" style="font-size:12px;margin:8px 0 0">👥 = pengguna nampak jalur amaran umum. 🔧 = untuk anda sahaja.</p>
+    <div class="sec-h">Semakan</div>
+    <div class="kv"><span>Laman owner</span><b>${ms(c.site)}</b></div><div class="kv"><span>Laman penyewa</span><b>${ms(c.site_t)}</b></div><div class="kv"><span>Database</span><b>${ms(c.db)}</b></div>
+    <div class="kv"><span>ToyyibPay</span><b>${ms(c.toyyib)}</b></div><div class="kv"><span>Penjadual notifikasi</span><b>${c.lastTick ? dtLabel(c.lastTick) : '-'}</b></div>
+    <div class="kv"><span>Push (30 minit)</span><b>${c.push ? `${c.push.sent} ✓ · ${c.push.fail} ✕` : '-'}</b></div><div class="kv"><span>Ralat (30 minit)</span><b>${c.errors ? `function ${c.errors.fn} · app ${c.errors.app}` : '-'}</b></div>
+    <div class="acts"><button class="btn" style="flex:1" data-act="healthNow">🔍 Semak sekarang</button><button class="btn ghost" style="flex:1" data-act="healthTest">🧪 Uji amaran</button></div>
+    <p class="muted" style="font-size:12px;margin:8px 0 0">Pemantau berjalan setiap 30 minit. Bila masalah bermula atau pulih, push notification dihantar ke phone anda (log masuk akaun Super Admin di APK / web dan aktifkan notifikasi).</p></div>
+  <div class="sec-h">📢 Notis kepada pengguna</div><form class="card" data-form="sysNotice">
+    ${area('Mesej (kosongkan untuk buang notis)', 'notice', SYS.notice || '', 'maxlength="200" placeholder="cth: Penyelenggaraan sistem malam ini 11 malam – 12 tengah malam."')}
+    <div class="grid2">${sel('Jenis', 'noticeLevel', [['info', 'ℹ️ Makluman'], ['warn', '🛠️ Penyelenggaraan'], ['down', '⚠️ Gangguan']], SYS.noticeLevel || 'info')}${fld('Papar sehingga (pilihan)', 'noticeUntil', (SYS.noticeUntil || '').slice(0, 16), 'datetime-local')}</div>
+    <p class="muted">Dipaparkan sebagai jalur di atas skrin semua owner & penyewa. ${noticeOn ? '<b style="color:var(--green)">Sedang dipaparkan.</b>' : ''}</p><button class="btn wide">Simpan notis</button></form>
+  <div class="sec-h">🐞 Ralat & laporan pengguna (${errs.length})</div><div class="card">${errs.length ? errs.map(e => `<div class="iss"><b>${e.src === 'report' ? '📮 Laporan pengguna' : e.src === 'fn' ? '⚙️ Function' : e.src === 'apk' ? '🤖 APK' : '🌐 Web'}</b> · ${dtLabel(e.at)}${e.where ? ` · <span data-raw>${esc(e.where)}</span>` : ''}${e.who ? ` · <span data-raw>${esc(e.who)}</span>` : ''}${e.contact ? ` · <span data-raw>${esc(e.contact)}</span>` : ''}<div class="muted" data-raw style="font-size:12.5px;word-break:break-word;white-space:pre-line">${esc(String(e.msg).slice(0, 300))}</div></div>`).join('') + '<div class="acts"><button class="btn sm red" data-act="clearErrs">🗑 Padam semua</button></div>' : '<p class="muted" style="margin:0">Tiada ralat. 👍</p>'}</div>`;
 }
 const LANDING = WEB_BASE + 'promo.html';
 const promoCaps = (l, code, days) => {
@@ -1219,6 +1289,7 @@ function oSettings() {
   const o = S.owner, s = S.settings;
   const perm = NPERM;
   return header('Tetapan', 'Tetapan.', o.name ? `${o.name}${o.phone ? ' · ' + o.phone : ''}` : 'Lengkapkan maklumat anda', {btns: ownerBtns()}) + `<div class="wrap"><div class="stack">
+    <div class="blk"><div class="card"><div class="acts" style="margin:0"><button class="btn" style="flex:1" data-act="manual">📘 Manual pengguna</button><button class="btn ghost" style="flex:1" data-act="reportForm">📮 Lapor masalah</button></div></div></div>
     <div class="blk"><div class="sec-h">Paparan</div><div class="card"><div class="switch">Bahasa ${langSeg()}</div><div class="switch">Tema ${themeSeg()}</div></div></div>
     <div class="blk"><div class="sec-h">Maklumat syarikat (untuk resit)</div><form class="card" data-form="company">
       <div class="logobox"><div id="logoPrev">${o.logo ? `<img src="${o.logo}" alt="logo">` : '<span class="muted">Tiada logo</span>'}</div>
@@ -1302,6 +1373,54 @@ function issueForm(id) {
     ${sel('Status', 'status', Object.entries(ISSUE_ST).map(([k, v]) => [k, v[0]]), i.status === 'new' ? 'progress' : i.status)}
     ${area('Nota untuk penyewa (pilihan)', 'note', '', 'maxlength="500" placeholder="cth: Tukang paip akan datang Sabtu 10 pagi."')}
     <button class="btn wide" style="margin-top:10px">Simpan & maklumkan penyewa</button></form>`);
+}
+
+/* ===================== MANUAL PENGGUNA (owner) ===================== */
+const MANUAL = [
+ ['🚀 Mula guna (5 minit)', '🚀 Getting started (5 minutes)',
+  '<ol><li>Pergi ke <b>Tetapan → Profil & maklumat bayaran</b>: isi nama, telefon, bank, no. akaun dan muat naik <b>QR DuitNow</b> anda. Penyewa nampak maklumat ini.</li><li>Di <b>Maklumat syarikat</b>: muat naik logo, nama & alamat syarikat, No. SSM/SST dan awalan no. resit. Ini muncul pada resit.</li><li>Di <b>Peringatan automatik</b>: pilih berapa hari sebelum tarikh bayar & jam notifikasi dihantar kepada penyewa.</li><li>Tekan <b>🔔 Aktifkan notifikasi phone</b>, kemudian <b>🧪 Uji notifikasi</b>.</li></ol>',
+  '<ol><li>Go to <b>Settings → Profile & payment details</b>: enter your name, phone, bank, account number and upload your <b>DuitNow QR</b>. Tenants see these details.</li><li>Under <b>Company details</b>: upload your logo, company name & address, SSM/SST numbers and receipt prefix. These appear on receipts.</li><li>Under <b>Automatic reminders</b>: choose how many days before the due date & what time tenants are notified.</li><li>Tap <b>🔔 Enable phone notifications</b>, then <b>🧪 Test notification</b>.</li></ol>'],
+ ['👥 Tambah penyewa & hantar link', '👥 Add tenants & send their link',
+  '<ol><li>Tekan butang <b>+</b> di atas. Isi nama, telefon, alamat (rumah / bilik), sewa, deposit, tarikh bayar, tarikh mula & <b>tamat kontrak</b>.</li><li>Selepas simpan, tekan <b>Hantar link via WhatsApp</b>. Penyewa cuma buka link itu, <b>tiada login</b>.</li><li>Penyewa Android boleh pasang <b>APK ProSewa Penyewa</b> dan tampal link sekali sahaja.</li><li>Link tersebar? Tekan 🔗 → <b>Tukar link</b>. Link lama terus tidak boleh digunakan.</li></ol>',
+  '<ol><li>Tap the <b>+</b> button at the top. Enter name, phone, address (house / room), rent, deposit, due day, start date & <b>tenancy end</b>.</li><li>After saving, tap <b>Send link via WhatsApp</b>. Tenants just open the link, <b>no login</b>.</li><li>Android tenants can install the <b>ProSewa Tenant APK</b> and paste the link once.</li><li>Link leaked? Tap 🔗 → <b>Change link</b>. The old link stops working immediately.</li></ol>'],
+ ['💳 Terima bayaran & resit', '💳 Payments & receipts',
+  '<ol><li>Penyewa bayar ke akaun / QR anda dan muat naik slip. Anda dapat notifikasi <b>🧾 Bukti bayaran baru</b>.</li><li>Buka tab <b>Status</b> → semak gambar → <b>✓ Lulus & hantar resit</b> atau <b>Tolak</b> (dengan sebab).</li><li>Penyewa bayar tunai / tak guna app? Tekan <b>💵 Rekod bayaran</b> pada kad penyewa dan muat naik slip sendiri.</li><li>Resit boleh disimpan sebagai PDF atau dihantar melalui WhatsApp. No. resit berturutan dan tidak berulang.</li><li>Tersilap? Buka resit → <b>Batal resit</b> (dengan sebab). Resit sah tidak boleh dipadam, untuk rekod audit.</li></ol>',
+  '<ol><li>Tenants pay to your account / QR and upload the slip. You get a <b>🧾 New payment proof</b> notification.</li><li>Open the <b>Status</b> tab → check the image → <b>✓ Approve & send receipt</b> or <b>Reject</b> (with a reason).</li><li>Tenant pays cash / doesn\'t use the app? Tap <b>💵 Record payment</b> on the tenant card and upload the slip yourself.</li><li>Receipts can be saved as PDF or sent via WhatsApp. Receipt numbers run in sequence and are never reused.</li><li>Made a mistake? Open the receipt → <b>Void receipt</b> (with a reason). Valid receipts cannot be deleted, for audit purposes.</li></ol>'],
+ ['🔔 Peringatan & notifikasi', '🔔 Reminders & notifications',
+  '<ul><li><b>Automatik:</b> penyewa dapat peringatan sebelum tarikh bayar dan bila sewa tertunggak (ikut Tetapan).</li><li><b>Manual:</b> di tab Status, tekan <b>🔔 Ingatkan</b> (terus) atau <b>⏰ Jadual</b> (pilih tarikh & masa).</li><li>Notifikasi sampai walaupun app ditutup. Ikon app tunjuk <b>lencana</b> bila ada perkara belum disemak.</li><li>Tiada notifikasi? Tetapan → <b>🧪 Uji notifikasi</b>, dan pastikan notifikasi ProSewa dibenarkan dalam Tetapan phone.</li></ul>',
+  '<ul><li><b>Automatic:</b> tenants get a reminder before the due date and when rent is overdue (based on Settings).</li><li><b>Manual:</b> in the Status tab, tap <b>🔔 Remind</b> (now) or <b>⏰ Schedule</b> (pick a date & time).</li><li>Notifications arrive even when the app is closed. The app icon shows a <b>badge</b> when something needs your attention.</li><li>No notifications? Settings → <b>🧪 Test notification</b>, and make sure ProSewa notifications are allowed in your phone settings.</li></ul>'],
+ ['📄 Kontrak & deposit', '📄 Tenancy & deposit',
+  '<ul><li>Isi <b>Tamat kontrak</b> pada penyewa. 30 hari sebelum tamat, amaran keluar di tab Penyewa dan notifikasi dihantar.</li><li>Tekan <b>📄 Perbaharui</b>: pilih tarikh tamat baru & sewa baru (berkuat kuasa bulan depan).</li><li>Penyewa keluar? Tekan <b>🚪</b> → isi tarikh keluar, tolak tunggakan & potongan (pembersihan, kerosakan, bil). Sistem kira baki deposit dan jana <b>Penyata Deposit</b> yang penyewa boleh lihat.</li></ul>',
+  '<ul><li>Fill in <b>Tenancy end</b> for each tenant. 30 days before it ends, a warning appears in the Tenants tab and notifications are sent.</li><li>Tap <b>📄 Renew</b>: choose the new end date & new rent (applies from next month).</li><li>Tenant moving out? Tap <b>🚪</b> → enter the move-out date, deduct arrears & charges (cleaning, damage, bills). The system calculates the deposit balance and creates a <b>Deposit Statement</b> the tenant can view.</li></ul>'],
+ ['🛠️ Aduan kerosakan', '🛠️ Maintenance requests',
+  '<ul><li>Penyewa hantar aduan (kategori, penerangan, gambar) dari tab <b>Aduan</b> di app mereka.</li><li>Anda dapat notifikasi. Buka tab <b>Aduan</b> → <b>Kemas kini status</b> (Dalam tindakan / Selesai) dan tulis nota, contohnya tarikh tukang datang.</li><li>Penyewa dimaklumkan setiap kali status berubah.</li></ul>',
+  '<ul><li>Tenants send requests (category, description, photo) from the <b>Requests</b> tab in their app.</li><li>You get notified. Open the <b>Requests</b> tab → <b>Update status</b> (In progress / Resolved) and add a note, e.g. when the repairer will come.</li><li>Tenants are notified every time the status changes.</li></ul>'],
+ ['📊 Laporan & cukai', '📊 Reports & tax',
+  '<ul><li><b>Kutipan sewa:</b> jangkaan vs diterima setiap bulan, tunggakan ikut penyewa. Simpan sebagai PDF atau CSV (Excel).</li><li><b>Cukai & Perbelanjaan:</b> tekan <b>+ Perbelanjaan</b> untuk rekod cukai pintu, cukai tanah, insurans, pembaikan dan lain-lain (boleh lampir resit).</li><li>Angka <b>Pendapatan sewa bersih</b> ialah rujukan untuk e-Filing LHDN. Sahkan perbelanjaan yang dibenarkan dengan LHDN / ejen cukai.</li></ul>',
+  '<ul><li><b>Rent collection:</b> expected vs received each month, arrears by tenant. Save as PDF or CSV (Excel).</li><li><b>Tax & Expenses:</b> tap <b>+ Expense</b> to record assessment tax, quit rent, insurance, repairs and more (you can attach receipts).</li><li>The <b>Net rental income</b> figure is a reference for LHDN e-Filing. Confirm allowable expenses with LHDN / your tax agent.</li></ul>'],
+ ['💎 Langganan & kod promo', '💎 Subscription & promo codes',
+  '<ul><li>Tab <b>Langganan</b> tunjuk baki hari. Pilih pakej dan bayar melalui ToyyibPay (FPX / DuitNow). Hari baru disambung selepas tarikh tamat semasa.</li><li>Ada kod promo? Tampal di <b>🎟️ Ada kod promo?</b> dan tekan <b>Guna</b>. Setiap kod sekali guna.</li><li>Jika langganan tamat, anda dan penyewa tidak dapat buka app sehingga bayaran dibuat. Data anda kekal selamat.</li></ul>',
+  '<ul><li>The <b>Subscription</b> tab shows the days left. Choose a plan and pay via ToyyibPay (FPX / DuitNow). New days are added after the current end date.</li><li>Have a promo code? Paste it under <b>🎟️ Have a promo code?</b> and tap <b>Apply</b>. Each code can be used once.</li><li>If the subscription ends, you and your tenants cannot open the app until payment is made. Your data stays safe.</li></ul>'],
+ ['📱 App Android, tablet & laptop', '📱 Android app, tablet & laptop',
+  '<ul><li>Muat turun <b>ProSewa Admin</b> (owner) dan <b>ProSewa Penyewa</b> di prosewa.web.app/download.html. Pasang terus atas versi lama untuk kemas kini.</li><li>Di laptop / iPhone: buka prosewa.web.app dan tekan <b>⬇ Pasang</b>.</li><li>Dalam APK, log masuk guna emel & kata laluan. Akaun Google: tetapkan kata laluan dahulu di versi web (Tetapan → Keselamatan).</li></ul>',
+  '<ul><li>Download <b>ProSewa Admin</b> (owner) and <b>ProSewa Tenant</b> at prosewa.web.app/download.html. Install over the old version to update.</li><li>On a laptop / iPhone: open prosewa.web.app and tap <b>⬇ Install</b>.</li><li>In the APK, sign in with email & password. Google accounts: set a password first on the web version (Settings → Security).</li></ul>'],
+ ['⚠️ Jika ada masalah', '⚠️ If something goes wrong',
+  '<ul><li>Jika sistem ada gangguan, <b>jalur amaran</b> muncul di atas skrin dan hilang sendiri bila pulih. Data anda selamat.</li><li>Tiada internet? Jalur 📡 muncul. App akan muat semula data bila sambungan kembali.</li><li>Masih bermasalah? Tekan <b>📮 Lapor masalah</b> di bawah. Laporan terus sampai kepada pasukan ProSewa.</li></ul>',
+  '<ul><li>If the system has a disruption, a <b>warning bar</b> appears at the top of the screen and disappears when it recovers. Your data is safe.</li><li>No internet? A 📡 bar appears. The app reloads data when the connection is back.</li><li>Still having trouble? Tap <b>📮 Report a problem</b> below. Your report goes straight to the ProSewa team.</li></ul>']
+];
+function manualModal() {
+  const en = LANG === 'en';
+  openModal(en ? '📘 User Manual' : '📘 Manual Pengguna', `<div class="manual" data-raw><p style="margin-top:0">${en ? 'A quick guide to every part of ProSewa. Tap a topic to open it.' : 'Panduan ringkas setiap bahagian ProSewa. Tekan topik untuk buka.'}</p>
+    ${MANUAL.map(([tb, te, bb, be], i) => `<details ${i === 0 ? 'open' : ''}><summary>${en ? te : tb}</summary>${en ? be : bb}</details>`).join('')}</div>
+    <div class="acts" style="margin-top:10px"><button class="btn" style="flex:1" data-act="reportForm">📮 Lapor masalah</button><a class="btn ghost" style="flex:1" href="${LANDING}" target="_blank" rel="noopener">🌐 prosewa.web.app</a></div>
+    <p class="muted" style="text-align:center;margin:8px 0 0">ProSewa v${APP_VER}</p>`);
+}
+function reportForm() {
+  openModal('Lapor Masalah', `<form data-form="report"><p class="muted" style="margin-top:0">Terangkan apa yang berlaku. Laporan terus dihantar kepada pasukan ProSewa.</p>
+    ${sel('Bahagian', 'area', [['Umum', 'Umum'], ['Penyewa / link', 'Penyewa / link'], ['Bayaran / resit', 'Bayaran / resit'], ['Notifikasi', 'Notifikasi'], ['Laporan', 'Laporan'], ['Langganan / bayaran ToyyibPay', 'Langganan / bayaran ToyyibPay'], ['App Android', 'App Android'], ['Lain-lain', 'Lain-lain']], 'Umum')}
+    ${area('Apa masalahnya?', 'msg', '', 'required maxlength="1000" placeholder="cth: Bila tekan Lulus, keluar ralat dan resit tidak dijana."')}
+    ${fld('No. telefon / emel untuk dihubungi (pilihan)', 'contact', S.owner?.phone || S.auth?.email || '', 'text')}
+    <button class="btn wide" style="margin-top:10px">Hantar laporan</button></form>`);
 }
 
 /* ===================== PENYEWA ===================== */
@@ -1546,6 +1665,40 @@ function phoneNotify(title, body, at) {
   const opt = {body, icon: 'icon-192.png', badge: 'icon-192.png', data: {url: location.href}};
   try { if (swReg) swReg.showNotification(title, opt); else new Notification(title, opt); } catch (e) {}
 }
+/* ---------- Status sistem: jalur amaran untuk semua pengguna (macam ProSyariah) ---------- */
+let SYS = {}, _sysAt = 0, _connErr = false;
+function showSysBan() {
+  const b = $('#sysban'); if (!b) return;
+  const now = nowStr(), n = SYS.notice && (!SYS.noticeUntil || SYS.noticeUntil > now) ? SYS : null;
+  let lv = '', msg = '';
+  if (!navigator.onLine) { lv = 'warn'; msg = '📡 Tiada sambungan internet. Data mungkin tidak terkini.'; }
+  else if (_connErr) { lv = 'warn'; msg = '⚠️ Tidak dapat sambung ke pelayan. Kami akan cuba lagi secara automatik.'; }
+  else if (SYS.level === 'down') { lv = 'down'; msg = '⚠️ Sistem sedang mengalami gangguan. Data atau notifikasi mungkin lewat. Kami sedang membaikinya.'; }
+  else if (n) { lv = n.noticeLevel || 'info'; msg = (lv === 'down' ? '⚠️ ' : lv === 'warn' ? '🛠️ ' : 'ℹ️ ') + n.notice; }
+  else if (SYS.level === 'warn') { lv = 'warn'; msg = 'ℹ️ Sistem agak perlahan sekarang. Data atau notifikasi mungkin lewat sedikit.'; }
+  if (!lv || S.mode === 'super' && !n && !_connErr && navigator.onLine && SYS.level !== 'down') { b.hidden = true; return; }
+  b.className = 'sysban ' + lv; b.textContent = n && msg.includes(n.notice) ? msg : tr(msg); b.hidden = false;   // notis Super Admin dipaparkan seperti ditulis
+}
+async function checkSys(force) {
+  if (!ONLINE && !force && _sysAt) return showSysBan();
+  if (!force && Date.now() - _sysAt < 5 * 60e3) return showSysBan();
+  _sysAt = Date.now();
+  try { SYS = await API.getStatus() || {}; _connErr = false; } catch (e) { if (navigator.onLine) _connErr = true; }
+  showSysBan();
+}
+addEventListener('online', () => { _connErr = false; showSysBan(); checkSys(true); refresh(); });
+addEventListener('offline', showSysBan);
+// Ralat dalam app pengguna → direkod untuk Super Admin (sekali bagi setiap ralat, maksimum 5 setiap sesi)
+const _errSeen = new Set();
+function reportErr(msg, where) {
+  msg = String(msg || '').slice(0, 500); if (!msg || _errSeen.has(msg) || _errSeen.size >= 5) return;
+  if (/ResizeObserver|Script error\.?$|extension|chrome-extension|Load failed|NetworkError|Failed to fetch|cancel/i.test(msg)) return;
+  _errSeen.add(msg);
+  API.addError({src: isNative() ? 'apk' : 'web', where: String(where || (IS_TENANT_SITE ? 'penyewa' : S.mode || '-')).slice(0, 100), msg, at: nowStr(), ver: APP_VER, ua: navigator.userAgent.slice(0, 200), who: S.uid ? 'owner:' + S.uid.slice(0, 8) : (S.t ? 'penyewa' : '-')}).catch(() => {});
+}
+addEventListener('error', e => reportErr(e.message + (e.filename ? ` @${String(e.filename).split('/').pop()}:${e.lineno}` : ''), 'window'));
+addEventListener('unhandledrejection', e => reportErr(e.reason?.stack || e.reason?.message || e.reason, 'promise'));
+
 /* ---------- Lencana (badge) pada ikon app: phone, tab & laptop ---------- */
 const BASE_TITLE = document.title;
 let _badgeN = -1, _favOrig = null, _favImg = null;
@@ -1707,6 +1860,11 @@ const ACTIONS = {
   depPdf: id => { const t = S.tenants.find(x => x.id === id) || S.t; printHTML(depStatementHTML(t), tr('Penyata Deposit') + ' ' + t.name); },
   promoFilter: id => { S.promoFilter = id; renderSuper(); },
   promoKit: () => promoKit(),
+  healthNow: async (id, el) => { el.disabled = true; el.textContent = '⏳ …'; try { S.health = await API.healthNow(); toast('Semakan selesai.'); } finally { renderSuper(); } },
+  healthTest: async () => { const r = await API.healthNow({test: true}); toast(r.sent ? `Amaran ujian dihantar ke ${r.sent} peranti ✅` : 'Tiada peranti Super Admin berdaftar. Log masuk di APK / web, aktifkan notifikasi, kemudian cuba lagi.', r.sent ? '' : 'err'); },
+  clearErrs: async () => { if (!confirm('Padam semua rekod ralat?')) return; await API.clearErrors(S.sysErrs || []); toast('Dipadam.'); renderSuper(); },
+  manual: () => manualModal(),
+  reportForm: () => reportForm(),
   kitCopy: async k => { const c = S.kitCaps[+k]; try { await navigator.clipboard.writeText(c); toast('Disalin.'); } catch (e) { prompt('Salin:', c); } },
   kitShare: async () => { const d = {title: 'ProSewa', text: S.kitCaps[2], url: LANDING}; if (navigator.share) { try { await navigator.share(d); } catch (e) {} } else { try { await navigator.clipboard.writeText(S.kitCaps[0]); toast('Disalin.'); } catch (e) {} } },
   kitPoster: async () => { let r = await fetch('shots/og.jpg').catch(() => null); if (!r || !r.ok) r = await fetch(WEB_BASE + 'shots/og.jpg'); const b = await r.blob(); await saveFile('ProSewa-poster.jpg', b, 'image/jpeg'); },
@@ -1885,6 +2043,16 @@ const FORMS = {
     await API.updateTenant(d.id, {active: false, endedAt: d.moveOut.slice(0, 7), moveOut: d.moveOut, depositReturn: dr});
     closeModal(); await refresh(); depStatement(d.id); toast('Sewa ditamatkan. Penyata deposit disimpan.');
   },
+  async sysNotice(d) {
+    const notice = (d.notice || '').trim().slice(0, 200);
+    await API.setStatus({notice, noticeLevel: d.noticeLevel || 'info', noticeUntil: d.noticeUntil ? d.noticeUntil.replace('T', 'T').slice(0, 16) : ''});
+    SYS = {...SYS, notice, noticeLevel: d.noticeLevel, noticeUntil: d.noticeUntil || ''}; toast(notice ? 'Notis disimpan & dipaparkan.' : 'Notis dibuang.'); renderSuper();
+  },
+  async report(d) {
+    const msg = (d.msg || '').trim(); if (msg.length < 5) throw new Error('Sila terangkan masalah anda.');
+    await API.addError({src: 'report', where: (d.area || '').slice(0, 100), msg: msg.slice(0, 1000), at: nowStr(), ver: APP_VER, ua: navigator.userAgent.slice(0, 200), who: (S.owner?.name || S.auth?.email || 'owner').slice(0, 60) + (S.uid ? ' · ' + S.uid.slice(0, 8) : ''), contact: (d.contact || '').trim().slice(0, 120)});
+    closeModal(); toast('Laporan dihantar ✅ Terima kasih, kami akan semak secepat mungkin.');
+  },
   async promoGen(d) {
     const n = Math.max(1, Math.min(50, +d.n || 1)), days = Math.max(1, Math.min(3650, +d.days || 30)), have = new Set((S.promos || []).map(p => p.code)), list = [];
     while (list.length < n) { const c = genPromo(); if (!have.has(c)) { have.add(c); list.push({code: c, days, expires: d.expires || '', note: (d.note || '').trim(), used: false, createdAt: nowStr()}); } }
@@ -1949,7 +2117,7 @@ document.addEventListener('click', async e => {
   const el = e.target.closest('[data-act]'); if (!el) return;
   const fn = ACTIONS[el.dataset.act]; if (!fn) return;
   e.preventDefault();
-  try { await fn(el.dataset.id, el); } catch (err) { console.error(err); toast(authMsg(err), 'err'); }
+  try { await fn(el.dataset.id, el); } catch (err) { console.error(err); toast(authMsg(err), 'err'); if (err.code || err.name !== 'Error') reportErr(`${el.dataset.act}: ${err.code || ''} ${err.stack || err.message}`, 'action'); }
 });
 $('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
 document.addEventListener('input', e => { if (e.target.closest('#app form')) S.dirty = true; });
@@ -1962,7 +2130,7 @@ document.addEventListener('submit', async e => {
   const btn = f.querySelector('button:not([type=button])'); if (btn) btn.disabled = true;
   S.dirty = false;
   try { await FORMS[f.dataset.form](Object.fromEntries(new FormData(f)), f); }
-  catch (err) { console.error(err); toast(authMsg(err), 'err'); }
+  catch (err) { console.error(err); toast(authMsg(err), 'err'); if (err.code || err.name !== 'Error') reportErr(`form ${f.dataset.form}: ${err.code || ''} ${err.stack || err.message}`, 'form'); }
   finally { if (btn && document.body.contains(btn)) btn.disabled = false; }
 });
 addEventListener('hashchange', () => { if (location.hash === '#super' && !IS_TENANT_SITE) renderSuper(); });
@@ -1998,7 +2166,7 @@ function nativeInit() {
 
 /* ===================== MULA ===================== */
 (async function boot() {
-  renderLoading(); nativeInit(); await notifPerm().catch(() => {});
+  renderLoading(); nativeInit(); await notifPerm().catch(() => {}); checkSys(true);
   const tok = new URLSearchParams(location.search).get('t');
   if (!IS_TENANT_SITE) {
     if (tok) { location.replace(baseDir() + 'penyewa.html?t=' + encodeURIComponent(tok)); return; }   // link lama → website penyewa

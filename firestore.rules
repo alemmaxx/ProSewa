@@ -70,6 +70,26 @@ service cloud.firestore {
             && get(/databases/$(database)/documents/tenants/$(request.resource.data.tok)).data.active == true));
     }
 
+    // Pemantau sistem — butiran untuk Super Admin sahaja (ditulis oleh Cloud Function)
+    match /health/{id} {
+      allow read: if isSuper();
+      allow write: if false;
+    }
+
+    // Ralat app & laporan masalah pengguna — sesiapa boleh hantar (saiz terhad), hanya Super Admin boleh baca / padam
+    match /sysErrors/{id} {
+      allow read, delete: if isSuper();
+      allow update: if false;
+      allow create: if request.resource.data.keys().hasOnly(['src', 'where', 'msg', 'at', 'ver', 'ua', 'who', 'contact'])
+        && request.resource.data.src in ['web', 'apk', 'report']
+        && request.resource.data.msg is string && request.resource.data.msg.size() <= 1000
+        && request.resource.data.at is string && request.resource.data.at.size() <= 20
+        && request.resource.data.get('where', '').size() <= 100
+        && request.resource.data.get('ua', '').size() <= 200
+        && request.resource.data.get('who', '').size() <= 120
+        && request.resource.data.get('contact', '').size() <= 120;
+    }
+
     // Perbelanjaan owner (untuk laporan cukai)
     match /expenses/{id} {
       allow read, update, delete: if signedIn() && (resource.data.ownerId == request.auth.uid || isSuper());

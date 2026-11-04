@@ -9,6 +9,9 @@
  * prosewaOnReminder  : mesej owner → push kepada penyewa
  * prosewaOnIssue     : aduan kerosakan baru → owner; kemas kini status → penyewa
  * prosewaPushTick    : setiap 15 minit → peringatan berjadual, tarikh bayar, tunggakan, kontrak tamat
+ * prosewaHealth      : setiap 30 minit → pemantau sistem (laman, database, notifikasi, ToyyibPay, ralat) + amaran kepada Super Admin
+ * prosewaHealthNow   : Super Admin tekan "Semak sekarang" / "Uji amaran"
+ * prosewaOnReport    : laporan masalah daripada owner → push kepada Super Admin
  *
  * Secret key ToyyibPay TIDAK ditulis dalam kod. Simpan sekali melalui CMD:
  *   firebase functions:secrets:set TOYYIBPAY_SECRET_KEY --project kukusanmy
@@ -38,6 +41,11 @@ const DEFAULT_PLANS = [
   {id: 'yearly', name: 'Setahun', months: 12, price: 179.00}
 ];
 const TRIAL_DAYS = 14;
+const SUPER_UID = 'D3U6Dxs5joZQq5EYRdjZQUmRV773';
+// Rekod ralat function supaya kelihatan di panel Super Admin → Status sistem
+async function logErr(where, e) {
+  try { await db.collection('sysErrors').add({src: 'fn', where: String(where).slice(0, 100), msg: String((e && (e.stack || e.message)) || e).slice(0, 500), at: myNow()}); } catch (x) { console.error('logErr', x); }
+}
 
 // ---------- tarikh (waktu Malaysia) ----------
 const myISO = (d = new Date()) => new Intl.DateTimeFormat('en-CA', {timeZone: 'Asia/Kuala_Lumpur', year: 'numeric', month: '2-digit', day: '2-digit'}).format(d);
@@ -101,12 +109,12 @@ exports.prosewaCreateBill = onRequest({region: REGION, secrets: [TOYYIBPAY_SECRE
     const r = await fetch(`${TP}/index.php/api/createBill`, {method: 'POST', body: form});
     const txt = await r.text(); let j; try { j = JSON.parse(txt); } catch (e) { j = null; }
     const billCode = Array.isArray(j) && j[0] && j[0].BillCode;
-    if (!billCode) { console.error('createBill gagal', txt); return res.status(502).json({error: 'ToyyibPay menolak permintaan bil.'}); }
+    if (!billCode) { console.error('createBill gagal', txt); await logErr('prosewaCreateBill: ToyyibPay', txt); return res.status(502).json({error: 'ToyyibPay menolak permintaan bil.'}); }
 
     await orderRef.set({uid: user.uid, plan: plan.id, months: plan.months, amount: plan.price, billCode, status: 'pending', createdAt: FieldValue.serverTimestamp()});
     return res.json({billCode, url: `${TP}/${billCode}`});
   } catch (e) {
-    console.error(e);
+    console.error(e); if (!(e.code && String(e.code).startsWith('auth/'))) await logErr('prosewaCreateBill', e);
     return res.status(e.code && String(e.code).startsWith('auth/') ? 401 : 500).json({error: 'Ralat pelayan. Cuba lagi.'});
   }
 });
@@ -144,7 +152,7 @@ exports.prosewaCallback = onRequest({region: REGION, secrets: [TOYYIBPAY_SECRET_
     });
     return res.send('OK');
   } catch (e) {
-    console.error(e);
+    console.error(e); await logErr('prosewaCallback', e);
     return res.status(500).send('error');
   }
 });
@@ -197,6 +205,7 @@ async function pushTo(field, value, build, url) {
     return {token: d.id, notification: {title: m.title, body: m.body}, data: {title: m.title, body: m.body, url: url || ''},
       android: {priority: 'high', notification: {icon: 'ic_stat_ps', color: '#d9b44a', sound: 'default'}}, webpush: {headers: {Urgency: 'high'}}}; });
   const r = await getMessaging().sendEach(msgs);
+  db.doc('health/admin').set({push: {sent: FieldValue.increment(r.successCount), fail: FieldValue.increment(r.failureCount)}}, {merge: true}).catch(() => {});
   const dead = r.responses.map((x, i) => !x.success && /registration-token-not-registered|invalid-registration-token|invalid-argument/.test(x.error && x.error.code || '') ? snap.docs[i].ref : null).filter(Boolean);
   await Promise.all(dead.map(ref => ref.delete().catch(() => {})));
   return r.successCount;
@@ -239,6 +248,7 @@ exports.prosewaOnReminder = onDocumentCreated({document: 'tenants/{tok}/reminder
 const dueISO = (ym, day) => { const [y, m] = ym.split('-').map(Number); const last = new Date(Date.UTC(y, m, 0)).getUTCDate(); return `${ym}-${String(Math.min(+day || 1, last)).padStart(2, '0')}`; };
 exports.prosewaPushTick = onSchedule({schedule: 'every 15 minutes', region: REGION, timeZone: 'Asia/Kuala_Lumpur'}, async () => {
   const now = myNow(), today = now.slice(0, 10), ym = today.slice(0, 7), {trialDays} = await getPlans();
+  await db.doc('health/admin').set({lastTick: now}, {merge: true}).catch(() => {});
   const tenants = await db.collection('tenants').where('active', '==', true).get();
   const owners = {}, subs = {};
   for (const d of tenants.docs) {
@@ -279,6 +289,90 @@ exports.prosewaPushTick = onSchedule({schedule: 'every 15 minutes', region: REGI
         }
       }
       if (Object.keys(upd).length) await d.ref.update(upd);
-    } catch (e) { console.error('tick', tok, e); }
+    } catch (e) { console.error('tick', tok, e); await logErr('prosewaPushTick ' + tok.slice(0, 4), e); }
   }
+});
+
+
+// ---------- 5) Pemantau sistem (macam ProSyariah) ----------
+// config/status → awam (app tunjuk jalur amaran umum kepada semua pengguna)
+// health/admin  → butiran penuh (Super Admin sahaja); amaran push kepada Super Admin bila masalah bermula / pulih
+const LV = {ok: 0, warn: 1, down: 2};
+const mins = (a, b) => (Date.parse(b + ':00+08:00') - Date.parse(a + ':00+08:00')) / 6e4;
+async function timed(url, opt = {}) {
+  let last = null;
+  for (let i = 0; i < 2; i++) {   // cuba dua kali supaya gangguan sekejap tidak dikira masalah
+    const t0 = Date.now();
+    try { const r = await fetch(url, {...opt, signal: AbortSignal.timeout(15000)}); const ms = Date.now() - t0; last = {ok: r.status < 500, status: r.status, ms}; if (last.ok && ms < 8000) return last; }
+    catch (e) { last = {ok: false, err: e.name || 'Error', ms: Date.now() - t0}; }
+    await new Promise(r => setTimeout(r, 3000));
+  }
+  return last;
+}
+async function runHealth(src) {
+  const now = myNow(), issues = [], checks = {};
+  const add = (k, pub, lv, msg, en) => issues.push({k, pub, lv, msg, en});
+  // 1) Laman app
+  for (const [url, k, bm, en] of [['https://prosewa.web.app/index.html', 'site', 'Laman owner (prosewa.web.app)', 'Owner site (prosewa.web.app)'], ['https://prosewa.web.app/penyewa.html', 'site_t', 'Laman penyewa', 'Tenant site']]) {
+    const r = await timed(url + '?t=' + Date.now()); checks[k] = r;
+    if (!r.ok) add(k, true, 'down', `${bm}: tidak dapat dibuka (${r.status || r.err}).`, `${en}: could not be opened (${r.status || r.err}).`);
+    else if (r.ms > 8000) add(k + '_slow', true, 'warn', `${bm}: perlahan (${(r.ms / 1000).toFixed(1)}s).`, `${en}: slow (${(r.ms / 1000).toFixed(1)}s).`);
+  }
+  // 2) Database
+  try { const t0 = Date.now(); await db.doc('health/ping').set({at: now, src}); await db.doc('health/ping').get(); checks.db = {ok: true, ms: Date.now() - t0}; }
+  catch (e) { checks.db = {ok: false, err: String(e.message || e).slice(0, 120)}; add('db', true, 'down', `Database tidak dapat ditulis/dibaca: ${checks.db.err}`, `Database cannot be written/read: ${checks.db.err}`); }
+  const prev = (await db.doc('health/admin').get().catch(() => null))?.data() || {};
+  // 3) Penjadual notifikasi (prosewaPushTick setiap 15 minit)
+  checks.lastTick = prev.lastTick || '';
+  if (!prev.lastTick || mins(prev.lastTick, now) > 40) add('tick', true, 'warn', `Penjadual notifikasi tidak berjalan sejak ${prev.lastTick ? Math.round(mins(prev.lastTick, now)) + ' minit' : '(tiada rekod)'}. Peringatan sewa mungkin lewat.`, `The notification scheduler has not run since ${prev.lastTick ? Math.round(mins(prev.lastTick, now)) + ' minutes' : '(no record)'}. Rent reminders may be late.`);
+  // 4) Push notification (sejak semakan lepas)
+  const ps = prev.push || {}, sent = +ps.sent || 0, fail = +ps.fail || 0; checks.push = {sent, fail};
+  if (fail >= 5 && fail > sent) add('push', false, 'warn', `Push notification banyak gagal: ${fail} gagal, ${sent} berjaya (30 minit lepas).`, `Many push notifications failed: ${fail} failed, ${sent} sent (last 30 min).`);
+  // 5) ToyyibPay (bayaran langganan)
+  const tp = await timed('https://toyyibpay.com/'); checks.toyyib = tp;
+  if (!tp.ok) add('toyyib', false, 'warn', `ToyyibPay tidak dapat dibuka (${tp.status || tp.err}). Owner mungkin tidak dapat bayar langganan.`, `ToyyibPay could not be opened (${tp.status || tp.err}). Owners may not be able to pay for subscriptions.`);
+  // 6) Ralat function & app (30 minit lepas)
+  const since = new Date(Date.now() + 8 * 3600e3 - 30 * 6e4).toISOString().slice(0, 16);
+  const errs = (await db.collection('sysErrors').where('at', '>=', since).get().catch(() => null))?.docs.map(d => d.data()) || [];
+  const fe = errs.filter(e => e.src === 'fn').length, ce = errs.filter(e => e.src === 'web' || e.src === 'apk').length; checks.errors = {fn: fe, app: ce};
+  if (fe >= 3) add('fn_err', false, 'warn', `${fe} ralat function dalam 30 minit lepas. Lihat senarai ralat di bawah.`, `${fe} function errors in the last 30 minutes. See the error list below.`);
+  if (ce >= 10) add('app_err', false, 'warn', `${ce} ralat dari app pengguna dalam 30 minit lepas.`, `${ce} errors from users' apps in the last 30 minutes.`);
+  // 7) Bayaran langganan gagal disahkan (24 jam)
+  const d24 = new Date(Date.now() - 864e5);
+  const failed = (await db.collection('subOrders').where('status', '==', 'failed').get().catch(() => null))?.docs.filter(d => (d.data().updatedAt?.toDate?.() || 0) >= d24).length || 0; checks.subFailed = failed;
+  if (failed) add('sub_fail', false, 'warn', `${failed} bayaran langganan ToyyibPay tidak berjaya disahkan dalam 24 jam lepas. Semak subOrders.`, `${failed} ToyyibPay subscription payment(s) could not be verified in the last 24 hours. Check subOrders.`);
+
+  const pubLevel = issues.filter(i => i.pub).reduce((m, i) => LV[i.lv] > LV[m] ? i.lv : m, 'ok');
+  const level = issues.reduce((m, i) => LV[i.lv] > LV[m] ? i.lv : m, 'ok');
+  await db.doc('config/status').set({level: pubLevel, at: now}, {merge: true});
+  const out = {level, pubLevel, at: now, src, issues, checks, push: {sent: 0, fail: 0}};
+  // amaran kepada Super Admin bila tahap berubah (bermula / pulih)
+  const was = prev.alertLevel || 'ok';
+  if (level !== was) {
+    const sum = issues.map(i => i.msg).join(' · ').slice(0, 200), sumEn = issues.map(i => i.en).join(' · ').slice(0, 200);
+    await toOwner(SUPER_UID, l => level === 'ok' ? (l === 'en' ? {title: '🟢 ProSewa recovered', body: 'All systems are back to normal.'} : {title: '🟢 Sistem ProSewa pulih', body: 'Semua sistem kembali normal.'})
+      : (l === 'en' ? {title: level === 'down' ? '🔴 ProSewa disruption' : '🟠 ProSewa warning', body: sumEn} : {title: level === 'down' ? '🔴 Gangguan sistem ProSewa' : '🟠 Amaran sistem ProSewa', body: sum})).catch(() => {});
+    out.alertLevel = level; out.lastAlert = now;
+  }
+  await db.doc('health/admin').set(out, {merge: true});
+  return out;
+}
+exports.prosewaHealth = onSchedule({schedule: 'every 30 minutes', region: REGION, timeZone: 'Asia/Kuala_Lumpur'}, async () => { try { await runHealth('auto'); } catch (e) { console.error(e); await logErr('prosewaHealth', e); } });
+
+exports.prosewaHealthNow = onRequest({region: REGION}, async (req, res) => {
+  if (cors(req, res)) return;
+  try {
+    const user = await getAuth().verifyIdToken((req.get('Authorization') || '').replace(/^Bearer\s+/i, ''));
+    if (user.uid !== SUPER_UID) return res.status(403).json({error: 'Super Admin sahaja.'});
+    if ((req.body || {}).test) {
+      const n = await toOwner(SUPER_UID, l => l === 'en' ? {title: '🧪 ProSewa test alert', body: 'The system alarm is working. You will be notified here if there is a problem.'} : {title: '🧪 Amaran ujian ProSewa', body: 'Sistem amaran berfungsi. Anda akan dimaklumkan di sini jika berlaku masalah.'});
+      return res.json({sent: n});
+    }
+    return res.json(await runHealth('manual'));
+  } catch (e) { console.error(e); return res.status(500).json({error: 'Ralat pelayan. Cuba lagi.'}); }
+});
+
+exports.prosewaOnReport = onDocumentCreated({document: 'sysErrors/{id}', database: 'prosewa', region: DB_REGION}, async ev => {
+  const r = ev.data.data(); if (!r || r.src !== 'report') return;
+  await toOwner(SUPER_UID, l => ({title: l === 'en' ? '📮 Problem report from user' : '📮 Laporan masalah daripada pengguna', body: `${r.who || ''}: ${String(r.msg || '').slice(0, 200)}`}));
 });
