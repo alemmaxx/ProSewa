@@ -1,0 +1,11 @@
+{
+  "hosting": {
+    "target": "prosewa",
+    "public": "_site",
+    "ignore": ["firebase.json", "**/.*"],
+    "headers": [
+      {"source": "/sw.js", "headers": [{"key": "Cache-Control", "value": "no-cache"}]},
+      {"source": "**/*.html", "headers": [{"key": "Cache-Control", "value": "no-cache"}]}
+    ]
+  }
+}

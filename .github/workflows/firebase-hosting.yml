@@ -1,0 +1,28 @@
+name: Deploy ProSewa ke Firebase Hosting (prosewa.web.app)
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+concurrency:
+  group: firebase-hosting
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sediakan fail web
+        run: sh build.sh
+      - name: Semak secret Firebase
+        id: chk
+        run: |
+          if [ -n "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KUKUSANMY }}" ]; then echo "ok=true" >> $GITHUB_OUTPUT; else echo "ok=false" >> $GITHUB_OUTPUT; echo "::warning::Secret FIREBASE_SERVICE_ACCOUNT_KUKUSANMY belum ditambah — deploy Firebase dilangkau."; fi
+      - name: Deploy ke Firebase Hosting
+        if: steps.chk.outputs.ok == 'true'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KUKUSANMY }}
+          channelId: live
+          projectId: kukusanmy
+          target: prosewa
