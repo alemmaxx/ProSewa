@@ -97,6 +97,13 @@ service cloud.firestore {
       allow create: if signedIn() && request.resource.data.ownerId == request.auth.uid;
     }
 
+    // Bil berulang owner (IWK, maintenance, internet…) — dijana sebagai perbelanjaan setiap bulan
+    match /recurring/{id} {
+      allow read, delete: if signedIn() && (resource.data.ownerId == request.auth.uid || isSuper());
+      allow update: if signedIn() && (resource.data.ownerId == request.auth.uid || isSuper()) && request.resource.data.ownerId == resource.data.ownerId;
+      allow create: if signedIn() && request.resource.data.ownerId == request.auth.uid;
+    }
+
     // Perbelanjaan owner (untuk laporan cukai)
     match /expenses/{id} {
       allow read, update, delete: if signedIn() && (resource.data.ownerId == request.auth.uid || isSuper());

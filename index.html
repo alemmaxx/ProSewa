@@ -283,6 +283,7 @@ table.rep tr.tot td{font-weight:800;border-bottom:0;color:var(--gold)}
 .unit.vac{border-style:dashed;border-color:var(--red);background:rgba(229,72,77,.08)}.unit.vac>span{color:var(--red)}
 .ttgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}.ttc{border:1px solid var(--line);background:var(--card2);border-radius:10px;padding:0;overflow:hidden;cursor:pointer;color:var(--ink);font:700 12px var(--f)}
 .ttc img{display:block;width:100%;aspect-ratio:9/16;object-fit:cover}.ttc span{display:block;padding:4px 0}
+.billtypes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}.billtypes div{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;font-size:13px}.billtypes b{font-size:15px}
 .dlalt{display:block;text-align:center;font-size:13px;color:var(--muted);margin-top:8px;text-decoration:underline}
 @page{size:A4;margin:14mm}
 @media print{
@@ -418,6 +419,12 @@ const I18N_RX = [
   [/Link (\S+) disalin/g, "$1's link copied"],
   [/Ditambah (\d+) hari/g, 'Added $1 days'],
   [/Salam, /g, 'Hi, '],
+  [/Bil & utiliti (\d{4})/g, 'Bills & utilities $1'],
+  [/Jumlah bil (\d{4})/g, 'Total bills $1'],
+  [/Bil berulang aktif \((\d+)\)/g, 'Active recurring bills ($1)'],
+  [/(\d+) bil disimpan/g, '$1 bill(s) saved'],
+  [/Setiap (\d+) hb/g, 'Every day $1'],
+  [/\/bulan/g, '/month'],
   [/Hartanah · (\d+) kosong/g, 'Properties · $1 vacant'],
   [/(\d+)\/(\d+) berpenghuni/g, '$1/$2 occupied'],
   [/Padam (.+)\? Rekod bayaran lama kekal dalam laporan\./g, 'Delete $1? Old payment records stay in reports.'],
@@ -441,7 +448,13 @@ const I18N_RX = [
   [/Sewa (.+?) (RM [\d,.]+) belum dibayar\./g, 'Rent for $1 ($2) is unpaid.']
 ];
 Object.assign(I18N, {
-  'LAPORAN KUTIPAN SEWA': 'RENT COLLECTION REPORT', 'Iklan TikTok / Reels (1080×1920)': 'TikTok / Reels ads (1080×1920)', 'Muat turun semua (5 gambar)': 'Download all (5 images)', 'Saiz menegak TikTok, Reels & Status WhatsApp. Gunakan teks "TikTok / Instagram" di bawah sebagai kapsyen.': 'Vertical size for TikTok, Reels & WhatsApp Status. Use the "TikTok / Instagram" text below as the caption.', '5 gambar iklan dimuat turun ✅': '5 ad images downloaded ✅', 'Hartanah': 'Properties', 'Penghunian': 'Occupancy', 'Sewa hilang sebulan': 'Rent lost per month', 'Seluruh unit': 'Whole unit', 'Sewa bilik': 'Room rental', 'berpenghuni': 'occupied', 'Masukkan penyewa': 'Add tenant', 'Edit rumah': 'Edit property', 'Senarai bilik': 'Rooms',
+  'LAPORAN KUTIPAN SEWA': 'RENT COLLECTION REPORT', 'Bil elektrik': 'Electricity bill', 'Bil air': 'Water bill', 'Bil IWK (pembetungan)': 'IWK (sewerage) bill', 'Bil internet / WiFi': 'Internet / WiFi bill', 'Bil gas': 'Gas bill', 'Rekod bil bulan ini': "Record this month's bills", 'Bil berulang': 'Recurring bills', 'Jumlah bil': 'Total bills',
+  'Ikut rumah': 'By property', 'Rumah': 'Property', 'Belum ada bil direkod. Tekan': 'No bills recorded yet. Tap', 'untuk bil elektrik / air, atau': 'for electricity / water bills, or', 'untuk bil tetap seperti IWK & maintenance.': 'for fixed bills such as IWK & maintenance.',
+  'Bil yang owner bayar dikira sebagai perbelanjaan dan ditolak daripada pendapatan sewa bersih.': 'Bills paid by the owner count as expenses and are deducted from net rental income.', 'Rekod Bil Bulanan': 'Record Monthly Bills', 'Isi bil yang anda bayar. Kosongkan yang tiada.': "Fill in the bills you paid. Leave the rest empty.", 'Bulan bil': 'Bill month',
+  'Lampirkan gambar bil (pilihan)': 'Attach bill image (optional)', 'Simpan bil': 'Save bills', 'Edit Bil Berulang': 'Edit Recurring Bill', 'Untuk bil tetap setiap bulan (cth: IWK RM8, maintenance RM150, internet RM99). Sistem rekod secara automatik setiap bulan pada tarikh dipilih.': 'For fixed monthly bills (e.g. IWK RM8, maintenance RM150, internet RM99). The system records them automatically every month on the chosen date.',
+  'Jenis bil': 'Bill type', 'Jumlah sebulan (RM)': 'Amount per month (RM)', 'Tarikh setiap bulan': 'Day of each month', 'Mula dari bulan': 'Starting month', 'Hentikan bil berulang': 'Stop recurring bill', 'Aktif': 'Active', 'Hentikan bil berulang ini? Bil yang sudah direkod kekal.': 'Stop this recurring bill? Bills already recorded will stay.',
+  'Bil berulang dihentikan.': 'Recurring bill stopped.', 'Isi sekurang-kurangnya satu jumlah bil.': 'Enter at least one bill amount.', 'Bil berulang disimpan ✅ Akan direkod automatik setiap bulan.': 'Recurring bill saved ✅ It will be recorded automatically every month.', 'Bil & utiliti': 'Bills & utilities', 'Bil & utiliti ikut rumah': 'Bills & utilities by property',
+  '(berulang)': '(recurring)', 'Iklan TikTok / Reels (1080×1920)': 'TikTok / Reels ads (1080×1920)', 'Muat turun semua (5 gambar)': 'Download all (5 images)', 'Saiz menegak TikTok, Reels & Status WhatsApp. Gunakan teks "TikTok / Instagram" di bawah sebagai kapsyen.': 'Vertical size for TikTok, Reels & WhatsApp Status. Use the "TikTok / Instagram" text below as the caption.', '5 gambar iklan dimuat turun ✅': '5 ad images downloaded ✅', 'Hartanah': 'Properties', 'Penghunian': 'Occupancy', 'Sewa hilang sebulan': 'Rent lost per month', 'Seluruh unit': 'Whole unit', 'Sewa bilik': 'Room rental', 'berpenghuni': 'occupied', 'Masukkan penyewa': 'Add tenant', 'Edit rumah': 'Edit property', 'Senarai bilik': 'Rooms',
   'Tambah rumah': 'Add property', 'Laporan ikut rumah': 'Report by property', 'Belum ada rumah didaftarkan.': 'No properties registered yet.', 'Daftar rumah & bilik supaya anda nampak': 'Register houses & rooms so you can see', 'bilik kosong': 'vacant rooms',
   ', kadar penghunian dan kutipan ikut rumah.': ', occupancy rate and collection by property.', 'Pilihan sahaja. Penyewa sedia ada tetap berfungsi seperti biasa.': 'Optional. Existing tenants keep working as usual.', 'Edit Rumah': 'Edit Property', 'Tambah Rumah': 'Add Property',
   'Nama / alamat rumah': 'Property name / address', 'cth: No. 12, Jalan Mawar, 43650 Bangi': 'e.g. No. 12, Jalan Mawar, 43650 Bangi', 'Jenis sewaan': 'Rental type', 'Sewa bilik (banyak penyewa)': 'Room rental (several tenants)', 'Seluruh rumah / unit (seorang penyewa)': 'Whole house / unit (one tenant)',
@@ -504,7 +517,7 @@ Object.assign(I18N, {
   'Padam perbelanjaan ini?': 'Delete this expense?', 'Perbelanjaan disimpan': 'Expense saved', 'LAPORAN PENDAPATAN SEWA': 'RENTAL INCOME REPORT', 'Dijana': 'Generated', 'Perbelanjaan ikut kategori': 'Expenses by category', 'Tiada perbelanjaan direkod': 'No expenses recorded',
   'Senarai resit': 'Receipt list', 'Senarai perbelanjaan': 'Expense list', 'No. resit': 'Receipt no.', 'Umum': 'General',
   'Laporan ini dijana oleh ProSewa berdasarkan rekod yang dimasukkan oleh pemilik, untuk rujukan pengisian e-Filing (pendapatan berkanun daripada sewa) dan ejen cukai. Sila sahkan perbelanjaan yang dibenarkan dengan LHDN / ejen cukai.': 'This report is generated by ProSewa from records entered by the owner, as a reference for e-Filing (statutory income from rent) and tax agents. Please confirm allowable expenses with LHDN / your tax agent.',
-  'Biasanya boleh ditolak: cukai pintu, cukai tanah, insurans, faedah pinjaman perumahan, pembaikan & penyelenggaraan, yuran pengurusan, komisen ejen untuk pembaharuan sewa.': 'Usually deductible: assessment tax, quit rent, insurance, housing loan interest, repairs & maintenance, management fees, agent commission for renewals.',
+  'Biasanya boleh ditolak: cukai pintu, cukai tanah, insurans, faedah pinjaman perumahan, pembaikan & penyelenggaraan, yuran pengurusan, komisen ejen untuk pembaharuan sewa.': 'Usually deductible: assessment tax, quit rent, insurance, housing loan interest, repairs & maintenance, management fees, agent commission for renewals.', 'Bil utiliti yang owner bayar untuk rumah sewa (elektrik, air, IWK, internet) juga biasanya dikira sebagai perbelanjaan sewaan.': 'Utility bills paid by the owner for the rental (electricity, water, IWK, internet) are usually counted as rental expenses too.',
   'Biasanya tidak boleh ditolak: kos ubah suai / naik taraf, bayaran pokok pinjaman, pembelian perabot (modal).': 'Usually not deductible: renovation / upgrade costs, loan principal, furniture purchases (capital).',
   'Sahkan dengan LHDN atau ejen cukai.': 'Confirm with LHDN or your tax agent.',
   'Batal resit': 'Void receipt', 'Batal Resit': 'Void Receipt', 'Batalkan resit': 'Void receipt', 'Resit dibatalkan': 'Receipt voided', 'Resit dibatalkan.': 'Receipt voided.', 'Dibatalkan': 'Voided', 'DIBATALKAN': 'VOID', 'Sebab batal': 'Void reason', 'Tarikh batal': 'Voided on',
@@ -743,6 +756,11 @@ const LocalAPI = {
   async addExpense(d) { const id = genId(); (L.expenses = L.expenses || {})[id] = clone(d); lsave(); return id; },
   async updateExpense(id, d) { Object.assign(L.expenses[id], clone(d)); lsave(); },
   async delExpense(id) { delete L.expenses[id]; lsave(); },
+  async setExpense(id, d) { (L.expenses = L.expenses || {})[id] = clone(d); lsave(); },
+  async listRecurring(uid) { return Object.entries(L.recurring || {}).filter(([k, x]) => x.ownerId === uid).map(([k, x]) => ({...clone(x), id: k})); },
+  async addRecurring(d) { const id = genId(); (L.recurring = L.recurring || {})[id] = clone(d); lsave(); return id; },
+  async updateRecurring(id, d) { Object.assign(L.recurring[id], clone(d)); lsave(); },
+  async delRecurring(id) { delete L.recurring[id]; lsave(); },
   async listProps(uid) { return Object.entries(L.props || {}).filter(([k, x]) => x.ownerId === uid).map(([k, x]) => ({...clone(x), id: k})); },
   async addProp(d) { const id = genId(); (L.props = L.props || {})[id] = clone(d); lsave(); return id; },
   async updateProp(id, d) { Object.assign(L.props[id], clone(d)); lsave(); },
@@ -839,6 +857,11 @@ const FireAPI = {
   async addExpense(d) { await fbInit(); const r = await fb.F.addDoc(fcol('expenses'), d); return r.id; },
   async updateExpense(id, d) { await fbInit(); await fb.F.updateDoc(fdoc('expenses', id), d); },
   async delExpense(id) { await fbInit(); await fb.F.deleteDoc(fdoc('expenses', id)); },
+  async setExpense(id, d) { await fbInit(); await fb.F.setDoc(fdoc('expenses', id), d); },
+  async listRecurring(uid) { await fbInit(); const s = await fb.F.getDocs(fb.F.query(fcol('recurring'), fb.F.where('ownerId', '==', uid))); return s.docs.map(d => ({...d.data(), id: d.id})); },
+  async addRecurring(d) { await fbInit(); const r = await fb.F.addDoc(fcol('recurring'), d); return r.id; },
+  async updateRecurring(id, d) { await fbInit(); await fb.F.updateDoc(fdoc('recurring', id), d); },
+  async delRecurring(id) { await fbInit(); await fb.F.deleteDoc(fdoc('recurring', id)); },
   async listProps(uid) { await fbInit(); const s = await fb.F.getDocs(fb.F.query(fcol('properties'), fb.F.where('ownerId', '==', uid))); return s.docs.map(d => ({...d.data(), id: d.id})); },
   async addProp(d) { await fbInit(); const r = await fb.F.addDoc(fcol('properties'), d); return r.id; },
   async updateProp(id, d) { await fbInit(); await fb.F.updateDoc(fdoc('properties', id), d); },
@@ -954,6 +977,8 @@ async function loadOwner() {
   S.subPayments = await API.listSubPayments(S.uid).catch(() => []);
   S.expenses = await API.listExpenses(S.uid).catch(() => []);
   S.props = await API.listProps(S.uid).catch(() => []);
+  S.recurring = await API.listRecurring(S.uid).catch(() => []);
+  await genRecurring().catch(e => console.warn('recurring', e));
 }
 async function loadTenant(tok) {
   S.t = await API.getTenant(tok).catch(() => null); S.payments = []; S.reminders = [];
@@ -1278,7 +1303,32 @@ function reportData(y) {
   const per = S.tenants.map(t => ({t, paid: S.payments.filter(p => p.tenantId === t.id && p.status === 'confirmed' && p.month.startsWith(ys)).reduce((a, p) => a + (+p.amount || 0), 0), arr: t.active !== false ? arrears(t, S.payments) : {sum: 0, months: []}}));
   return {months, inc, exp, per};
 }
-const EXP_CATS = ['Cukai pintu', 'Cukai tanah', 'Insurans kebakaran / rumah', 'Faedah pinjaman perumahan', 'Pembaikan & penyelenggaraan', 'Yuran penyelenggaraan / pengurusan', 'Komisen ejen (pembaharuan sewa)', 'Lain-lain'];
+const BILL_CATS = ['Bil elektrik', 'Bil air', 'Bil IWK (pembetungan)', 'Bil internet / WiFi', 'Bil gas', 'Yuran penyelenggaraan / pengurusan'];
+const EXP_CATS = ['Cukai pintu', 'Cukai tanah', 'Insurans kebakaran / rumah', 'Faedah pinjaman perumahan', 'Pembaikan & penyelenggaraan', ...BILL_CATS, 'Komisen ejen (pembaharuan sewa)', 'Lain-lain'];
+const BILL_IC = {'Bil elektrik': '⚡', 'Bil air': '💧', 'Bil IWK (pembetungan)': '🚽', 'Bil internet / WiFi': '📶', 'Bil gas': '🔥', 'Yuran penyelenggaraan / pengurusan': '🏢'};
+function billData(y) {
+  const ys = String(y), ex = (S.expenses || []).filter(e => String(e.date || '').startsWith(ys) && BILL_CATS.includes(e.category));
+  const byType = BILL_CATS.map(c => ({c, v: ex.filter(e => e.category === c).reduce((a, e) => a + (+e.amount || 0), 0)})).filter(x => x.v);
+  const units = [...new Set(ex.map(e => normU(e.unit) || ''))].sort((a, b) => (a === '') - (b === '') || a.localeCompare(b));
+  const byUnit = units.map(u => ({u, sys: !u, t: BILL_CATS.map(c => ex.filter(e => normU(e.unit) === u && e.category === c).reduce((a, e) => a + (+e.amount || 0), 0)), tot: ex.filter(e => normU(e.unit) === u).reduce((a, e) => a + (+e.amount || 0), 0)}));
+  const months = Array.from({length: 12}, (_, i) => `${ys}-${pad(i + 1)}`).map(m => ({m, v: ex.filter(e => e.date.startsWith(m)).reduce((a, e) => a + (+e.amount || 0), 0)}));
+  return {ex, byType, byUnit, months, total: ex.reduce((a, e) => a + (+e.amount || 0), 0), cols: BILL_CATS.filter(c => ex.some(e => e.category === c))};
+}
+// Bil berulang (cth: IWK, maintenance, internet): dijana automatik setiap bulan sebagai perbelanjaan
+async function genRecurring() {
+  const cm = curMonth(), today = localISO(), have = new Set((S.expenses || []).map(e => e.id)); let n = 0;
+  for (const r of (S.recurring || []).filter(x => x.active !== false)) {
+    for (const ym of monthsRange(r.startMonth || cm, cm)) {
+      if (r.endMonth && ym > r.endMonth) break;
+      const day = `${ym}-${pad(Math.min(28, Math.max(1, +r.day || 1)))}`; if (day > today) continue;
+      const id = `rec_${r.id}_${ym}`; if (have.has(id) || (r.skip || []).includes(ym)) continue;
+      await API.setExpense(id, {ownerId: S.uid, date: day, amount: +r.amount || 0, category: r.category, unit: normU(r.unit), note: (r.note || '') + ' (berulang)', proof: '', recId: r.id, createdAt: nowStr()}).catch(() => {}); n++;
+    }
+  }
+  if (n) S.expenses = await API.listExpenses(S.uid).catch(() => S.expenses);
+  return n;
+}
+const EXP_CATS_OLD = null;
 const normU = a => String(a || '').trim().replace(/\s+/g, ' ');
 const propOfT = t => t && t.propertyId ? (S.props || []).find(p => p.id === t.propertyId) : null;
 function unitList() { const m = new Map(), put = k => { k = normU(k); if (k && !m.has(k.toLowerCase())) m.set(k.toLowerCase(), k); }; (S.props || []).forEach(p => put(p.name)); S.tenants.forEach(t => { if (!propOfT(t)) put(t.address); }); return [...m.values()]; }
@@ -1304,6 +1354,8 @@ function taxReportHTML(y) {
     <table class="rep"><tr><td>Sewa kasar diterima (${d.count} resit)</td><td><b>${RM(d.gross)}</b></td></tr><tr><td>Tolak: perbelanjaan</td><td><b>(${RM(d.totalExp)})</b></td></tr>
     <tr class="tot"><td>Pendapatan sewa bersih</td><td>${RM(d.net)}</td></tr></table>
     <div class="sec-h">Ikut unit</div><table class="rep"><tr><th>Unit</th><th>Sewa</th><th>Belanja</th><th>Bersih</th></tr>${d.rows.map(r => `<tr><td ${r.sys ? '' : 'data-raw'}>${esc(r.unit)}</td><td>${RM(r.inc)}</td><td>${RM(r.exp)}</td><td>${RM(r.net)}</td></tr>`).join('') || '<tr><td colspan="4">Tiada data</td></tr>'}</table>
+    ${(() => { const b = billData(y); return b.total ? `<div class="sec-h">Bil & utiliti</div><table class="rep">${b.byType.map(x => `<tr><td>${esc(x.c)}</td><td>${RM(x.v)}</td></tr>`).join('')}<tr class="tot"><td>Jumlah bil</td><td>${RM(b.total)}</td></tr></table>
+      ${b.byUnit.length ? `<table class="rep small" style="margin-top:6px"><tr><th>Rumah</th>${b.cols.map(c => `<th>${esc(c.replace('Bil ', '').replace(' (pembetungan)', '').replace(' / pengurusan', ''))}</th>`).join('')}<th>Jumlah</th></tr>${b.byUnit.map(r => `<tr><td ${r.sys ? '' : 'data-raw'}>${esc(r.u || 'Umum (semua unit)')}</td>${b.cols.map(c => `<td>${RM(r.t[BILL_CATS.indexOf(c)])}</td>`).join('')}<td>${RM(r.tot)}</td></tr>`).join('')}</table>` : ''}` : ''; })()}
     <div class="sec-h">Perbelanjaan ikut kategori</div><table class="rep">${d.byCat.map(x => `<tr><td>${esc(x.c)}</td><td>${RM(x.v)}</td></tr>`).join('') || '<tr><td>Tiada perbelanjaan direkod</td><td></td></tr>'}<tr class="tot"><td>Jumlah</td><td>${RM(d.totalExp)}</td></tr></table>
     <div class="sec-h">Senarai resit</div><table class="rep small"><tr><th>No. resit</th><th>Tarikh</th><th>Nama penyewa</th><th>Jumlah</th></tr>${d.pays.sort((a, b) => a.paidDate.localeCompare(b.paidDate)).map(p => `<tr><td>${esc(p.receiptNo)}</td><td>${dateLabel(p.paidDate)}</td><td data-raw>${esc(p.tenantName)}</td><td>${RM(p.amount)}</td></tr>`).join('') || '<tr><td colspan="4">-</td></tr>'}</table>
     <div class="sec-h">Senarai perbelanjaan</div><table class="rep small"><tr><th>Tarikh</th><th>Kategori</th><th>Unit</th><th>Jumlah</th></tr>${d.exps.sort((a, b) => a.date.localeCompare(b.date)).map(e => `<tr><td>${dateLabel(e.date)}</td><td>${esc(e.category)}</td><td ${e.unit ? 'data-raw' : ''}>${esc(e.unit || 'Umum')}</td><td>${RM(e.amount)}</td></tr>`).join('') || '<tr><td colspan="4">-</td></tr>'}</table>
@@ -1332,11 +1384,12 @@ function oReport() {
       <div class="card"><h3>Ringkasan cukai ${y}</h3><table class="rep"><tr><td>Sewa kasar diterima (${d.count} resit)</td><td>${RM(d.gross)}</td></tr><tr><td>Tolak: perbelanjaan</td><td>(${RM(d.totalExp)})</td></tr><tr class="tot"><td>Pendapatan sewa bersih</td><td>${RM(d.net)}</td></tr></table>
         <p class="muted">Angka "Pendapatan sewa bersih" diisi di ruangan <b>pendapatan berkanun daripada sewa</b> dalam e-Filing. Dikira ikut tarikh sewa diterima.</p>
         <div class="acts"><button class="btn" data-act="taxPdf">🖨️ Simpan PDF</button><button class="btn ghost" data-act="taxCsv">⬇ Excel (CSV)</button></div></div>
+      ${billsCard(y)}
       <div class="cols"><div class="blk"><div class="sec-h">Ikut unit</div><div class="card"><table class="rep"><tr><th>Unit</th><th>Sewa</th><th>Belanja</th><th>Bersih</th></tr>${d.rows.map(r => `<tr><td ${r.sys ? '' : 'data-raw'}>${esc(r.unit)}</td><td>${RM(r.inc)}</td><td>${RM(r.exp)}</td><td>${RM(r.net)}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">Tiada data</td></tr>'}</table></div></div>
       <div class="blk"><div class="sec-h">Ikut kategori</div><div class="card"><table class="rep">${d.byCat.map(x => `<tr><td>${esc(x.c)}</td><td>${RM(x.v)}</td></tr>`).join('') || '<tr><td class="muted">Belum ada perbelanjaan</td><td></td></tr>'}</table></div></div></div>
       <div class="sec-h">Perbelanjaan ${y} (${d.exps.length})</div><div class="card">${d.exps.length ? d.exps.sort((a, b) => b.date.localeCompare(a.date)).map(e => `<div class="row"><div class="av">🧾</div><div class="grow"><div class="t">${esc(e.category)} · ${RM(e.amount)}</div><div class="s">${dateLabel(e.date)} · <span ${e.unit ? 'data-raw' : ''}>${esc(e.unit || 'Umum (semua unit)')}</span></div>${e.note ? `<div class="s" data-raw>${esc(e.note)}</div>` : ''}
           <div class="acts">${e.proof ? `<button class="btn sm ghost fx" data-act="expProof" data-id="${e.id}">📎 Resit</button>` : ''}<button class="btn sm ghost fx" data-act="expForm" data-id="${e.id}">✏️ Edit</button><button class="btn sm red fx" data-act="delExp" data-id="${e.id}">🗑</button></div></div></div>`).join('') : '<div class="empty">Belum ada perbelanjaan untuk tahun ini. Tekan <b>+ Perbelanjaan</b>.</div>'}</div>
-      <div class="hint">💡 <span>Biasanya boleh ditolak: cukai pintu, cukai tanah, insurans, faedah pinjaman perumahan, pembaikan & penyelenggaraan, yuran pengurusan, komisen ejen untuk pembaharuan sewa.</span><br><span>Biasanya tidak boleh ditolak: kos ubah suai / naik taraf, bayaran pokok pinjaman, pembelian perabot (modal).</span><br><span>Sahkan dengan LHDN atau ejen cukai.</span></div>`;
+      <div class="hint">💡 <span>Biasanya boleh ditolak: cukai pintu, cukai tanah, insurans, faedah pinjaman perumahan, pembaikan & penyelenggaraan, yuran pengurusan, komisen ejen untuk pembaharuan sewa.</span><br><span>Bil utiliti yang owner bayar untuk rumah sewa (elektrik, air, IWK, internet) juga biasanya dikira sebagai perbelanjaan sewaan.</span><br><span>Biasanya tidak boleh ditolak: kos ubah suai / naik taraf, bayaran pokok pinjaman, pembelian perabot (modal).</span><br><span>Sahkan dengan LHDN atau ejen cukai.</span></div>`;
     return h + `</div>`;
   }
   const r = reportData(y);
@@ -1483,8 +1536,8 @@ const MANUAL = [
   '<ul><li>Penyewa hantar aduan (kategori, penerangan, gambar) dari tab <b>Aduan</b> di app mereka.</li><li>Anda dapat notifikasi. Buka tab <b>Aduan</b> → <b>Kemas kini status</b> (Dalam tindakan / Selesai) dan tulis nota, contohnya tarikh tukang datang.</li><li>Penyewa dimaklumkan setiap kali status berubah.</li></ul>',
   '<ul><li>Tenants send requests (category, description, photo) from the <b>Requests</b> tab in their app.</li><li>You get notified. Open the <b>Requests</b> tab → <b>Update status</b> (In progress / Resolved) and add a note, e.g. when the repairer will come.</li><li>Tenants are notified every time the status changes.</li></ul>'],
  ['📊 Laporan & cukai', '📊 Reports & tax',
-  '<ul><li><b>Kutipan sewa:</b> jangkaan vs diterima setiap bulan, tunggakan ikut penyewa. Simpan sebagai PDF atau CSV (Excel).</li><li><b>Cukai & Perbelanjaan:</b> tekan <b>+ Perbelanjaan</b> untuk rekod cukai pintu, cukai tanah, insurans, pembaikan dan lain-lain (boleh lampir resit).</li><li>Angka <b>Pendapatan sewa bersih</b> ialah rujukan untuk e-Filing LHDN. Sahkan perbelanjaan yang dibenarkan dengan LHDN / ejen cukai.</li></ul>',
-  '<ul><li><b>Rent collection:</b> expected vs received each month, arrears by tenant. Save as PDF or CSV (Excel).</li><li><b>Tax & Expenses:</b> tap <b>+ Expense</b> to record assessment tax, quit rent, insurance, repairs and more (you can attach receipts).</li><li>The <b>Net rental income</b> figure is a reference for LHDN e-Filing. Confirm allowable expenses with LHDN / your tax agent.</li></ul>'],
+  '<ul><li><b>Kutipan sewa:</b> jangkaan vs diterima setiap bulan, tunggakan ikut penyewa. Simpan sebagai PDF atau CSV (Excel).</li><li><b>Cukai & Perbelanjaan:</b> tekan <b>+ Perbelanjaan</b> untuk rekod cukai pintu, cukai tanah, insurans, pembaikan dan lain-lain (boleh lampir resit).</li><li><b>💡 Bil & utiliti:</b> tekan <b>Rekod bil bulan ini</b> untuk elektrik, air, IWK, internet sekali gus ikut rumah. Bil tetap (IWK, maintenance, internet) tetapkan sekali di <b>Bil berulang</b>, dan sistem rekod setiap bulan secara automatik.</li><li>Angka <b>Pendapatan sewa bersih</b> ialah rujukan untuk e-Filing LHDN. Sahkan perbelanjaan yang dibenarkan dengan LHDN / ejen cukai.</li></ul>',
+  '<ul><li><b>Rent collection:</b> expected vs received each month, arrears by tenant. Save as PDF or CSV (Excel).</li><li><b>Tax & Expenses:</b> tap <b>+ Expense</b> to record assessment tax, quit rent, insurance, repairs and more (you can attach receipts).</li><li><b>💡 Bills & utilities:</b> tap <b>Record this month's bills</b> to enter electricity, water, IWK and internet at once, per property. Set fixed bills (IWK, maintenance, internet) once under <b>Recurring bills</b> and the system records them every month automatically.</li><li>The <b>Net rental income</b> figure is a reference for LHDN e-Filing. Confirm allowable expenses with LHDN / your tax agent.</li></ul>'],
  ['💎 Langganan & kod promo', '💎 Subscription & promo codes',
   '<ul><li>Tab <b>Langganan</b> tunjuk baki hari. Pilih pakej dan bayar melalui ToyyibPay (FPX / DuitNow). Hari baru disambung selepas tarikh tamat semasa.</li><li>Ada kod promo? Tampal di <b>🎟️ Ada kod promo?</b> dan tekan <b>Guna</b>. Setiap kod sekali guna.</li><li>Jika langganan tamat, anda dan penyewa tidak dapat buka app sehingga bayaran dibuat. Data anda kekal selamat.</li></ul>',
   '<ul><li>The <b>Subscription</b> tab shows the days left. Choose a plan and pay via ToyyibPay (FPX / DuitNow). New days are added after the current end date.</li><li>Have a promo code? Paste it under <b>🎟️ Have a promo code?</b> and tap <b>Apply</b>. Each code can be used once.</li><li>If the subscription ends, you and your tenants cannot open the app until payment is made. Your data stays safe.</li></ul>'],
@@ -1665,6 +1718,41 @@ function remindForm(id, now = false) {
     ${area('Mesej', 'message', t ? reminderMsg(t, S.month, S.owner) : '', 'rows="5" required data-raw')}
     <p class="muted" style="margin-top:0">Mesej akan masuk sebagai notifikasi dalam app penyewa (dan notifikasi phone jika penyewa aktifkan).</p>
     <button class="btn wide">🔔 Hantar / Jadualkan</button></form>`);
+}
+function billsCard(y) {
+  const b = billData(y), rec = (S.recurring || []).filter(r => r.active !== false);
+  const mx = Math.max(1, ...b.months.map(x => x.v));
+  return `<div class="sec-h">💡 Bil & utiliti ${y}</div><div class="card">
+    <div class="acts" style="margin-top:0"><button class="btn" style="flex:1" data-act="billForm">🧾 Rekod bil bulan ini</button><button class="btn ghost" style="flex:1" data-act="recForm">🔁 Bil berulang</button></div>
+    ${b.total ? `<div class="kv" style="font-size:16px"><span>Jumlah bil ${y}</span><b>${RM(b.total)}</b></div>
+      <div class="billtypes">${b.byType.map(x => `<div><span>${BILL_IC[x.c] || '🧾'} ${esc(x.c)}</span><b>${RM(x.v)}</b></div>`).join('')}</div>
+      <div class="chart" style="height:90px;margin-top:10px">${b.months.map((m, i) => `<div class="col"><div class="bars"><i style="height:${m.v / mx * 100}%"></i></div><small>${MONTHS[i]}</small></div>`).join('')}</div>
+      ${b.byUnit.length > 1 || (b.byUnit[0] && b.byUnit[0].u) ? `<div class="sec-h">Ikut rumah</div><div style="overflow-x:auto"><table class="rep small"><tr><th>Rumah</th>${b.cols.map(c => `<th>${BILL_IC[c] || ''}</th>`).join('')}<th>Jumlah</th></tr>${b.byUnit.map(r => `<tr><td ${r.sys ? '' : 'data-raw'}>${esc(r.u || 'Umum (semua unit)')}</td>${b.cols.map(c => `<td>${RM(r.t[BILL_CATS.indexOf(c)]).replace('RM ', '')}</td>`).join('')}<td>${RM(r.tot)}</td></tr>`).join('')}</table></div>` : ''}`
+    : '<p class="muted" style="margin:6px 0 0">Belum ada bil direkod. Tekan <b>Rekod bil bulan ini</b> untuk bil elektrik / air, atau <b>Bil berulang</b> untuk bil tetap seperti IWK & maintenance.</p>'}
+    ${rec.length ? `<div class="sec-h">Bil berulang aktif (${rec.length})</div>${rec.map(r => `<div class="row" style="padding:6px 0"><div class="grow"><div class="t">${BILL_IC[r.category] || '🔁'} ${esc(r.category)} · ${RM(r.amount)}/bulan</div><div class="s">Setiap ${r.day} hb · <span ${r.unit ? 'data-raw' : ''}>${esc(r.unit || 'Umum (semua unit)')}</span></div></div><button class="btn sm ghost fx" data-act="recForm" data-id="${r.id}">✏️</button></div>`).join('')}` : ''}
+    <p class="muted" style="font-size:12.5px;margin:8px 0 0">Bil yang owner bayar dikira sebagai perbelanjaan dan ditolak daripada pendapatan sewa bersih.</p></div>`;
+}
+function billForm() {
+  const units = unitList(), m = curMonth();
+  openModal('Rekod Bil Bulanan', `<form data-form="bills"><p class="muted" style="margin-top:0">Isi bil yang anda bayar. Kosongkan yang tiada.</p>
+    <div class="grid2">${sel('Bulan bil', 'month', monthsRange(addMonths(m, -11), m).reverse().map(x => [x, monthLabel(x)]), m)}${fld('Tarikh dibayar', 'date', localISO(), 'date', 'required')}</div>
+    ${sel('Rumah', 'unit', [['', 'Umum (semua unit)'], ...units.map(u => [u, u])], units[0] || '')}
+    <div class="grid2">${BILL_CATS.map((c, i) => fld(`${BILL_IC[c]} ${c} (RM)`, 'b' + i, '', 'number', 'step="0.01" min="0" inputmode="decimal"')).join('')}</div>
+    <label class="filebtn" id="expfile"><input type="file" accept="image/*" data-chg="expPick">📎 Lampirkan gambar bil (pilihan)</label><div id="exppreview"></div>
+    <button class="btn wide" style="margin-top:12px">Simpan bil</button></form>`);
+}
+function recForm(id) {
+  const r = (S.recurring || []).find(x => x.id === id) || {category: 'Bil IWK (pembetungan)', amount: '', day: 1, unit: unitList()[0] || '', startMonth: curMonth()};
+  const list = (S.recurring || []).filter(x => x.active !== false && x.id !== id);
+  openModal(id ? 'Edit Bil Berulang' : 'Bil Berulang', `<form data-form="recurring">${hid('id', id || '')}<p class="muted" style="margin-top:0">Untuk bil tetap setiap bulan (cth: IWK RM8, maintenance RM150, internet RM99). Sistem rekod secara automatik setiap bulan pada tarikh dipilih.</p>
+    ${sel('Jenis bil', 'category', BILL_CATS.map(c => [c, `${BILL_IC[c]} ${c}`]), r.category)}
+    <div class="grid2">${money('Jumlah sebulan (RM)', 'amount', r.amount)}${fld('Tarikh setiap bulan', 'day', r.day, 'number', 'min="1" max="28" required')}</div>
+    ${sel('Rumah', 'unit', [['', 'Umum (semua unit)'], ...unitList().map(u => [u, u])], normU(r.unit))}
+    ${sel('Mula dari bulan', 'startMonth', monthsRange(addMonths(curMonth(), -12), addMonths(curMonth(), 1)).reverse().map(x => [x, monthLabel(x)]), r.startMonth || curMonth())}
+    ${fld('Nota (pilihan)', 'note', r.note || '')}
+    <button class="btn wide" style="margin-top:12px">Simpan</button></form>
+    ${id ? `<button class="btn wide red" style="margin-top:8px" data-act="recStop" data-id="${id}">⏹ Hentikan bil berulang</button>` : ''}
+    ${!id && list.length ? `<div class="sec-h">Aktif</div>${list.map(x => `<div class="row" style="padding:6px 0"><div class="grow"><div class="t">${BILL_IC[x.category] || ''} ${esc(x.category)} · ${RM(x.amount)}</div><div class="s" data-raw>${esc(x.unit || '-')}</div></div><button class="btn sm ghost fx" data-act="recForm" data-id="${x.id}">✏️</button></div>`).join('')}` : ''}`);
 }
 function expForm(id) {
   const e = (S.expenses || []).find(x => x.id === id) || {date: localISO(), category: EXP_CATS[0], unit: ''};
@@ -1946,6 +2034,8 @@ const ACTIONS = {
   issueNew: () => issueNew(), issueView: id => issueView(id), issueForm: id => issueForm(id),
   issueFilter: id => { S.issueFilter = id; renderOwner(); },
   issuePhoto: id => { const i = S.issues.find(x => x.id === id); if (i?.photo) openModal('Gambar Aduan', `<img class="proofbig" src="${i.photo}" alt="">`); },
+  billForm: () => billForm(), recForm: id => recForm(id),
+  recStop: async id => { if (!confirm('Hentikan bil berulang ini? Bil yang sudah direkod kekal.')) return; await API.updateRecurring(id, {active: false, endMonth: curMonth()}); closeModal(); toast('Bil berulang dihentikan.'); await refresh(); },
   tenView: id => { S.tenView = id; renderOwner(); },
   tenantInto: v => tenantForm(null, v),
   propForm: v => propForm(v),
@@ -2018,7 +2108,7 @@ const ACTIONS = {
   repView: id => { S.repView = id; renderOwner(); },
   expForm: id => expForm(id),
   expProof: id => { const e = S.expenses.find(x => x.id === id); openModal('Resit Perbelanjaan', `<img class="proofbig" src="${e.proof}" alt=""><div class="kv"><span>${esc(e.category)}</span><b>${RM(e.amount)}</b></div><div class="kv"><span>Tarikh</span><b>${dateLabel(e.date)}</b></div>`); },
-  delExp: async id => { if (!confirm('Padam perbelanjaan ini?')) return; await API.delExpense(id); toast('Dipadam.'); await refresh(); },
+  delExp: async id => { if (!confirm('Padam perbelanjaan ini?')) return; const e = S.expenses.find(x => x.id === id), r = e?.recId && (S.recurring || []).find(x => x.id === e.recId); if (r) await API.updateRecurring(r.id, {skip: [...(r.skip || []), e.date.slice(0, 7)]}).catch(() => {}); await API.delExpense(id); toast('Dipadam.'); await refresh(); },
   collPdf: () => printHTML(collReportHTML(S.year), tr('Laporan Kutipan') + ' ' + S.year),
   taxPdf: () => printHTML(taxReportHTML(S.year), tr('Laporan Sewa') + ' ' + S.year),
   taxCsv: () => {
@@ -2026,6 +2116,7 @@ const ACTIONS = {
     const rows = [[tr('Laporan Pendapatan Sewa') + ' ' + y], [tr('Pemilik'), o.company || o.name || ''], [], [tr('Sewa kasar diterima'), d.gross.toFixed(2)], [tr('Perbelanjaan'), d.totalExp.toFixed(2)], [tr('Pendapatan sewa bersih'), d.net.toFixed(2)], [],
       [tr('Ikut unit')], L(['Unit', 'Sewa', 'Belanja', 'Bersih']), ...d.rows.map(r => [r.sys ? tr(r.unit) : r.unit, r.inc.toFixed(2), r.exp.toFixed(2), r.net.toFixed(2)]), [],
       [tr('Perbelanjaan ikut kategori')], ...d.byCat.map(x => [tr(x.c), x.v.toFixed(2)]), [],
+      ...(() => { const b = billData(y); return b.total ? [[tr('Bil & utiliti ikut rumah')], L(['Rumah', ...b.cols, 'Jumlah']), ...b.byUnit.map(r => [r.u || tr('Umum (semua unit)'), ...b.cols.map(c => r.t[BILL_CATS.indexOf(c)].toFixed(2)), r.tot.toFixed(2)]), []] : []; })(),
       [tr('Senarai resit')], L(['No. resit', 'Tarikh dibayar', 'Bulan sewa', 'Nama penyewa', 'Alamat', 'Kaedah', 'Jumlah']), ...d.pays.map(p => [p.receiptNo, p.paidDate, p.month, p.tenantName, p.address, tr(p.method), (+p.amount).toFixed(2)]), [],
       [tr('Senarai perbelanjaan')], L(['Tarikh', 'Kategori', 'Unit', 'Nota', 'Jumlah']), ...d.exps.map(e => [e.date, tr(e.category), e.unit || tr('Umum'), e.note || '', (+e.amount).toFixed(2)])];
     const csv = '\ufeff' + rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
@@ -2142,6 +2233,17 @@ const FORMS = {
     // kemas kini alamat penyewa dalam rumah ini supaya sama dengan nama rumah / bilik baru
     if (d.id) for (const t of S.tenants.filter(t => t.active !== false && t.propertyId === d.id)) { const u = unitsOf({...data}).find(x => x.id === (data.type === 'whole' ? 'whole' : t.roomId)); if (u) { const a = unitLabel(data, u); if (a !== t.address) await API.updateTenant(t.id, {address: a}); } }
     closeModal(); S.tenView = 'props'; toast(d.id ? 'Rumah dikemas kini.' : 'Rumah ditambah ✅'); await refresh();
+  },
+  async bills(d, f) {
+    const items = BILL_CATS.map((c, i) => [c, Math.round((+d['b' + i] || 0) * 100) / 100]).filter(x => x[1] > 0);
+    if (!items.length) throw new Error('Isi sekurang-kurangnya satu jumlah bil.');
+    for (const [c, a] of items) await API.addExpense({ownerId: S.uid, date: d.date, amount: a, category: c, unit: normU(d.unit), note: `Bil ${monthLabel(d.month)}`, billMonth: d.month, proof: f.dataset.proof || '', createdAt: nowStr()});
+    closeModal(); toast(`${items.length} bil disimpan ✅`); S.year = +d.date.slice(0, 4); await refresh();
+  },
+  async recurring(d) {
+    const data = {category: d.category, amount: Math.round((+d.amount || 0) * 100) / 100, day: Math.min(28, Math.max(1, +d.day || 1)), unit: normU(d.unit), startMonth: d.startMonth, note: (d.note || '').trim(), active: true};
+    if (d.id) await API.updateRecurring(d.id, data); else await API.addRecurring({...data, ownerId: S.uid, createdAt: nowStr()});
+    closeModal(); toast('Bil berulang disimpan ✅ Akan direkod automatik setiap bulan.'); await refresh();
   },
   async renew(d) {
     const t = S.tenants.find(x => x.id === d.id), nr = +d.rent || +t.rent, hist = [...(t.rentHist || [])];
