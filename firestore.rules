@@ -53,6 +53,23 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Kod promo langganan — Super Admin sahaja (owner guna melalui Cloud Function prosewaRedeemPromo)
+    match /promos/{code} {
+      allow read, write: if isSuper();
+    }
+
+    // Peranti untuk push notification (FCM) — ID dokumen = token FCM. Dibaca oleh Cloud Function sahaja.
+    match /devices/{id} {
+      allow read, delete: if false;
+      allow create, update: if request.resource.data.lang in ['bm', 'en']
+        && request.resource.data.platform in ['web', 'android']
+        && request.resource.data.at is string
+        && ((signedIn() && request.resource.data.keys().hasOnly(['uid', 'lang', 'platform', 'at']) && request.resource.data.uid == request.auth.uid)
+          || (request.resource.data.keys().hasOnly(['tok', 'lang', 'platform', 'at']) && request.resource.data.tok is string
+            && exists(/databases/$(database)/documents/tenants/$(request.resource.data.tok))
+            && get(/databases/$(database)/documents/tenants/$(request.resource.data.tok)).data.active == true));
+    }
+
     // Perbelanjaan owner (untuk laporan cukai)
     match /expenses/{id} {
       allow read, update, delete: if signedIn() && (resource.data.ownerId == request.auth.uid || isSuper());

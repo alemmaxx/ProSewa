@@ -36,6 +36,15 @@ jobs:
           distribution: temurin
           java-version: 17
       - run: npm install --no-audit --no-fund
+      - name: Push notification (FCM) — hanya jika google-services.json ada dalam repo
+        id: fcm
+        run: |
+          if [ -f google-services.json ] && grep -q '"${{ matrix.appId }}"' google-services.json; then
+            npm install --no-audit --no-fund @capacitor/push-notifications@^6.0.0
+            echo "on=1" >> $GITHUB_OUTPUT; echo "FCM: aktif untuk ${{ matrix.appId }}"
+          else
+            echo "on=0" >> $GITHUB_OUTPUT; echo "::warning::google-services.json (dengan ${{ matrix.appId }}) tiada — APK dibina tanpa push FCM (notifikasi tempatan masih berfungsi)."
+          fi
       - name: Sediakan fail app (www)
         run: |
           sh build.sh
@@ -43,7 +52,8 @@ jobs:
           cp _site/${{ matrix.page }} www/index.html
           cp icon-192.png icon-512.png icon-t-192.png icon-t-512.png www/
           cp node_modules/html2pdf.js/dist/html2pdf.bundle.min.js www/lib/
-          sed -i 's#<head>#<head><script>window.PROSEWA_APP="${{ matrix.kind }}"</script>#' www/index.html
+          FCMJS=""; [ "${{ steps.fcm.outputs.on }}" = "1" ] && FCMJS="window.PROSEWA_FCM=true;"
+          sed -i "s#<head>#<head><script>window.PROSEWA_APP=\"${{ matrix.kind }}\";$FCMJS</script>#" www/index.html
           grep -c 'PROSEWA_APP="${{ matrix.kind }}"' www/index.html
           cat > capacitor.config.json <<JSON
           {
@@ -52,7 +62,8 @@ jobs:
             "webDir": "www",
             "backgroundColor": "#0a1210",
             "plugins": {
-              "LocalNotifications": { "smallIcon": "ic_stat_ps", "iconColor": "#d9b44a" }
+              "LocalNotifications": { "smallIcon": "ic_stat_ps", "iconColor": "#d9b44a" },
+              "PushNotifications": { "presentationOptions": ["badge", "sound", "alert"] }
             }
           }
           JSON
@@ -65,7 +76,7 @@ jobs:
           rm -rf $RES/mipmap-anydpi-v26
           if [ "${{ matrix.kind }}" = "tenant" ]; then SRC=android-icons/penyewa/res; else SRC=android-icons/admin/res; fi
           cp -r $SRC/* $RES/
-          printf '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">#0a1210</color>\n</resources>\n' > $RES/values/ic_launcher_background.xml
+          printf '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">#0a1210</color>\n    <color name="ps_gold">#d9b44a</color>\n</resources>\n' > $RES/values/ic_launcher_background.xml
       - name: Permission notifikasi & alarm tepat
         run: |
           M=android/app/src/main/AndroidManifest.xml
@@ -73,6 +84,10 @@ jobs:
           if [ "${{ matrix.kind }}" = "tenant" ]; then
             # link penyewa (prosewa.web.app/penyewa.html?t=…) terus buka app
             sed -i 's#</activity>#    <intent-filter android:autoVerify="true">\n                <action android:name="android.intent.action.VIEW" />\n                <category android:name="android.intent.category.DEFAULT" />\n                <category android:name="android.intent.category.BROWSABLE" />\n                <data android:scheme="https" android:host="prosewa.web.app" android:pathPrefix="/penyewa" />\n            </intent-filter>\n        </activity>#' $M
+          fi
+          if [ "${{ steps.fcm.outputs.on }}" = "1" ]; then
+            cp google-services.json android/app/google-services.json
+            sed -i 's#<activity#<meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_stat_ps" />\n        <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/ps_gold" />\n        <activity#' $M
           fi
           cat $M
       - name: Kunci tandatangan tetap & versi

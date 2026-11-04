@@ -272,6 +272,7 @@ table.rep tr.tot td{font-weight:800;border-bottom:0;color:var(--gold)}
 .pdfdoc{--line:#dddddd;--muted:#444444;--ink:#000000;--card:#ffffff;--gold:#8a6a12;--green:#16935f;--red:#c9483a;background:#fff;color:#000;font-family:var(--f);width:720px}
 .pdfdoc #receipt{border:0;background:#fff;color:#000;max-width:560px;margin:0 auto;padding:0}
 .pdfdoc #taxrep{color:#000;font-size:12px}.pdfdoc #taxrep table.rep th,.pdfdoc #taxrep table.rep td{border-color:#ddd;color:#000;padding:4px}.pdfdoc #taxrep table.rep tr.tot td{color:#000!important}.pdfdoc #taxrep .sec-h{color:#555;margin:14px 0 6px}
+.promo-in{display:flex;gap:8px;align-items:flex-end}.promo-in .fld{flex:1;margin:0}.promo-in .btn{flex:none;padding-left:22px;padding-right:22px}
 .dlalt{display:block;text-align:center;font-size:13px;color:var(--muted);margin-top:8px;text-decoration:underline}
 @page{size:A4;margin:14mm}
 @media print{
@@ -405,10 +406,35 @@ const I18N_RX = [
   [/Link (\S+) disalin/g, "$1's link copied"],
   [/Ditambah (\d+) hari/g, 'Added $1 days'],
   [/Salam, /g, 'Hi, '],
+  [/(\d+) kod promo dijana/g, '$1 promo code(s) generated'],
+  [/Padam kod (\S+)\?/g, 'Delete code $1?'],
+  [/Kod promo berjaya! \+(\d+) hari, aktif sehingga ([^.]+)\./g, 'Promo code applied! +$1 days, active until $2.'],
+  [/Kod promo · \+(\d+) hari/g, 'Promo code · +$1 days'],
+  [/tamat (\d+) hari lalu/g, 'ended $1 days ago'],
+  [/Tolak tunggakan sewa (RM [\d,.]+)/g, 'Deduct rent arrears $1'],
+  [/Kontrak sewa anda tamat pada ([^.]+)\. Sila hubungi tuan rumah untuk pembaharuan\./g, 'Your tenancy ends on $1. Please contact your landlord about renewal.'],
+  [/Kontrak hampir tamat \((\d+)\)/g, 'Tenancy ending soon ($1)'],
+  [/Bekas penyewa \((\d+)\)/g, 'Former tenants ($1)'],
+  [/Potongan (\d)/g, 'Deduction $1'],
+  [/Terima kasih, /g, 'Thank you, '],
   [/Sewa (.+?) (RM [\d,.]+) belum dibayar\./g, 'Rent for $1 ($2) is unpaid.']
 ];
 Object.assign(I18N, {
-  'LAPORAN KUTIPAN SEWA': 'RENT COLLECTION REPORT', 'Muat turun APK Android': 'Download Android APK', 'Muat turun gagal? Buka halaman muat turun': 'Download failed? Open the download page', 'App & notifikasi': 'App & notifications', 'Notifikasi phone': 'Phone notifications',
+  'LAPORAN KUTIPAN SEWA': 'RENT COLLECTION REPORT', 'Kod promo': 'Promo code', 'Bilangan kod': 'Number of codes', 'Hari langganan percuma': 'Free subscription days', 'Guna sebelum (pilihan)': 'Use before (optional)', 'guna sebelum': 'use before',
+  'Setiap kod hanya boleh digunakan': 'Each code can only be used', 'sekali': 'once', 'oleh seorang owner. Selepas digunakan, kod itu tidak sah lagi.': 'by one owner. Once used, the code is no longer valid.',
+  'Jana kod promo': 'Generate promo codes', 'Belum guna': 'Unused', 'Digunakan': 'Used', 'Tamat tempoh': 'Expired', 'Semua': 'All', 'Salin semua kod belum guna': 'Copy all unused codes', 'Salin': 'Copy', 'Tiada kod promo.': 'No promo codes.',
+  'Edit Kod Promo': 'Edit Promo Code', 'Kod promo dikemas kini.': 'Promo code updated.', 'Ada kod promo?': 'Have a promo code?', 'Guna': 'Apply', 'Kod promo ini sudah digunakan.': 'This promo code has already been used.',
+  'Kod promo tidak sah.': 'Invalid promo code.', 'Kod promo ini sudah tamat tempoh.': 'This promo code has expired.', 'Sila masukkan kod promo.': 'Please enter a promo code.', 'Promo pelancaran': 'Launch promo',
+  'Tamat kontrak (pilihan)': 'Tenancy end (optional)', 'Tamat kontrak': 'Tenancy ends', 'Kontrak': 'Tenancy', 'tamat hari ini': 'ends today', 'Perbaharui': 'Renew', 'Perbaharui kontrak': 'Renew tenancy', 'Perbaharui Kontrak': 'Renew Tenancy',
+  'Kontrak sewa hampir tamat': 'Tenancy ending soon', 'Tamat kontrak semasa': 'Current tenancy end', 'Tamat kontrak baru': 'New tenancy end', 'Sewa baru (RM)': 'New rent (RM)',
+  'Sewa baru berkuat kuasa untuk bulan seterusnya. Penyewa akan nampak tarikh kontrak baru dalam app.': 'The new rent applies from next month. The tenant will see the new tenancy date in the app.', 'Simpan pembaharuan': 'Save renewal', 'Kontrak diperbaharui': 'Tenancy renewed',
+  'Tamatkan Sewa': 'End Tenancy', 'Tarikh keluar': 'Move-out date', 'Deposit dipegang': 'Deposit held', 'Tunggakan sewa': 'Rent arrears', 'Pembersihan': 'Cleaning', 'Pembaikan kerosakan': 'Damage repair', 'Bil utiliti tertunggak': 'Unpaid utility bills', 'Kunci / kad hilang': 'Lost keys / card',
+  'Nota potongan (pilihan)': 'Deduction note (optional)', 'cth: Cat dinding bilik 2 rosak': 'e.g. Room 2 wall paint damaged', 'Dipulangkan kepada penyewa': 'Refunded to tenant', 'Kaedah pulangan': 'Refund method', 'Tarikh pulangan': 'Refund date',
+  'Link penyewa akan ditutup, tetapi penyewa masih boleh lihat penyata deposit. Rekod bayaran lama kekal dalam laporan.': 'The tenant link will be closed, but the tenant can still view the deposit statement. Old payment records stay in reports.',
+  'Tamatkan sewa & simpan penyata': 'End tenancy & save statement', 'Tamatkan tanpa penyata deposit': 'End without a deposit statement', 'Baki perlu dibayar penyewa': 'Balance owed by tenant', 'Sewa ditamatkan. Penyata deposit disimpan.': 'Tenancy ended. Deposit statement saved.',
+  'Penyata Deposit': 'Deposit Statement', 'PENYATA DEPOSIT': 'DEPOSIT STATEMENT', 'Penyata deposit': 'Deposit statement', 'Tempoh sewa': 'Tenancy period', 'Deposit diterima': 'Deposit received', 'Tolak:': 'Less:', 'tunggakan sewa': 'rent arrears',
+  'Tiada penyewa aktif.': 'No active tenants.', 'keluar': 'moved out', 'Deposit dipulangkan': 'Deposit refunded', 'Deposit habis ditolak': 'Deposit fully deducted', 'Sewaan telah tamat': 'Tenancy has ended', 'Berikut penyata deposit anda.': 'Here is your deposit statement.',
+  'Tamatkan sewa': 'End tenancy', 'Muat turun APK Android': 'Download Android APK', 'Muat turun gagal? Buka halaman muat turun': 'Download failed? Open the download page', 'App & notifikasi': 'App & notifications', 'Notifikasi phone': 'Phone notifications',
   'Uji notifikasi': 'Test notification', 'Uji dalam 10 saat': 'Test in 10 seconds', '"Uji dalam 10 saat": tekan, kemudian tutup app untuk pastikan notifikasi tetap sampai.': '"Test in 10 seconds": tap it, then close the app to make sure notifications still arrive.',
   'Ujian notifikasi ProSewa': 'ProSewa test notification', 'Notifikasi berfungsi': 'Notifications are working', 'Anda akan terima makluman seperti ini.': "You'll receive alerts like this.", 'Notifikasi berjadual berfungsi': 'Scheduled notifications are working', 'Peringatan sewa akan sampai walaupun app ditutup.': 'Rent reminders will arrive even when the app is closed.',
   'Notifikasi akan sampai dalam 10 saat. Boleh tutup app sekarang.': 'The notification will arrive in 10 seconds. You can close the app now.', 'Notifikasi ujian dihantar. Semak bar notifikasi phone.': 'Test notification sent. Check your phone notification bar.',
@@ -607,6 +633,7 @@ const PLANS = [
   {id: 'yearly', name: 'Setahun', months: 12, price: 179.00, tag: 'Paling jimat'}
 ];
 const TRIAL_DAYS = 14;   // asal; Super Admin boleh ubah dalam panel #super (disimpan dalam config/app)
+const PROMO_URL = 'https://asia-southeast1-kukusanmy.cloudfunctions.net/prosewaRedeemPromo';   // Cloud Function kod promo
 const TOYYIBPAY = {createBillUrl: 'https://asia-southeast1-kukusanmy.cloudfunctions.net/prosewaCreateBill'};   // Cloud Function (folder functions/)
 // Harga pakej boleh diubah oleh Super Admin (disimpan dalam config/app.plans); PLANS di atas ialah nilai asal.
 const plans = () => PLANS.map(d => { const c = (S.config?.plans || []).find(x => x.id === d.id) || {}; return {...d, price: c.price != null ? +c.price : d.price, tag: c.tag != null ? c.tag : d.tag}; });
@@ -617,8 +644,11 @@ function subInfo(s = S.sub) {
   if (!s) return null;
   const end = s.plan === 'trial' ? addDays(s.start, trialDays()) : s.end;
   const diff = new Date(end + 'T23:59:59') - new Date(), active = diff >= 0, days = active ? Math.floor(diff / 864e5) : -Math.ceil(-diff / 864e5);
-  return {...s, end, days, active, planName: s.plan === 'trial' ? 'Percubaan percuma' : (plans().find(p => p.id === s.plan)?.name || s.plan)};
+  return {...s, end, days, active, planName: s.plan === 'trial' ? 'Percubaan percuma' : s.plan === 'promo' ? 'Kod promo' : (plans().find(p => p.id === s.plan)?.name || s.plan)};
 }
+const PROMO_ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const genPromo = () => 'PS-' + Array.from({length: 8}, (_, i) => (i === 4 ? '-' : '') + PROMO_ABC[Math.floor(Math.random() * PROMO_ABC.length)]).join('');
+const normPromo = v => String(v || '').toUpperCase().replace(/\s+/g, '').replace(/[^A-Z0-9-]/g, '');
 const extendFrom = si => si && si.active && si.end > localISO() ? si.end : localISO();
 
 /* ---------- API: mod peranti (localStorage) ---------- */
@@ -662,6 +692,19 @@ const LocalAPI = {
   async delExpense(id) { delete L.expenses[id]; lsave(); },
   async addSubPayment(d) { L.subPayments.push({...clone(d), id: genId()}); lsave(); },
   async idToken() { return 'local'; },
+  async listPromos() { return Object.entries(L.promos || {}).map(([k, x]) => ({...clone(x), code: k})); },
+  async addPromos(list) { L.promos = L.promos || {}; list.forEach(x => L.promos[x.code] = clone(x)); lsave(); },
+  async updatePromo(code, d) { Object.assign(L.promos[code], clone(d)); lsave(); },
+  async delPromo(code) { delete L.promos[code]; lsave(); },
+  async redeemPromo(code) {
+    const p = (L.promos || {})[code]; if (!p) throw new Error('Kod promo tidak sah.'); if (p.used) throw new Error('Kod promo ini sudah digunakan.');
+    if (p.expires && p.expires < localISO()) throw new Error('Kod promo ini sudah tamat tempoh.');
+    const uid = L.session, si = subInfo(L.subs[uid]), from = extendFrom(si), end = addDays(from, +p.days);
+    L.subs[uid] = {plan: L.subs[uid] && L.subs[uid].plan !== 'trial' ? L.subs[uid].plan : 'promo', start: L.subs[uid]?.start || localISO(), end};
+    Object.assign(p, {used: true, usedBy: uid, usedEmail: Object.keys(L.users).find(k => L.users[k].uid === uid) || '', usedAt: nowStr()});
+    L.subPayments.push({id: genId(), ownerId: uid, date: nowStr(), plan: 'promo', months: 0, days: +p.days, amount: 0, ref: code, until: end}); lsave(); return {days: +p.days, end};
+  },
+  async saveDevice() {},
   async nextReceiptSeq(uid) { const o = L.owners[uid] = L.owners[uid] || {}; o.receiptSeq = (+o.receiptSeq || 0) + 1; lsave(); return o.receiptSeq; }
 };
 addEventListener('storage', e => { if (!ONLINE && e.key === LKEY) { L = lsGet(LKEY) || L; refresh(); } });
@@ -673,7 +716,7 @@ async function fbInit() {
   const b = `https://www.gstatic.com/firebasejs/${FB_VER}/`;
   const [A, U, F] = await Promise.all([import(b + 'firebase-app.js'), import(b + 'firebase-auth.js'), import(b + 'firebase-firestore.js')]);
   const app = A.initializeApp(FIREBASE_CONFIG);
-  return fb = {U, F, auth: U.getAuth(app), db: F.getFirestore(app, FIRESTORE_DB)};
+  return fb = {app, U, F, auth: U.getAuth(app), db: F.getFirestore(app, FIRESTORE_DB)};
 }
 const fdoc = (...p) => fb.F.doc(fb.db, ...p);
 const fcol = (...p) => fb.F.collection(fb.db, ...p);
@@ -732,6 +775,17 @@ const FireAPI = {
   async addExpense(d) { await fbInit(); const r = await fb.F.addDoc(fcol('expenses'), d); return r.id; },
   async updateExpense(id, d) { await fbInit(); await fb.F.updateDoc(fdoc('expenses', id), d); },
   async delExpense(id) { await fbInit(); await fb.F.deleteDoc(fdoc('expenses', id)); },
+  async listPromos() { await fbInit(); const s = await fb.F.getDocs(fcol('promos')); return s.docs.map(d => ({...d.data(), code: d.id})); },
+  async addPromos(list) { await fbInit(); const b = fb.F.writeBatch(fb.db); list.forEach(x => { const {code, ...d} = x; b.set(fdoc('promos', code), d); }); await b.commit(); },
+  async updatePromo(code, d) { await fbInit(); await fb.F.updateDoc(fdoc('promos', code), d); },
+  async delPromo(code) { await fbInit(); await fb.F.deleteDoc(fdoc('promos', code)); },
+  async redeemPromo(code) {
+    const token = await this.idToken();
+    const r = await fetch(PROMO_URL, {method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token}, body: JSON.stringify({code})}).catch(() => null);
+    if (!r) throw new Error('Tiada sambungan internet.');
+    const j = await r.json().catch(() => ({})); if (!r.ok || j.error) throw new Error(j.error || 'Ralat berlaku.'); return j;
+  },
+  async saveDevice(token, d) { await fbInit(); await fb.F.setDoc(fdoc('devices', token), {...d, at: nowStr()}); },
   async listSubPayments(uid) { await fbInit(); const s = await fb.F.getDocs(fb.F.query(fcol('subPayments'), fb.F.where('ownerId', '==', uid))); return s.docs.map(d => ({...d.data(), id: d.id})); },
   async addSubPayment(d) { await fbInit(); await fb.F.addDoc(fcol('subPayments'), d); },
   async idToken() { await fbInit(); return fb.auth.currentUser.getIdToken(); },
@@ -763,18 +817,21 @@ function dueDate(t, ym) { const [y, m] = ym.split('-').map(Number); const last =
 function monthStatus(t, ym, payments) {
   const ps = payments.filter(p => p.tenantId === t.id && p.month === ym);
   const paid = ps.filter(p => p.status === 'confirmed').reduce((a, p) => a + (+p.amount || 0), 0);
-  const rent = +t.rent || 0, due = dueDate(t, ym), late = localISO() > due;
+  const rent = rentFor(t, ym), due = dueDate(t, ym), late = localISO() > due;
   if (rent > 0 && paid >= rent) return {code: 'paid', label: 'Sudah bayar', paid, due};
   if (ps.some(p => p.status === 'pending')) return {code: 'pending', label: 'Menunggu semakan', paid, due};
   if (paid > 0) return {code: 'partial', label: 'Bayar separa', paid, due, late};
   if (late) return {code: 'overdue', label: 'Tertunggak', paid, due};
   return {code: 'unpaid', label: 'Belum bayar', paid, due};
 }
+const rentFor = (t, ym) => { for (const x of [...(t.rentHist || [])].sort((a, b) => a.from.localeCompare(b.from))) if (ym < x.from) return +x.prev || 0; return +t.rent || 0; };   // sewa ikut bulan (selepas pembaharuan)
+const ctInfo = t => { if (!t.contractEnd) return null; const d = daysTo(t.contractEnd); return {d, soon: d <= 30, past: d < 0}; };
+const ctLabel = t => { const c = ctInfo(t); return !c ? '-' : `${dateLabel(t.contractEnd)} · ${c.past ? `tamat ${-c.d} hari lalu` : c.d === 0 ? 'tamat hari ini' : `${c.d} hari lagi`}`; };
 function arrears(t, payments) {
   const out = {sum: 0, months: []}; if (!t.startDate) return out;
   for (const ym of monthsRange(t.startDate.slice(0, 7), curMonth())) {
     const s = monthStatus(t, ym, payments);
-    if (s.code === 'overdue' || (s.code === 'partial' && s.late)) { out.sum += (+t.rent || 0) - s.paid; out.months.push(ym); }
+    if (s.code === 'overdue' || (s.code === 'partial' && s.late)) { out.sum += rentFor(t, ym) - s.paid; out.months.push(ym); }
   }
   return out;
 }
@@ -794,6 +851,7 @@ function tenantNotifs(t, payments, reminders, settings) {
     if (now >= at) out.push({id: `due-${cm}`, at, ic: '🔔', title: 'Peringatan bayar sewa', body: `Sewa ${monthLabel(cm)} ${RM(t.rent)} perlu dibayar sebelum ${dateLabel(s.due)}.`});
   }
   if (settings.overdueOn) { const a = arrears(t, payments); if (a.sum > 0) out.push({id: `arr-${a.months.join('_')}`, at: `${addDays(dueDate(t, a.months[a.months.length - 1]), 1)}T${settings.autoTime || '09:00'}`, ic: '⚠️', title: 'Sewa tertunggak', body: `Tunggakan ${RM(a.sum)} (${a.months.map(monthLabel).join(', ')}).`}); }
+  if (t.contractEnd) { const at = `${addDays(t.contractEnd, -30)}T09:00`; if (now >= at && t.contractEnd >= now.slice(0, 10)) out.push({id: 'ct-' + t.contractEnd, at, ic: '📄', title: 'Kontrak sewa hampir tamat', body: `Kontrak sewa anda tamat pada ${dateLabel(t.contractEnd)}. Sila hubungi tuan rumah untuk pembaharuan.`}); }
   reminders.filter(r => r.tenantId === t.id && r.at <= now).forEach(r => out.push({id: 'r-' + r.id, at: r.at, ic: '📩', title: 'Mesej dari tuan rumah', body: r.message, raw: true}));
   payments.filter(p => p.tenantId === t.id).forEach(p => {
     if (p.status === 'confirmed' && p.confirmedAt) out.push({id: 'ok-' + p.id, at: p.confirmedAt, ic: '✅', title: 'Bayaran diluluskan', body: `Resit ${p.receiptNo} untuk ${monthLabel(p.month)} sedia. Tekan untuk lihat.`, pay: p.id});
@@ -895,6 +953,7 @@ function renderLocked() {
   $('#app').innerHTML = `<div class="login"><div class="lbox">${langSeg()}${themeSeg()}<br><img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa</h2>
     <div class="al hot" style="text-align:left"><b>⛔ Langganan telah tamat</b>Langganan anda tamat pada ${dateLabel(si.end)}. Sila buat bayaran untuk log masuk semula. Penyewa anda juga tidak dapat membuka app sehingga bayaran dibuat.</div>
     <div style="text-align:left">${plans().map(p => `<div class="instbig" style="margin-bottom:8px"><div><b>${p.name}${p.tag ? ` · <span style="font-weight:600">${p.tag}</span>` : ''}</b><span class="muted">${p.months} bulan · ${RM(p.price)}</span></div><button class="btn sm" data-act="buyPlan" data-id="${p.id}">Bayar</button></div>`).join('')}</div>
+    <div style="text-align:left">${promoForm()}</div>
     <button class="btn wide ghost" style="margin-top:6px" data-act="logout">Log Keluar</button></div></div>`;
 }
 
@@ -908,8 +967,8 @@ async function renderSuper() {
     return;
   }
   S.mode = 'super'; renderLoading();
-  const [config, owners] = await Promise.all([API.getConfig(), API.listOwners()]);
-  S.config = config || {}; S.owners = owners;
+  const [config, owners, promos] = await Promise.all([API.getConfig(), API.listOwners(), API.listPromos().catch(() => [])]);
+  S.config = config || {}; S.owners = owners; S.promos = promos;
   const rows = owners.map(o => { const si = subInfo(fsub(o.sub)) || {planName: '-', end: '', active: false, days: 0};
     return `<div class="tc ${si.active ? (si.days <= 5 ? 'warn' : '') : 'hot'}"><div class="t1"><div>${si.active ? `<span class="chip c-paid">Aktif · ${si.days} hari lagi</span>` : '<span class="chip c-overdue">Tamat</span>'}<h4 data-raw>${esc(o.name || o.email || o.uid)}</h4><div class="muted" data-raw>${esc(o.email || '')}</div></div></div>
       <div class="kvs"><div class="kv"><span>Pelan</span><b>${esc(si.planName)}</b></div><div class="kv"><span>Tamat</span><b>${si.end ? dateLabel(si.end) : '-'}</b></div><div class="kv"><span>Daftar</span><b>${o.createdAt ? dtLabel(o.createdAt) : '-'}</b></div></div>
@@ -920,9 +979,29 @@ async function renderSuper() {
       <p class="muted">Harga ini dipaparkan kepada owner dan digunakan semasa cipta bil ToyyibPay.</p><button class="btn wide">Simpan harga</button></form>
     <div class="sec-h">Tempoh percubaan</div><form class="card" data-form="trial">${fld('Hari percubaan percuma', 'days', trialDays(), 'number', 'min="0" max="365" required')}
       <p class="muted">Berkuat kuasa serta-merta untuk owner yang masih dalam percubaan.</p><button class="btn wide">Simpan</button></form>
+    ${promoSection(promos)}
     <div class="sec-h">Owner (${owners.length})</div>${owners.length ? `<div class="tcgrid">${rows}</div>` : '<div class="empty">Belum ada owner.</div>'}
     <button class="btn wide ghost" style="margin-top:12px" data-act="exitSuper">‹ Kembali ke app</button></div>`;
 }
+function promoSection(promos) {
+  const f = S.promoFilter || 'unused', today = localISO();
+  const st = p => p.used ? 'used' : (p.expires && p.expires < today ? 'expired' : 'unused');
+  const list = promos.filter(p => f === 'all' || st(p) === f).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)) || a.code.localeCompare(b.code));
+  const cnt = k => promos.filter(p => st(p) === k).length;
+  const row = p => { const s = st(p);
+    return `<div class="row"><div class="av">🎟️</div><div class="grow"><div class="t"><span data-raw style="font-family:ui-monospace,monospace;letter-spacing:.5px">${esc(p.code)}</span> · +${p.days} hari</div>
+      <div class="s">${s === 'used' ? `<span class="chip c-paid">Digunakan</span> <span data-raw>${esc(p.usedEmail || p.usedBy || '')}</span> · ${dtLabel(p.usedAt)}` : s === 'expired' ? `<span class="chip c-overdue">Tamat tempoh</span> ${dateLabel(p.expires)}` : `<span class="chip c-pending">Belum guna</span>${p.expires ? ` · guna sebelum ${dateLabel(p.expires)}` : ''}`}${p.note ? ` · <span data-raw>${esc(p.note)}</span>` : ''}</div>
+      ${s === 'used' ? '' : `<div class="acts"><button class="btn sm fx" data-act="copy" data-id="${esc(p.code)}">📋 Salin</button><button class="btn sm ghost fx" data-act="promoEdit" data-id="${esc(p.code)}">✏️ Edit</button><button class="btn sm red fx" data-act="promoDel" data-id="${esc(p.code)}">🗑</button></div>`}</div></div>`; };
+  return `<div class="sec-h">Kod promo</div><form class="card" data-form="promoGen">
+      <div class="grid2">${fld('Bilangan kod', 'n', 5, 'number', 'min="1" max="50" required')}${fld('Hari langganan percuma', 'days', 30, 'number', 'min="1" max="3650" required')}</div>
+      <div class="grid2">${fld('Guna sebelum (pilihan)', 'expires', '', 'date')}${fld('Nota (pilihan)', 'note', '', 'text', 'placeholder="cth: Promo pelancaran"')}</div>
+      <p class="muted">Setiap kod hanya boleh digunakan <b>sekali</b> oleh seorang owner. Selepas digunakan, kod itu tidak sah lagi.</p><button class="btn wide">🎟️ Jana kod promo</button></form>
+    <div class="seg" style="margin-top:10px">${[['unused', 'Belum guna'], ['used', 'Digunakan'], ['expired', 'Tamat tempoh'], ['all', 'Semua']].map(([k, l]) => `<button class="${f === k ? 'on' : ''}" data-act="promoFilter" data-id="${k}">${l} (${k === 'all' ? promos.length : cnt(k)})</button>`).join('')}</div>
+    ${f === 'unused' && cnt('unused') ? `<button class="btn wide ghost" style="margin-bottom:8px" data-act="promoCopyAll">📋 Salin semua kod belum guna</button>` : ''}
+    <div class="card">${list.length ? list.map(row).join('') : '<div class="empty">Tiada kod promo.</div>'}</div>`;
+}
+const promoForm = () => `<form class="card" data-form="promo" style="margin-top:8px"><div class="sec-h" style="margin-top:0">🎟️ Ada kod promo?</div>
+  <div class="promo-in">${fld('Kod promo', 'code', '', 'text', 'required placeholder="PS-XXXX-XXXX" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;letter-spacing:.5px"')}<button class="btn">Guna</button></div></form>`;
 function tenantDown() {
   $('#app').innerHTML = `<div class="login"><div class="lbox">${langSeg()}<br><img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa</h2>
     <div class="al hot" style="text-align:left"><b>⚠️ Sistem tergendala</b>Maaf, sistem tidak dapat dibuka buat masa ini. Sila rujuk tuan rumah anda.</div></div></div>`;
@@ -946,10 +1025,16 @@ function oTenants() {
   const paid = st.filter(x => x.s.code === 'paid').length, late = st.filter(x => tcCls(x.s) === 'hot').length;
   let h = header('Penyewa', 'Senarai penyewa.', list.length ? `${monthLabel(cm)} · tekan + di atas untuk tambah penyewa.` : 'Tekan + di atas untuk tambah penyewa baru.',
     {btns: ownerBtns(), stats: [[list.length, 'Penyewa'], [paid, 'Sudah bayar', 'g'], [late, 'Tertunggak', late ? 'r' : '']]}) + `<div class="wrap">`;
-  if (!list.length) return h + `<div class="empty">Belum ada penyewa.<br>Tekan <b>+</b> di kanan atas untuk tambah.</div></div>`;
+  const ending = list.filter(t => t.contractEnd && ctInfo(t).soon).sort((a, b) => a.contractEnd.localeCompare(b.contractEnd));
+  if (ending.length) h += `<div class="al hot"><b>📄 Kontrak hampir tamat (${ending.length})</b>${ending.map(t => `<div style="display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:6px"><span><span data-raw>${esc(t.name)}</span> · ${ctLabel(t)}</span><button class="btn sm" data-act="renewForm" data-id="${t.id}">Perbaharui</button></div>`).join('')}</div>`;
+  if (!list.length && !S.tenants.length) return h + `<div class="empty">Belum ada penyewa.<br>Tekan <b>+</b> di kanan atas untuk tambah.</div></div>`;
+  if (!list.length) h += `<div class="empty">Tiada penyewa aktif.<br>Tekan <b>+</b> di kanan atas untuk tambah.</div>`;
   h += `<div class="tcgrid">${st.map(({t, s}, i) => `<div class="tc ${tcCls(s)}"><div class="t1"><div><span class="num">${i + 1}</span>${chip(s)}<h4>${esc(t.name)}</h4></div>${cdBox(s)}</div>
-    <div class="kvs"><div class="kv"><span>Alamat</span><b>${esc(t.address || '-')}</b></div><div class="kv"><span>Sewa</span><b>${RM(t.rent)} / bulan</b></div><div class="kv"><span>Tarikh bayar</span><b>Sebelum ${t.dueDay} hb · ${dateLabel(s.due)}</b></div><div class="kv"><span>Telefon</span><b>${esc(t.phone)}</b></div></div>
-    <div class="acts"><button class="btn sm" data-act="copyLink" data-id="${t.id}">📋 Salin link</button><button class="btn sm ghost" data-act="tenantForm" data-id="${t.id}">✏️ Edit</button><button class="btn sm ghost fx" data-act="shareLink" data-id="${t.id}" aria-label="Kongsi">🔗</button><a class="btn sm wa fx" href="${waLink(t.phone, 'Salam ' + t.name + ', ')}" target="_blank" rel="noopener">💬</a><button class="btn sm red fx" data-act="delTenant" data-id="${t.id}">🗑</button></div></div>`).join('')}</div>`;
+    <div class="kvs"><div class="kv"><span>Alamat</span><b>${esc(t.address || '-')}</b></div><div class="kv"><span>Sewa</span><b>${RM(t.rent)} / bulan</b></div><div class="kv"><span>Tarikh bayar</span><b>Sebelum ${t.dueDay} hb · ${dateLabel(s.due)}</b></div><div class="kv"><span>Telefon</span><b>${esc(t.phone)}</b></div>${+t.deposit ? `<div class="kv"><span>Deposit</span><b>${RM(t.deposit)}</b></div>` : ''}${t.contractEnd ? `<div class="kv"><span>Kontrak</span><b style="${ctInfo(t).soon ? 'color:var(--red)' : ''}">${ctLabel(t)}</b></div>` : ''}</div>
+    <div class="acts"><button class="btn sm" data-act="copyLink" data-id="${t.id}">📋 Salin link</button><button class="btn sm ghost" data-act="tenantForm" data-id="${t.id}">✏️ Edit</button><button class="btn sm ghost fx" data-act="shareLink" data-id="${t.id}" aria-label="Kongsi">🔗</button><a class="btn sm wa fx" href="${waLink(t.phone, 'Salam ' + t.name + ', ')}" target="_blank" rel="noopener">💬</a><button class="btn sm red fx" data-act="endForm" data-id="${t.id}" aria-label="Tamatkan sewa">🚪</button></div>${t.contractEnd && ctInfo(t).soon ? `<div class="acts"><button class="btn sm ghost" style="flex:1" data-act="renewForm" data-id="${t.id}">📄 Perbaharui kontrak</button></div>` : ''}</div>`).join('')}</div>`;
+  const past = S.tenants.filter(t => t.active === false).sort((a, b) => String(b.moveOut || b.endedAt || '').localeCompare(String(a.moveOut || a.endedAt || '')));
+  if (past.length) h += `<div class="sec-h">Bekas penyewa (${past.length})</div><div class="card">${past.map(t => `<div class="row"><div class="av">${esc(initials(t.name))}</div><div class="grow"><div class="t"><span data-raw>${esc(t.name)}</span></div><div class="s"><span data-raw>${esc(t.address || '')}</span> · keluar ${t.moveOut ? dateLabel(t.moveOut) : monthLabel(t.endedAt)}</div>
+    ${t.depositReturn ? `<div class="s">${t.depositReturn.refund > 0 ? `Deposit dipulangkan ${RM(t.depositReturn.refund)}` : t.depositReturn.due > 0 ? `Baki perlu dibayar penyewa ${RM(t.depositReturn.due)}` : 'Deposit habis ditolak'}</div><div class="acts"><button class="btn sm ghost" data-act="depStatement" data-id="${t.id}">📄 Penyata deposit</button></div>` : ''}</div></div>`).join('')}</div>`;
   return h + `</div>`;
 }
 
@@ -958,7 +1043,7 @@ function oStatus() {
   const pend = S.payments.filter(p => p.status === 'pending').sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
   const st = list.map(t => ({t, s: monthStatus(t, m, S.payments)}));
   const paid = st.filter(x => x.s.code === 'paid'), unpaid = st.filter(x => x.s.code !== 'paid');
-  const expected = list.reduce((a, t) => a + (+t.rent || 0), 0);
+  const expected = list.reduce((a, t) => a + rentFor(t, m), 0);
   const got = S.payments.filter(p => p.month === m && p.status === 'confirmed').reduce((a, p) => a + (+p.amount || 0), 0);
   const months = [...new Set([addMonths(curMonth(), 1), curMonth(), ...S.payments.map(p => p.month)])].sort().reverse();
   const now = nowStr(), upcoming = S.reminders.filter(r => r.at > now).sort((a, b) => a.at.localeCompare(b.at));
@@ -992,7 +1077,7 @@ function oStatus() {
 function reportData(y) {
   const ys = String(y), months = Array.from({length: 12}, (_, i) => `${ys}-${pad(i + 1)}`);
   const inc = months.map(m => S.payments.filter(p => p.status === 'confirmed' && p.month === m).reduce((a, p) => a + (+p.amount || 0), 0));
-  const exp = months.map(m => m > curMonth() ? 0 : S.tenants.filter(t => t.startDate && t.startDate.slice(0, 7) <= m && (t.active !== false || (t.endedAt || '') >= m)).reduce((a, t) => a + (+t.rent || 0), 0));
+  const exp = months.map(m => m > curMonth() ? 0 : S.tenants.filter(t => t.startDate && t.startDate.slice(0, 7) <= m && (t.active !== false || (t.endedAt || '') >= m)).reduce((a, t) => a + rentFor(t, m), 0));
   const per = S.tenants.map(t => ({t, paid: S.payments.filter(p => p.tenantId === t.id && p.status === 'confirmed' && p.month.startsWith(ys)).reduce((a, p) => a + (+p.amount || 0), 0), arr: t.active !== false ? arrears(t, S.payments) : {sum: 0, months: []}}));
   return {months, inc, exp, per};
 }
@@ -1080,8 +1165,8 @@ function oSub() {
       <div class="big">${RM(p.price)}</div><div class="muted">${p.months > 1 ? `Bersamaan ${perMonth(p)} / bulan · ` : ''}${p.months} bulan akses penuh</div></div><div class="cd"><b>${p.months}</b><small>Bulan</small></div></div>
       <div class="kvs"><div class="kv"><span>Penyewa</span><b>Tanpa had</b></div><div class="kv"><span>Resit, peringatan & laporan</span><b>✓</b></div></div>
       <div class="acts"><button class="btn" data-act="buyPlan" data-id="${p.id}">Pilih ${p.name}</button></div></div>`).join('')}</div>
-    <p class="muted" style="margin:4px 0 0;text-align:center">Bayaran selamat melalui <b style="color:var(--ink)">ToyyibPay</b> · FPX online banking · DuitNow</p>`;
-  h += `<div class="sec-h">Sejarah bayaran langganan</div><div class="card">${hist.length ? hist.map(x => `<div class="row"><div class="av">💎</div><div class="grow"><div class="t">${esc(plans().find(p => p.id === x.plan)?.name || x.plan)} · ${RM(x.amount)}</div><div class="s">${dtLabel(x.date)} · Ruj: ${esc(x.ref)}</div><div class="s">Aktif sehingga ${dateLabel(x.until)}</div></div><span class="chip c-paid">Berjaya</span></div>`).join('') : '<div class="empty">Belum ada bayaran langganan.</div>'}</div>`;
+    <p class="muted" style="margin:4px 0 0;text-align:center">Bayaran selamat melalui <b style="color:var(--ink)">ToyyibPay</b> · FPX online banking · DuitNow</p>${promoForm()}`;
+  h += `<div class="sec-h">Sejarah bayaran langganan</div><div class="card">${hist.length ? hist.map(x => `<div class="row"><div class="av">💎</div><div class="grow"><div class="t">${x.plan === 'promo' ? `🎟️ Kod promo · +${x.days || 0} hari` : `${esc(plans().find(p => p.id === x.plan)?.name || x.plan)} · ${RM(x.amount)}`}</div><div class="s">${dtLabel(x.date)} · Ruj: ${esc(x.ref)}</div><div class="s">Aktif sehingga ${dateLabel(x.until)}</div></div><span class="chip c-paid">Berjaya</span></div>`).join('') : '<div class="empty">Belum ada bayaran langganan.</div>'}</div>`;
   return h + `</div>`;
 }
 
@@ -1127,6 +1212,11 @@ const notifBlock = perm => `${perm === 'granted' ? '<div class="kv"><span>Notifi
 function renderTenant() {
   if (S.mode !== 'tenant') return;
   if (S.t && S.sub && S.t.ownerId !== SUPER_UID && !subInfo()?.active) return tenantDown();
+  if (S.t && S.t.active === false && S.t.depositReturn) {
+    $('#app').innerHTML = `<div class="login"><div class="lbox" style="max-width:560px">${langSeg()}${themeSeg()}<br><h2 class="lh">Sewaan telah tamat</h2><p class="muted">Terima kasih, <span data-raw>${esc(S.t.name.split(' ')[0])}</span>. Berikut penyata deposit anda.</p>
+      <div style="text-align:left">${depStatementHTML(S.t)}</div><button class="btn wide ghost" style="margin-top:12px" data-act="depPdf" data-id="${S.t.id}">🖨️ Simpan PDF</button></div></div>`;
+    return;
+  }
   if (!S.t || S.t.active === false) {
     $('#app').innerHTML = `<div class="login"><div class="lbox">${langSeg()}${themeSeg()}<br><img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa Penyewa</h2>
       <p class="muted">${S.token ? 'Link ini tidak sah atau sewaan telah tamat.' : 'Sila buka link khas yang dihantar oleh tuan rumah anda.'}<br>Hubungi tuan rumah untuk dapatkan link baru.</p>
@@ -1139,7 +1229,7 @@ function renderTenant() {
   const unread = S.tTab === 'notif' ? 0 : notifs.filter(n => !seenBefore.includes(n.id)).length;
   const v = {home: tHome, notif: tNotif, history: tHistory}[S.tTab] || tHome;
   $('#app').innerHTML = v(notifs, unread, seenBefore) + nav([['home', '🏠', 'Utama'], ['notif', '🔔', 'Notifikasi', unread], ['history', '🧾', 'Sejarah']], S.tTab);
-  pushNewTenantNotifs(notifs); scheduleTenantNative();
+  pushNewTenantNotifs(notifs); scheduleTenantNative(); pushRegister();
 }
 const tenantBtns = unread => instBtn() + hb('lang', LANG === 'en' ? 'BM' : 'EN', 'Bahasa', 0, '', LANG === 'en' ? 'bm' : 'en') + hb('theme', curTheme() === 'dark' ? '☀️' : '🌙', 'Tema', 0, '', curTheme() === 'dark' ? 'light' : 'dark') + hb('ttab', '🔔', 'Notifikasi', unread, '', 'notif');
 function tHome(notifs, unread) {
@@ -1154,7 +1244,7 @@ function tHome(notifs, unread) {
   h += `<div class="cols"><div class="blk"><div class="sec-h">💳 Cara bayar</div><div class="card">${o.bankAcc ? `<div class="kv"><span>Bank</span><b>${esc(o.bankName)}</b></div><div class="kv"><span>No. akaun</span><b>${esc(o.bankAcc)} <button class="link" data-act="copy" data-id="${esc(o.bankAcc)}">salin</button></b></div><div class="kv"><span>Nama</span><b>${esc(o.accName || o.name)}</b></div>` : (o.qr ? '' : '<p class="muted" style="margin:0">Tuan rumah belum isi maklumat bayaran.</p>')}
     ${o.qr ? `<div class="qrbox"><img src="${o.qr}" alt="QR bayaran" data-act="qrView"><div class="acts"><button class="btn sm" data-act="qrView">🔍 Besarkan</button><button class="btn sm ghost" data-act="saveQR">⬇ Simpan QR</button></div><p class="muted" style="margin:6px 0 0">Imbas QR ini dengan app bank / e-wallet anda.</p></div>` : ''}</div>
 </div>
-    <div class="blk"><div class="sec-h">🏠 Maklumat sewaan</div><div class="card"><div class="kv"><span>Alamat</span><b>${esc(t.address)}</b></div><div class="kv"><span>Sewa bulanan</span><b>${RM(t.rent)}</b></div><div class="kv"><span>Tarikh bayar</span><b>Sebelum ${t.dueDay} hb setiap bulan</b></div><div class="kv"><span>Deposit</span><b>${RM(t.deposit)}</b></div><div class="kv"><span>Tuan rumah</span><b>${esc(o.name || '-')}</b></div></div></div></div>
+    <div class="blk"><div class="sec-h">🏠 Maklumat sewaan</div><div class="card"><div class="kv"><span>Alamat</span><b>${esc(t.address)}</b></div><div class="kv"><span>Sewa bulanan</span><b>${RM(t.rent)}</b></div><div class="kv"><span>Tarikh bayar</span><b>Sebelum ${t.dueDay} hb setiap bulan</b></div><div class="kv"><span>Deposit</span><b>${RM(t.deposit)}</b></div>${t.contractEnd ? `<div class="kv"><span>Tamat kontrak</span><b>${ctLabel(t)}</b></div>` : ''}<div class="kv"><span>Tuan rumah</span><b>${esc(o.name || '-')}</b></div></div></div></div>
     ${o.phone ? `<a class="btn wide wa" href="${waLink(o.phone, `Salam ${o.name || ''}, saya ${t.name} (${t.address}). `)}" target="_blank" rel="noopener">💬 Chat tuan rumah (urgent)</a><div style="height:8px"></div>` : ''}
     <div class="sec-h">🔔 App & notifikasi</div><div class="card">${notifBlock(NPERM)}${isNative() ? '' : `<div style="height:8px"></div>${apkLinks('tenant')}`}</div>`;
   return h + `</div>`;
@@ -1179,7 +1269,56 @@ function tenantForm(id) {
     ${area('Alamat rumah / bilik sewa', 'address', t.address, 'required')}
     <div class="grid2">${money('Harga sewa (RM)', 'rent', t.rent)}${money('Deposit (RM)', 'deposit', t.deposit)}</div>
     <div class="grid2">${fld('Bayar sebelum hari bulan ke-', 'dueDay', t.dueDay, 'number', 'min="1" max="31" required')}${fld('Mula sewa', 'startDate', t.startDate, 'date', 'required')}</div>
+    ${fld('Tamat kontrak (pilihan)', 'contractEnd', t.contractEnd || '', 'date')}
     ${fld('Nota (pilihan)', 'notes', t.notes)}<button class="btn wide">Simpan</button></form>`);
+}
+function renewForm(id) {
+  const t = S.tenants.find(x => x.id === id), base = t.contractEnd && t.contractEnd > localISO() ? t.contractEnd : localISO();
+  const [y, m, d] = base.split('-').map(Number), def = localISO(new Date(y + 1, m - 1, d));
+  openModal('Perbaharui Kontrak', `<form data-form="renew">${hid('id', id)}<p style="margin-top:0"><b data-raw>${esc(t.name)}</b> · <span data-raw>${esc(t.address)}</span></p>
+    <div class="kv"><span>Tamat kontrak semasa</span><b>${ctLabel(t)}</b></div>
+    <div class="grid2">${fld('Tamat kontrak baru', 'contractEnd', def, 'date', 'required')}${money('Sewa baru (RM)', 'rent', t.rent)}</div>
+    <p class="muted">Sewa baru berkuat kuasa untuk bulan seterusnya. Penyewa akan nampak tarikh kontrak baru dalam app.</p><button class="btn wide">Simpan pembaharuan</button></form>`);
+}
+const DED_REASONS = ['Pembersihan', 'Pembaikan kerosakan', 'Bil utiliti tertunggak', 'Kunci / kad hilang', 'Lain-lain'];
+function endForm(id) {
+  const t = S.tenants.find(x => x.id === id), a = arrears(t, S.payments);
+  const row = i => `<div class="grid2">${sel('Potongan ' + (i + 1), 'dr' + i, [['', '—'], ...DED_REASONS.map(r => [r, r])], '')}${fld('RM', 'da' + i, '', 'number', 'step="0.01" min="0" inputmode="decimal"')}</div>`;
+  openModal('Tamatkan Sewa', `<form data-form="endTenancy" data-chg="endCalc">${hid('id', id)}<p style="margin-top:0"><b data-raw>${esc(t.name)}</b> · <span data-raw>${esc(t.address)}</span></p>
+    ${fld('Tarikh keluar', 'moveOut', localISO(), 'date', 'required')}
+    <div class="sec-h">Deposit</div>
+    <div class="kv"><span>Deposit dipegang</span><b>${RM(t.deposit)}</b></div>
+    ${a.sum > 0 ? `<label class="switch">Tolak tunggakan sewa ${RM(a.sum)} (${a.months.map(monthLabel).join(', ')}) <input type="checkbox" name="dedArr" checked></label>` : '<div class="kv"><span>Tunggakan sewa</span><b>RM 0.00</b></div>'}
+    ${[0, 1, 2].map(row).join('')}
+    ${fld('Nota potongan (pilihan)', 'note', '', 'text', 'placeholder="cth: Cat dinding bilik 2 rosak"')}
+    <div class="kv" style="font-size:16px"><span>Dipulangkan kepada penyewa</span><b id="endRefund" style="color:var(--green)">${RM(Math.max(0, (+t.deposit || 0) - a.sum))}</b></div>
+    <div class="grid2">${sel('Kaedah pulangan', 'method', METHODS, 'Pindahan bank')}${fld('Tarikh pulangan', 'retDate', localISO(), 'date')}</div>
+    <p class="muted">Link penyewa akan ditutup, tetapi penyewa masih boleh lihat penyata deposit. Rekod bayaran lama kekal dalam laporan.</p>
+    <button class="btn wide red">Tamatkan sewa & simpan penyata</button></form>
+    <button class="btn wide ghost" style="margin-top:8px" data-act="delTenant" data-id="${id}">Tamatkan tanpa penyata deposit</button>`);
+}
+function depCalc(t, f) {
+  const a = arrears(t, S.payments), items = [0, 1, 2].map(i => ({r: f['dr' + i] || '', a: Math.max(0, +f['da' + i] || 0)})).filter(x => x.a > 0).map(x => ({r: x.r || 'Lain-lain', a: x.a}));
+  const arr = f.dedArr ? a.sum : 0, net = (+t.deposit || 0) - arr - items.reduce((s, x) => s + x.a, 0);
+  return {deposit: +t.deposit || 0, arrears: arr, arrMonths: f.dedArr ? a.months : [], items, refund: Math.max(0, net), due: Math.max(0, -net)};
+}
+function depStatementHTML(t) {
+  const o = S.owner || {}, r = t.depositReturn || {};
+  return `<div id="receipt"><div class="rco">${o.logo ? `<img class="rlogo" src="${o.logo}" alt="">` : '<img class="rlogo" src="icon-192.png" alt="">'}<div><b data-raw>${esc(o.company || o.name || '')}</b>${o.companyAddr ? `<div class="muted" data-raw style="white-space:pre-line">${esc(o.companyAddr)}</div>` : ''}${o.regNo ? `<div class="muted">No. SSM: <span data-raw>${esc(o.regNo)}</span></div>` : ''}${o.phone ? `<div class="muted">Tel: ${esc(o.phone)}</div>` : ''}</div></div>
+    <div class="rh"><b>PENYATA DEPOSIT</b><div class="muted">${dateLabel(r.date || t.moveOut)}</div></div>
+    <div class="kv"><span>Penyewa</span><b data-raw>${esc(t.name)}</b></div><div class="kv"><span>Alamat</span><b data-raw>${esc(t.address)}</b></div>
+    <div class="kv"><span>Tempoh sewa</span><b>${dateLabel(t.startDate)} – ${dateLabel(t.moveOut)}</b></div>
+    <table class="rep" style="margin-top:10px"><tr><td>Deposit diterima</td><td>${RM(r.deposit)}</td></tr>
+    ${r.arrears ? `<tr><td>Tolak: tunggakan sewa${r.arrMonths?.length ? ` (${r.arrMonths.map(monthLabel).join(', ')})` : ''}</td><td>(${RM(r.arrears)})</td></tr>` : ''}
+    ${(r.items || []).map(x => `<tr><td>Tolak: ${esc(x.r)}</td><td>(${RM(x.a)})</td></tr>`).join('')}
+    <tr class="tot"><td>${r.due > 0 ? 'Baki perlu dibayar penyewa' : 'Dipulangkan kepada penyewa'}</td><td>${RM(r.due > 0 ? r.due : r.refund)}</td></tr></table>
+    ${r.note ? `<p class="muted" data-raw>${esc(r.note)}</p>` : ''}
+    ${r.refund > 0 ? `<div class="kv"><span>Kaedah pulangan</span><b>${esc(r.method || '-')}</b></div><div class="kv"><span>Tarikh pulangan</span><b>${dateLabel(r.retDate)}</b></div>` : ''}
+    <p class="muted" style="text-align:center;margin:12px 0 0">Dijana oleh ProSewa</p></div>`;
+}
+function depStatement(id) {
+  const t = S.tenants.find(x => x.id === id) || S.t; if (!t?.depositReturn) return;
+  openModal('Penyata Deposit', depStatementHTML(t) + `<div class="acts" style="margin-top:12px"><button class="btn ghost" style="flex:1" data-act="depPdf" data-id="${t.id}">🖨️ Simpan PDF</button>${S.mode === 'owner' && t.phone ? `<a class="btn wa" style="flex:1" href="${waLink(t.phone, `Salam ${t.name}, penyata deposit untuk ${t.address}: ${t.depositReturn.due > 0 ? 'baki perlu dibayar ' + RM(t.depositReturn.due) : 'dipulangkan ' + RM(t.depositReturn.refund)}. Lihat penyata: ${tenantUrl(t)}`)}" target="_blank" rel="noopener">💬 WhatsApp</a>` : ''}</div>`);
 }
 function shareLink(id) {
   const t = S.tenants.find(x => x.id === id), url = tenantUrl(t);
@@ -1306,18 +1445,41 @@ function phoneNotify(title, body, at) {
   const opt = {body, icon: 'icon-192.png', badge: 'icon-192.png', data: {url: location.href}};
   try { if (swReg) swReg.showNotification(title, opt); else new Notification(title, opt); } catch (e) {}
 }
+/* ---------- Push notification (FCM): sampai walaupun app ditutup ---------- */
+const FCM_VAPID = '';   // Firebase Console → Project settings → Cloud Messaging → Web Push certificates → Key pair
+let _pushTok = null, _pushBusy = false;
+const pushWho = () => S.mode === 'tenant' && S.t && !(lsGet('prosewa_owner_dev') && !isNative()) ?   // browser owner yang buka paparan penyewa: jangan ambil alih notifikasi owner
+   {tok: S.t.token} : (S.uid && ['owner', 'locked'].includes(S.mode) ? {uid: S.uid} : null);
+async function pushSave() {
+  const who = pushWho(); if (!_pushTok || !who || !ONLINE) return;
+  const key = JSON.stringify([_pushTok, who, LANG]); if (lsGet('prosewa_push_reg') === key) return;
+  await API.saveDevice(_pushTok, {...who, lang: LANG, platform: isNative() ? 'android' : 'web'}); lsSet('prosewa_push_reg', key);
+}
+async function pushRegister() {
+  if (!ONLINE || NPERM !== 'granted' || _pushBusy) return;
+  if (_pushTok) return pushSave().catch(e => console.warn('push', e));
+  _pushBusy = true;
+  try {
+    if (isNative()) { const PN = CP('PushNotifications'); if (!window.PROSEWA_FCM || !PN) return; await PN.requestPermissions().catch(() => {}); await PN.register(); return; }   // token sampai melalui listener 'registration'
+    if (!FCM_VAPID || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    await fbInit(); const M = await import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-messaging.js`);
+    if (!(await M.isSupported().catch(() => false))) return;
+    _pushTok = await M.getToken(M.getMessaging(fb.app), {vapidKey: FCM_VAPID, serviceWorkerRegistration: await navigator.serviceWorker.ready});
+    await pushSave();
+  } catch (e) { console.warn('push', e); } finally { _pushBusy = false; }
+}
 // APK penyewa: jadualkan notifikasi akan datang supaya sampai walaupun app ditutup
 async function scheduleTenantNative() {
   const LN = CP('LocalNotifications'); if (!isNative() || !LN || S.mode !== 'tenant' || !S.t || NPERM !== 'granted') return;
   const t = S.t, st = S.settings, now = nowStr(), list = [];
-  if (st.autoOn) for (let i = 0; i < 3; i++) {
+  if (st.autoOn && !_pushTok) for (let i = 0; i < 3; i++) {   // FCM aktif → pelayan yang hantar
     const ym = addMonths(curMonth(), i), ms = monthStatus(t, ym, S.payments); if (['paid', 'pending'].includes(ms.code)) continue;
     const at = `${addDays(ms.due, -(+st.autoDays || 0))}T${st.autoTime || '09:00'}`;
     if (at > now) list.push({key: `due-${ym}`, at, title: '🔔 Peringatan bayar sewa', body: `Sewa ${monthLabel(ym)} ${RM(t.rent)} perlu dibayar sebelum ${dateLabel(ms.due)}.`});
     if (st.overdueOn) { const oat = `${addDays(ms.due, 1)}T${st.autoTime || '09:00'}`; if (oat > now) list.push({key: `od-${ym}`, at: oat, title: '⚠️ Sewa tertunggak', body: `Sewa ${monthLabel(ym)} ${RM(t.rent)} belum dibayar.`}); }
   }
-  S.reminders.filter(r => r.tenantId === t.id && r.at > now).forEach(r => list.push({key: 'r-' + r.id, at: r.at, title: '📩 Mesej dari tuan rumah', body: r.message}));
-  const sig = JSON.stringify([LANG, list]), K = 'prosewa_sched_' + t.token;
+  if (!_pushTok) S.reminders.filter(r => r.tenantId === t.id && r.at > now).forEach(r => list.push({key: 'r-' + r.id, at: r.at, title: '📩 Mesej dari tuan rumah', body: r.message}));
+  const sig = JSON.stringify([LANG, !!_pushTok, list]), K = 'prosewa_sched_' + t.token;
   if (lsGet(K + '_sig') === sig) return;
   const old = lsGet(K, []); if (old.length) await LN.cancel({notifications: old.map(id => ({id}))}).catch(() => {});
   const notifs = list.map(x => ({id: nid(x.key), title: tr(x.title), body: tr(x.body), schedule: {at: new Date(x.at), allowWhileIdle: true}, smallIcon: 'ic_stat_ps', iconColor: '#d9b44a'}));
@@ -1327,7 +1489,7 @@ async function scheduleTenantNative() {
 function pushNewTenantNotifs(notifs) {
   const k = 'prosewa_pushed_' + S.t.token, done = lsGet(k, []);
   const fresh = notifs.filter(n => !done.includes(n.id) && !(isNative() && /^(due-|r-)/.test(n.id)));   // APK: yang berjadual sudah dihantar oleh telefon
-  if (fresh.length) { fresh.slice(0, 3).forEach(n => phoneNotify(n.title, n.body)); lsSet(k, [...done, ...fresh.map(n => n.id)].slice(-200)); }
+  if (fresh.length) { if (!_pushTok) fresh.slice(0, 3).forEach(n => phoneNotify(n.title, n.body)); lsSet(k, [...done, ...fresh.map(n => n.id)].slice(-200)); }
 }
 // Owner: makluman bila peringatan berjadual sampai masa, dan bila ada bukti bayaran baru
 async function ownerTick() {
@@ -1341,7 +1503,7 @@ async function ownerTick() {
     toast(`🔔 Peringatan berjadual dihantar kepada ${t.name}.`);
   }
   const k = 'prosewa_seenproof_' + S.uid, seen = lsGet(k, []), fresh = S.payments.filter(p => p.status === 'pending' && !seen.includes(p.id));
-  if (fresh.length) { fresh.slice(0, 3).forEach(p => phoneNotify('🧾 Bukti bayaran baru', `${p.tenantName} · ${monthLabel(p.month)} · ${RM(p.amount)}`)); lsSet(k, [...seen, ...fresh.map(p => p.id)].slice(-300)); }
+  if (fresh.length) { if (!_pushTok) fresh.slice(0, 3).forEach(p => phoneNotify('🧾 Bukti bayaran baru', `${p.tenantName} · ${monthLabel(p.month)} · ${RM(p.amount)}`)); lsSet(k, [...seen, ...fresh.map(p => p.id)].slice(-300)); }
 }
 setInterval(ownerTick, 30000);
 
@@ -1359,7 +1521,7 @@ async function enterOwner(uid, opts = {}) {
   if (!(await API.getSub(uid))) await API.createTrial(uid);
   await loadOwner();
   if (!isSuper() && !subInfo()?.active) { renderLocked(); return; }
-  S.mode = 'owner'; S.tab = opts.tab || S.tab || 'tenants'; renderOwner(); ownerTick();
+  S.mode = 'owner'; S.tab = opts.tab || S.tab || 'tenants'; renderOwner(); ownerTick(); lsSet('prosewa_owner_dev', true); pushRegister();
 }
 
 /* ===================== TINDAKAN ===================== */
@@ -1367,7 +1529,7 @@ const tokOfPay = id => S.payments.find(x => x.id === id)?.tenantId;
 const ACTIONS = {
   remindNow: id => remindForm(id, true),
   theme: id => { setTheme(id); rerender(); },
-  lang: id => { setLang(id); rerender(); },
+  lang: id => { setLang(id); rerender(); pushSave().catch(() => {}); },
   authView: id => { const e = $('form [name=email]'); if (e) S.lastEmail = e.value; S.authView = id; renderLogin(); },
   eye: (id, el) => { const i = el.parentElement.querySelector('input'); const show = i.type === 'password'; i.type = show ? 'text' : 'password'; el.classList.toggle('on', show); },
   buyPlan: id => {
@@ -1401,6 +1563,13 @@ const ACTIONS = {
     closeModal(); toast('Langganan diaktifkan ✅'); await enterOwner(S.uid, {tab: 'sub'});
   },
   exitSuper: () => { history.replaceState(null, '', baseDir() + 'index.html'); S.uid ? enterOwner(S.uid) : renderLogin(); },
+  renewForm: id => renewForm(id), endForm: id => endForm(id), depStatement: id => depStatement(id),
+  depPdf: id => { const t = S.tenants.find(x => x.id === id) || S.t; printHTML(depStatementHTML(t), tr('Penyata Deposit') + ' ' + t.name); },
+  promoFilter: id => { S.promoFilter = id; renderSuper(); },
+  promoCopyAll: async () => { const t = localISO(), c = (S.promos || []).filter(p => !p.used && !(p.expires && p.expires < t)).map(p => p.code).join('\n'); try { await navigator.clipboard.writeText(c); toast('Disalin.'); } catch (e) { prompt('Salin:', c); } },
+  promoEdit: code => { const p = S.promos.find(x => x.code === code); openModal('Edit Kod Promo', `<form data-form="promoEdit">${hid('code', code)}<div class="linkbox" data-raw>${esc(code)}</div>
+      ${fld('Hari langganan percuma', 'days', p.days, 'number', 'min="1" max="3650" required')}${fld('Guna sebelum (pilihan)', 'expires', p.expires || '', 'date')}${fld('Nota (pilihan)', 'note', p.note || '')}<button class="btn wide" style="margin-top:10px">Simpan</button></form>`); },
+  promoDel: async code => { if (!confirm(`Padam kod ${code}?`)) return; await API.delPromo(code); toast('Dipadam.'); renderSuper(); },
   superAdd: async v => {
     const [uid, n] = v.split('|'); const o = S.owners.find(x => x.uid === uid), si = subInfo(fsub(o.sub));
     const end = addDays(extendFrom(si), +n);
@@ -1433,7 +1602,7 @@ const ACTIONS = {
   delTenant: async id => {
     const t = S.tenants.find(x => x.id === id);
     if (!confirm(`Padam ${t.name}? Link penyewa akan dimatikan. Rekod bayaran lama kekal dalam laporan.`)) return;
-    await API.updateTenant(id, {active: false, endedAt: curMonth()});
+    closeModal(); await API.updateTenant(id, {active: false, endedAt: curMonth(), moveOut: localISO()});
     toast('Penyewa dibuang.'); await refresh();
   },
   newToken: async id => { if (!confirm('Tukar link? Link lama tidak boleh digunakan lagi.')) return; closeModal(); renderLoading(); const nt = await API.rekeyTenant(id); await loadOwner(); renderOwner(); shareLink(nt); toast('Link baru dijana.'); },
@@ -1475,7 +1644,7 @@ const ACTIONS = {
       r = await Notification.requestPermission();
     }
     NPERM = r || 'denied';
-    if (r === 'granted') { phoneNotify('ProSewa', 'Notifikasi diaktifkan ✅'); toast('Notifikasi diaktifkan.'); scheduleTenantNative(); } else toast('Kebenaran notifikasi ditolak. Buka Tetapan phone → App → ProSewa → Notifikasi.', 'err');
+    if (r === 'granted') { phoneNotify('ProSewa', 'Notifikasi diaktifkan ✅'); toast('Notifikasi diaktifkan.'); scheduleTenantNative(); pushRegister(); } else toast('Kebenaran notifikasi ditolak. Buka Tetapan phone → App → ProSewa → Notifikasi.', 'err');
     rerender();
   },
   testNotif: async delay => {
@@ -1503,6 +1672,7 @@ const ACTIONS = {
   }
 };
 const CHANGES = {
+  endCalc: el => { const f = el.closest('form'), t = S.tenants.find(x => x.id === f.elements.id.value), c = depCalc(t, Object.fromEntries(new FormData(f))); const b = $('#endRefund'); if (b) { b.textContent = c.due > 0 ? `${tr('Baki perlu dibayar penyewa')}: ${RM(c.due)}` : RM(c.refund); b.style.color = c.due > 0 ? 'var(--red)' : 'var(--green)'; } },
   remindWhen: el => { $('#whenBox').style.display = el.value === 'later' ? '' : 'none'; },
   month: el => { S.month = el.value; renderOwner(); },
   year: el => { S.year = +el.value; renderOwner(); },
@@ -1548,6 +1718,30 @@ const FORMS = {
   },
   async forgot(d) { try { await API.resetPass(d.email.trim()); toast(ONLINE ? 'Pautan tetapan semula telah dihantar ke emel anda.' : 'Mod peranti: tiada emel dihantar.'); S.authView = 'login'; S.lastEmail = d.email.trim(); renderLogin(); } catch (e) { throw new Error(authMsg(e)); } },
   async prices(d) { const list = PLANS.map(p => ({id: p.id, price: Math.max(1, Math.round((+d['price_' + p.id] || p.price) * 100) / 100), tag: (d['tag_' + p.id] || '').trim()})); await API.setConfig({plans: list}); S.config.plans = list; toast('Harga pakej disimpan ✅'); renderSuper(); },
+  async renew(d) {
+    const t = S.tenants.find(x => x.id === d.id), nr = +d.rent || +t.rent, hist = [...(t.rentHist || [])];
+    if (nr !== +t.rent) hist.push({from: addMonths(curMonth(), 1), prev: +t.rent, rent: nr});
+    const up = {contractEnd: d.contractEnd, rent: nr, rentHist: hist, renewals: [...(t.renewals || []), {at: nowStr(), from: t.contractEnd || '', to: d.contractEnd, rent: +d.rent || t.rent}]};
+    await API.updateTenant(d.id, up); closeModal(); toast('Kontrak diperbaharui ✅'); await refresh();
+  },
+  async endTenancy(d) {
+    const t = S.tenants.find(x => x.id === d.id), c = depCalc(t, d);
+    const dr = {...c, note: (d.note || '').trim(), method: d.method, retDate: d.retDate || d.moveOut, date: localISO(), at: nowStr()};
+    await API.updateTenant(d.id, {active: false, endedAt: d.moveOut.slice(0, 7), moveOut: d.moveOut, depositReturn: dr});
+    closeModal(); await refresh(); depStatement(d.id); toast('Sewa ditamatkan. Penyata deposit disimpan.');
+  },
+  async promoGen(d) {
+    const n = Math.max(1, Math.min(50, +d.n || 1)), days = Math.max(1, Math.min(3650, +d.days || 30)), have = new Set((S.promos || []).map(p => p.code)), list = [];
+    while (list.length < n) { const c = genPromo(); if (!have.has(c)) { have.add(c); list.push({code: c, days, expires: d.expires || '', note: (d.note || '').trim(), used: false, createdAt: nowStr()}); } }
+    await API.addPromos(list); S.promoFilter = 'unused'; toast(`${n} kod promo dijana ✅`); await renderSuper();
+  },
+  async promoEdit(d) { await API.updatePromo(d.code, {days: Math.max(1, Math.min(3650, +d.days || 1)), expires: d.expires || '', note: (d.note || '').trim()}); closeModal(); toast('Kod promo dikemas kini.'); renderSuper(); },
+  async promo(d) {
+    const code = normPromo(d.code); if (!code) throw new Error('Sila masukkan kod promo.');
+    const r = await API.redeemPromo(code);
+    toast(`🎉 Kod promo berjaya! +${r.days} hari, aktif sehingga ${dateLabel(r.end)}.`);
+    await enterOwner(S.uid, {tab: 'sub'});
+  },
   async trial(d) { await API.setConfig({trialDays: Math.max(0, Math.min(365, +d.days || 0))}); S.config.trialDays = +d.days; toast('Tempoh percubaan: ' + trialDays() + ' hari.'); renderSuper(); },
   async password(d) { if (d.pass !== d.pass2) throw new Error('Kata laluan tidak sama.'); try { await API.changePass(d.pass); S.auth = await API.authInfo(); toast('Kata laluan disimpan ✅'); renderOwner(); } catch (e) { throw new Error(authMsg(e)); } },
   async company(d, f) {
@@ -1562,7 +1756,7 @@ const FORMS = {
   },
   async settings(d) { await API.setOwner(S.uid, {settings: {autoOn: !!d.autoOn, autoDays: Math.max(0, +d.autoDays || 0), autoTime: d.autoTime || '09:00', overdueOn: !!d.overdueOn}}); toast('Tetapan disimpan.'); await refresh(); },
   async tenant(d) {
-    const data = {name: d.name.trim(), phone: d.phone.trim(), address: d.address.trim(), rent: +d.rent, deposit: +d.deposit || 0, dueDay: Math.min(31, Math.max(1, +d.dueDay || 1)), startDate: d.startDate, notes: d.notes || ''};
+    const data = {name: d.name.trim(), phone: d.phone.trim(), address: d.address.trim(), rent: +d.rent, deposit: +d.deposit || 0, dueDay: Math.min(31, Math.max(1, +d.dueDay || 1)), startDate: d.startDate, contractEnd: d.contractEnd || '', notes: d.notes || ''};
     if (d.id) { await API.updateTenant(d.id, data); closeModal(); toast('Penyewa dikemas kini.'); await refresh(); return; }
     const id = await API.addTenant({...data, ownerId: S.uid, active: true, createdAt: nowStr()});
     closeModal(); await refresh(); shareLink(id); toast('Penyewa ditambah. Hantar link kepada penyewa.');
@@ -1604,6 +1798,7 @@ document.addEventListener('click', async e => {
 });
 $('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
 document.addEventListener('input', e => { if (e.target.closest('#app form')) S.dirty = true; });
+document.addEventListener('input', e => { const f = e.target.closest('form[data-chg=endCalc]'); if (f) CHANGES.endCalc(f); });
 document.addEventListener('change', e => { if (e.target.closest('#app form') && !e.target.closest('[data-chg]')) S.dirty = true; });
 document.addEventListener('change', e => { const el = e.target.closest('[data-chg]'); if (el && CHANGES[el.dataset.chg]) CHANGES[el.dataset.chg](el); });
 document.addEventListener('submit', async e => {
@@ -1635,6 +1830,13 @@ function nativeInit() {
     if (lsGet('prosewa_paying')) { localStorage.removeItem('prosewa_paying'); S.pollSub = 20; }   // pulang dari ToyyibPay
     notifPerm().then(() => refresh());
   });
+  const PN = CP('PushNotifications');
+  if (PN && window.PROSEWA_FCM) {
+    PN.addListener('registration', t => { _pushTok = t.value; _pushBusy = false; pushSave().catch(e => console.warn('push', e)); });
+    PN.addListener('registrationError', e => { _pushBusy = false; console.warn('push reg', e); });
+    PN.addListener('pushNotificationReceived', n => { phoneNotify(n.title || n.data?.title || 'ProSewa', n.body || n.data?.body || ''); refresh(); });   // app sedang dibuka
+    PN.addListener('pushNotificationActionPerformed', () => refresh());
+  }
   if (IS_TENANT_SITE) A.addListener('appUrlOpen', e => { const tok = tokFrom(e.url); if (tok && tok !== S.token) openTenantToken(tok); });
 }
 
