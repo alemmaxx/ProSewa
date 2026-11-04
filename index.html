@@ -159,6 +159,14 @@ table.rep tr.tot td{font-weight:800;border-bottom:0;color:var(--gold)}
 #receipt{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:8px}
 #receipt .rh{text-align:center;border-bottom:1px dashed var(--line);padding-bottom:12px;margin-bottom:10px}
 #receipt .rh b{display:block;font-size:20px;font-weight:800;color:var(--gold);margin-top:6px;letter-spacing:1px}
+#receipt .rco{display:flex;gap:12px;align-items:flex-start;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--line)}
+#receipt .rco b{display:block;font-size:16px;font-weight:800}
+#receipt .rco .muted{font-size:12px;line-height:1.45}
+#receipt .rlogo{width:64px;height:64px;object-fit:contain;border-radius:10px;background:#fff;flex:none}
+.logobox{display:flex;gap:14px;align-items:center;margin-bottom:6px}
+#logoPrev{width:84px;height:84px;border-radius:12px;border:1px dashed var(--line);display:grid;place-items:center;background:#fff;overflow:hidden;flex:none;text-align:center}
+#logoPrev img{max-width:100%;max-height:100%;object-fit:contain}
+#logoPrev .muted{font-size:11px;color:#777}
 #receipt .amt{text-align:center;font-size:34px;font-weight:800;margin:8px 0 10px;color:var(--green);letter-spacing:-1px}
 .stamp{text-align:center;margin-top:12px}.stamp span{display:inline-block;border:2px solid var(--green);color:var(--green);font-weight:800;border-radius:8px;padding:3px 14px;transform:rotate(-4deg);letter-spacing:2px}
 /* notifikasi */
@@ -245,7 +253,7 @@ table.rep tr.tot td{font-weight:800;border-bottom:0;color:var(--gold)}
   #toast{bottom:28px}
   .btn.lo{max-width:420px}
 }
-@media print{body *{visibility:hidden!important}#receipt,#receipt *{visibility:visible!important}#receipt{position:absolute;left:0;top:0;width:100%;border:0;background:#fff;color:#000}#modal{background:none}}
+@media print{body *{visibility:hidden!important}#receipt,#receipt *{visibility:visible!important}#receipt{position:absolute;left:0;top:0;width:100%;border:0;background:#fff;color:#000}#receipt .muted,#receipt .kv span{color:#444!important}#receipt .rco{border-color:#ccc}#modal{background:none}}
 </style>
 </head>
 <body>
@@ -296,6 +304,18 @@ async function hashPass(p) {
   try { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('prosewa:' + p)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); }
   catch (e) { let h = 0; for (const c of 'prosewa:' + p) h = (h * 31 + c.charCodeAt(0)) | 0; return 'x' + h; }
 }
+function compressLogo(file, max = 360) {
+  return new Promise((res, rej) => {
+    if (!file || !file.type.startsWith('image/')) return rej(new Error('Sila pilih fail gambar (PNG / JPG).'));
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => { const s = Math.min(1, max / Math.max(img.width, img.height)); const c = document.createElement('canvas');
+      c.width = Math.round(img.width * s); c.height = Math.round(img.height * s); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      let d = c.toDataURL('image/png'); if (d.length > 250000) { const c2 = document.createElement('canvas'); c2.width = c.width; c2.height = c.height; const g = c2.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(c, 0, 0); d = c2.toDataURL('image/jpeg', .85); }
+      res(d); };
+    img.onerror = () => rej(new Error('Gambar tidak dapat dibaca.'));
+    img.src = url;
+  });
+}
 function compressImage(file, max = 1100, q = 0.72) {
   return new Promise((res, rej) => {
     if (!file || !file.type.startsWith('image/')) return rej(new Error('Sila pilih fail gambar (screenshot / foto resit).'));
@@ -339,6 +359,11 @@ const I18N_RX = [
   [/Salam, /g, 'Hi, ']
 ];
 Object.assign(I18N, {
+  'Maklumat syarikat (untuk resit)': 'Company details (for receipts)', 'Tiada logo': 'No logo', 'Pilih logo': 'Choose logo', 'Buang': 'Remove',
+  'PNG / JPG. Logo menggantikan logo ProSewa pada resit.': 'PNG / JPG. Your logo replaces the ProSewa logo on receipts.', 'Nama syarikat / perniagaan': 'Company / business name',
+  'Alamat syarikat': 'Company address', 'No. SST': 'SST No.', 'No. pendaftaran (SSM)': 'Registration no. (SSM)', 'Simpan maklumat syarikat': 'Save company details',
+  'Maklumat syarikat disimpan': 'Company details saved', 'Logo dipilih. Tekan Simpan untuk simpan.': 'Logo selected. Tap Save to keep it.', 'Tekan Simpan untuk buang logo.': 'Tap Save to remove the logo.',
+  'No. SSM:': 'SSM No.:', 'No. SST:': 'SST No.:', 'Sila pilih fail gambar (PNG / JPG).': 'Please choose an image file (PNG / JPG).',
   'Harga pakej': 'Plan prices', 'Label': 'Label', 'Harga ini dipaparkan kepada owner dan digunakan semasa cipta bil ToyyibPay.': 'These prices are shown to owners and used when creating ToyyibPay bills.',
   'Simpan harga': 'Save prices', 'Harga pakej disimpan': 'Plan prices saved', 'Mod peranti: ToyyibPay tidak digunakan. Ini': 'Device mode: ToyyibPay is not used. This is a',
   'atau': 'or', 'Teruskan dengan Google': 'Continue with Google', 'Emel log masuk': 'Sign-in email', 'Disambung': 'Connected', 'Tetapkan kata laluan': 'Set password', 'Simpan kata laluan': 'Save password',
@@ -906,6 +931,14 @@ function oSettings() {
   const perm = 'Notification' in window ? Notification.permission : 'unsupported';
   return header('Tetapan', 'Tetapan.', o.name ? `${o.name}${o.phone ? ' · ' + o.phone : ''}` : 'Lengkapkan maklumat anda', {btns: ownerBtns()}) + `<div class="wrap"><div class="cols">
     <div class="blk"><div class="sec-h">Paparan</div><div class="card"><div class="switch">Bahasa ${langSeg()}</div><div class="switch">Tema ${themeSeg()}</div></div></div>
+    <div class="blk"><div class="sec-h">Maklumat syarikat (untuk resit)</div><form class="card" data-form="company">
+      <div class="logobox"><div id="logoPrev">${o.logo ? `<img src="${o.logo}" alt="logo">` : '<span class="muted">Tiada logo</span>'}</div>
+        <div><label class="btn sm ghost" style="cursor:pointer">📷 Pilih logo<input type="file" accept="image/*" data-chg="logoPick" hidden></label>
+        ${o.logo ? '<button type="button" class="btn sm red" data-act="logoRemove">Buang</button>' : ''}<p class="muted" style="margin:6px 0 0">PNG / JPG. Logo menggantikan logo ProSewa pada resit.</p></div></div>
+      ${fld('Nama syarikat / perniagaan', 'company', o.company, 'text', 'placeholder="cth: Ahmad Hartanah Enterprise"')}
+      ${area('Alamat syarikat', 'companyAddr', o.companyAddr, 'placeholder="cth: No. 1, Jalan Bunga, 43000 Kajang, Selangor"')}
+      <div class="grid2">${fld('No. SST', 'sstNo', o.sstNo, 'text', 'placeholder="cth: W10-1808-32000123"')}${fld('No. pendaftaran (SSM)', 'regNo', o.regNo, 'text', 'placeholder="cth: 202301012345"')}</div>
+      <button class="btn wide" style="margin-top:12px">Simpan maklumat syarikat</button></form></div>
     <div class="blk"><div class="sec-h">Profil & maklumat bayaran</div><form class="card" data-form="profile">${fld('Nama', 'name', o.name, 'text', 'required')}${fld('No. telefon', 'phone', o.phone, 'tel')}
       ${fld('Bank / e-wallet', 'bankName', o.bankName, 'text', 'placeholder="cth: Maybank"')}${fld('No. akaun / DuitNow', 'bankAcc', o.bankAcc)}${fld('Nama pemegang akaun', 'accName', o.accName)}
       <p class="muted">Maklumat bank dipaparkan kepada penyewa.</p><button class="btn wide">Simpan profil</button></form></div>
@@ -1026,7 +1059,10 @@ function receipt(id) {
   const p = S.payments.find(x => x.id === id); if (!p) return;
   const o = S.owner || {}, isOwner = S.mode === 'owner', t = S.tenants.find(x => x.id === p.tenantId) || S.t;
   const msg = `RESIT SEWA ${p.receiptNo}\nDiterima daripada: ${p.tenantName}\nAlamat: ${p.address}\nBulan: ${monthLabel(p.month)}\nJumlah: ${RM(p.amount)}\nTarikh: ${dateLabel(p.paidDate)}\n\nLihat resit: ${t ? tenantUrl(t) : ''}\nTerima kasih — ${o.name || ''}`;
-  openModal('Resit Bayaran', `<div id="receipt"><div class="rh"><img src="icon-192.png" width="36" height="36" style="border-radius:10px" alt=""><br><b>RESIT SEWA</b><div class="muted">${esc(p.receiptNo)}</div></div>
+  openModal('Resit Bayaran', `<div id="receipt"><div class="rco">${o.logo ? `<img class="rlogo" src="${o.logo}" alt="">` : '<img class="rlogo" src="icon-192.png" alt="">'}
+      <div><b data-raw>${esc(o.company || o.name || '')}</b>${o.companyAddr ? `<div class="muted" data-raw style="white-space:pre-line">${esc(o.companyAddr)}</div>` : ''}
+      ${o.regNo ? `<div class="muted">No. SSM: <span data-raw>${esc(o.regNo)}</span></div>` : ''}${o.sstNo ? `<div class="muted">No. SST: <span data-raw>${esc(o.sstNo)}</span></div>` : ''}${o.phone ? `<div class="muted">Tel: ${esc(o.phone)}</div>` : ''}</div></div>
+      <div class="rh"><b>RESIT SEWA</b><div class="muted">${esc(p.receiptNo)}</div></div>
     <div class="amt">${RM(p.amount)}</div>
     <div class="kv"><span>Diterima daripada</span><b>${esc(p.tenantName)}</b></div><div class="kv"><span>Alamat</span><b>${esc(p.address)}</b></div>
     <div class="kv"><span>Sewa bulan</span><b>${monthLabel(p.month)}</b></div><div class="kv"><span>Tarikh bayar</span><b>${dateLabel(p.paidDate)}</b></div>
@@ -1133,6 +1169,7 @@ const ACTIONS = {
   superTrial: async uid => { await API.setSub(uid, {plan: 'trial', start: localISO()}); toast('Percubaan diset semula.'); renderSuper(); },
   superExpire: async uid => { if (!confirm('Tamatkan langganan owner sekarang? (untuk uji)')) return; const o = S.owners.find(x => x.uid === uid), si = subInfo(fsub(o.sub)); await API.setSub(uid, {plan: si && si.plan !== 'trial' ? si.plan : 'monthly', start: si?.start || localISO(), end: addDays(localISO(), -1)}); toast('Langganan ditamatkan.'); renderSuper(); },
   google: async () => { try { const r = await API.google(); if (r) { S.lastEmail = r.email; if (!ONLINE) await enterOwner(r.uid); } } catch (e) { if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') throw e; } },
+  logoRemove: (id, el) => { const f = el.closest('form'); f.dataset.logo = ''; $('#logoPrev').innerHTML = '<span class="muted">Tiada logo</span>'; el.remove(); S.dirty = true; toast('Tekan Simpan untuk buang logo.'); },
   goSuper: () => { location.hash = '#super'; renderSuper(); },
   closeModal, tenantForm, shareLink, payForm, cashForm, remindForm, rejectForm, viewProof, receipt,
   tab: id => { closeModal(); S.dirty = false; S.tab = id; renderOwner(); scrollTo(0, 0); },
@@ -1183,6 +1220,11 @@ const CHANGES = {
   year: el => { S.year = +el.value; renderOwner(); },
   remindWho: el => { const t = S.tenants.find(x => x.id === el.value); const m = el.form.message;
     m.value = t ? reminderMsg(t, S.month, S.owner) : (LANG === 'en' ? `Hi, a friendly reminder: rent for ${monthLabel(S.month)} is due soon. After paying, please upload your payment proof in the app. Thank you — ${S.owner.name}` : `Salam, peringatan mesra: sewa ${monthLabel(S.month)} perlu dibayar sebelum tarikh akhir. ${bankText(S.owner)} Selepas bayar, sila muat naik resit di link penyewa anda. Terima kasih — ${S.owner.name}`); },
+  logoPick: async el => {
+    const f = el.files[0]; if (!f) return; S.dirty = true;
+    try { const d = await compressLogo(f); el.form.dataset.logo = d; $('#logoPrev').innerHTML = `<img src="${d}" alt="logo">`; toast('Logo dipilih. Tekan Simpan untuk simpan.'); }
+    catch (e) { toast(e.message, 'err'); el.value = ''; }
+  },
   proofPick: async el => {
     const f = el.files[0]; if (!f) return;
     try { const d = await compressImage(f, 1000, .68); el.form.dataset.proof = d; $('#preview').innerHTML = `<img class="proofbig" src="${d}" alt="">`; $('#filebtn').lastChild.textContent = ' Tukar gambar'; }
@@ -1203,6 +1245,11 @@ const FORMS = {
   async prices(d) { const list = PLANS.map(p => ({id: p.id, price: Math.max(1, Math.round((+d['price_' + p.id] || p.price) * 100) / 100), tag: (d['tag_' + p.id] || '').trim()})); await API.setConfig({plans: list}); S.config.plans = list; toast('Harga pakej disimpan ✅'); renderSuper(); },
   async trial(d) { await API.setConfig({trialDays: Math.max(0, Math.min(365, +d.days || 0))}); S.config.trialDays = +d.days; toast('Tempoh percubaan: ' + trialDays() + ' hari.'); renderSuper(); },
   async password(d) { if (d.pass !== d.pass2) throw new Error('Kata laluan tidak sama.'); try { await API.changePass(d.pass); S.auth = await API.authInfo(); toast('Kata laluan disimpan ✅'); renderOwner(); } catch (e) { throw new Error(authMsg(e)); } },
+  async company(d, f) {
+    const up = {company: d.company.trim(), companyAddr: d.companyAddr.trim(), sstNo: d.sstNo.trim(), regNo: d.regNo.trim()};
+    if (f.dataset.logo !== undefined) up.logo = f.dataset.logo;
+    await API.setOwner(S.uid, up); Object.assign(S.owner, up); toast('Maklumat syarikat disimpan ✅'); await refresh();
+  },
   async profile(d) { await API.setOwner(S.uid, {name: d.name.trim(), phone: d.phone.trim(), bankName: d.bankName.trim(), bankAcc: d.bankAcc.trim(), accName: d.accName.trim()}); toast('Profil disimpan.'); await refresh(); },
   async settings(d) { await API.setOwner(S.uid, {settings: {autoOn: !!d.autoOn, autoDays: Math.max(0, +d.autoDays || 0), autoTime: d.autoTime || '09:00', overdueOn: !!d.overdueOn}}); toast('Tetapan disimpan.'); await refresh(); },
   async tenant(d) {
