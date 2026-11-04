@@ -359,6 +359,7 @@ const I18N_RX = [
   [/Salam, /g, 'Hi, ']
 ];
 Object.assign(I18N, {
+  'Awalan no. resit': 'Receipt no. prefix', 'Resit seterusnya': 'Next receipt',
   'Maklumat syarikat (untuk resit)': 'Company details (for receipts)', 'Tiada logo': 'No logo', 'Pilih logo': 'Choose logo', 'Buang': 'Remove',
   'PNG / JPG. Logo menggantikan logo ProSewa pada resit.': 'PNG / JPG. Your logo replaces the ProSewa logo on receipts.', 'Nama syarikat / perniagaan': 'Company / business name',
   'Alamat syarikat': 'Company address', 'No. SST': 'SST No.', 'No. pendaftaran (SSM)': 'Registration no. (SSM)', 'Simpan maklumat syarikat': 'Save company details',
@@ -578,7 +579,8 @@ const LocalAPI = {
   async listOwners() { return Object.keys(L.priv).map(uid => ({uid, ...clone(L.priv[uid]), name: L.owners[uid]?.name || '', sub: clone(L.subs[uid])})); },
   async listSubPayments(uid) { return L.subPayments.filter(x => x.ownerId === uid).map(clone); },
   async addSubPayment(d) { L.subPayments.push({...clone(d), id: genId()}); lsave(); },
-  async idToken() { return 'local'; }
+  async idToken() { return 'local'; },
+  async nextReceiptSeq(uid) { const o = L.owners[uid] = L.owners[uid] || {}; o.receiptSeq = (+o.receiptSeq || 0) + 1; lsave(); return o.receiptSeq; }
 };
 addEventListener('storage', e => { if (!ONLINE && e.key === LKEY) { L = lsGet(LKEY) || L; refresh(); } });
 
@@ -643,7 +645,11 @@ const FireAPI = {
   },
   async listSubPayments(uid) { await fbInit(); const s = await fb.F.getDocs(fb.F.query(fcol('subPayments'), fb.F.where('ownerId', '==', uid))); return s.docs.map(d => ({...d.data(), id: d.id})); },
   async addSubPayment(d) { await fbInit(); await fb.F.addDoc(fcol('subPayments'), d); },
-  async idToken() { await fbInit(); return fb.auth.currentUser.getIdToken(); }
+  async idToken() { await fbInit(); return fb.auth.currentUser.getIdToken(); },
+  async nextReceiptSeq(uid) {   // kaunter dalam transaksi: tidak berulang walaupun resit dipadam
+    await fbInit(); const ref = fdoc('owners', uid);
+    return fb.F.runTransaction(fb.db, async t => { const snap = await t.get(ref); const n = (+(snap.data()?.receiptSeq) || 0) + 1; t.set(ref, {receiptSeq: n}, {merge: true}); return n; });
+  }
 };
 const API = ONLINE ? FireAPI : LocalAPI;
 function authMsg(e) {
@@ -658,6 +664,11 @@ function authMsg(e) {
 /* ---------- Data contoh dibuang: owner mula dengan akaun kosong ---------- */
 
 /* ---------- Logik sewa ---------- */
+async function nextRcpt() {
+  const n = await API.nextReceiptSeq(S.uid); if (S.owner) S.owner.receiptSeq = n;
+  const pre = (S.owner?.rcptPrefix || 'PS').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) || 'PS';
+  return `${pre}-${String(n).padStart(6, '0')}`;
+}
 const rcptNo = ym => `PS-${ym.replace('-', '')}-${genToken().slice(0, 4).toUpperCase()}`;
 function dueDate(t, ym) { const [y, m] = ym.split('-').map(Number); const last = new Date(y, m, 0).getDate(); return `${ym}-${pad(Math.min(+t.dueDay || 1, last))}`; }
 function monthStatus(t, ym, payments) {
@@ -937,6 +948,7 @@ function oSettings() {
         ${o.logo ? '<button type="button" class="btn sm red" data-act="logoRemove">Buang</button>' : ''}<p class="muted" style="margin:6px 0 0">PNG / JPG. Logo menggantikan logo ProSewa pada resit.</p></div></div>
       ${fld('Nama syarikat / perniagaan', 'company', o.company, 'text', 'placeholder="cth: Ahmad Hartanah Enterprise"')}
       ${area('Alamat syarikat', 'companyAddr', o.companyAddr, 'placeholder="cth: No. 1, Jalan Bunga, 43000 Kajang, Selangor"')}
+      <div class="grid2">${fld('Awalan no. resit', 'rcptPrefix', o.rcptPrefix || 'PS', 'text', 'maxlength="6" placeholder="PS" style="text-transform:uppercase"')}<div class="fld"><span>Resit seterusnya</span><input disabled value="${esc((o.rcptPrefix || 'PS').toUpperCase())}-${String((+o.receiptSeq || 0) + 1).padStart(6, '0')}"></div></div>
       <div class="grid2">${fld('No. SST', 'sstNo', o.sstNo, 'text', 'placeholder="cth: W10-1808-32000123"')}${fld('No. pendaftaran (SSM)', 'regNo', o.regNo, 'text', 'placeholder="cth: 202301012345"')}</div>
       <button class="btn wide" style="margin-top:12px">Simpan maklumat syarikat</button></form></div>
     <div class="blk"><div class="sec-h">Profil & maklumat bayaran</div><form class="card" data-form="profile">${fld('Nama', 'name', o.name, 'text', 'required')}${fld('No. telefon', 'phone', o.phone, 'tel')}
@@ -1187,7 +1199,7 @@ const ACTIONS = {
   newToken: async id => { if (!confirm('Tukar link? Link lama tidak boleh digunakan lagi.')) return; closeModal(); renderLoading(); const nt = await API.rekeyTenant(id); await loadOwner(); renderOwner(); shareLink(nt); toast('Link baru dijana.'); },
   approve: async id => {
     const p = S.payments.find(x => x.id === id);
-    await API.updateSub(p.tenantId, 'payments', id, {status: 'confirmed', receiptNo: rcptNo(p.month), confirmedAt: nowStr()});
+    await API.updateSub(p.tenantId, 'payments', id, {status: 'confirmed', receiptNo: await nextRcpt(), confirmedAt: nowStr()});
     closeModal(); await refresh(); receipt(id); toast('Diluluskan. Resit kini ada dalam app penyewa.');
   },
   delPay: async id => { if (!confirm('Padam rekod bayaran ini?')) return; await API.delSub(tokOfPay(id), 'payments', id); closeModal(); toast('Dipadam.'); await refresh(); },
@@ -1246,7 +1258,7 @@ const FORMS = {
   async trial(d) { await API.setConfig({trialDays: Math.max(0, Math.min(365, +d.days || 0))}); S.config.trialDays = +d.days; toast('Tempoh percubaan: ' + trialDays() + ' hari.'); renderSuper(); },
   async password(d) { if (d.pass !== d.pass2) throw new Error('Kata laluan tidak sama.'); try { await API.changePass(d.pass); S.auth = await API.authInfo(); toast('Kata laluan disimpan ✅'); renderOwner(); } catch (e) { throw new Error(authMsg(e)); } },
   async company(d, f) {
-    const up = {company: d.company.trim(), companyAddr: d.companyAddr.trim(), sstNo: d.sstNo.trim(), regNo: d.regNo.trim()};
+    const up = {company: d.company.trim(), companyAddr: d.companyAddr.trim(), sstNo: d.sstNo.trim(), regNo: d.regNo.trim(), rcptPrefix: (d.rcptPrefix || 'PS').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) || 'PS'};
     if (f.dataset.logo !== undefined) up.logo = f.dataset.logo;
     await API.setOwner(S.uid, up); Object.assign(S.owner, up); toast('Maklumat syarikat disimpan ✅'); await refresh();
   },
@@ -1266,7 +1278,7 @@ const FORMS = {
   },
   async cash(d) {
     const t = S.tenants.find(x => x.id === d.tenantId);
-    const id = await API.addSub(t.id, 'payments', {ownerId: S.uid, tenantId: t.id, tenantName: t.name, address: t.address, month: d.month, amount: +d.amount, paidDate: d.paidDate, method: d.method, ref: '', proof: '', status: 'confirmed', receiptNo: rcptNo(d.month), submittedAt: nowStr(), confirmedAt: nowStr()});
+    const id = await API.addSub(t.id, 'payments', {ownerId: S.uid, tenantId: t.id, tenantName: t.name, address: t.address, month: d.month, amount: +d.amount, paidDate: d.paidDate, method: d.method, ref: '', proof: '', status: 'confirmed', receiptNo: await nextRcpt(), submittedAt: nowStr(), confirmedAt: nowStr()});
     closeModal(); await refresh(); receipt(id); toast('Bayaran direkod.');
   },
   async remind(d) {
