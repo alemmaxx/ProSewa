@@ -1225,7 +1225,7 @@ function renderOwner() {
   const v = {tenants: oTenants, status: oStatus, issues: oIssues, report: oReport, sub: oSub, settings: oSettings}[S.tab] || oTenants;
   const isNew = (S.issues || []).filter(i => i.status === 'new').length;
   const si = subInfo(), warn = si && si.days <= 5;
-  $('#app').innerHTML = v() + nav([['tenants', '👥', 'Penyewa'], ['status', '💳', 'Status', pend], ['issues', '🛠️', 'Aduan', isNew], ['report', '📊', 'Laporan'], ['sub', '💎', 'Langganan', warn ? '!' : 0], ['settings', '⚙️', 'Tetapan']], S.tab);
+  $('#app').innerHTML = v() + nav([['tenants', '👥', 'Penyewa'], ['status', '💳', 'Status', pend], ['report', '📊', 'Laporan'], ['issues', '🛠️', 'Aduan', isNew], ['sub', '💎', 'Langganan', warn ? '!' : 0], ['settings', '⚙️', 'Tetapan']], S.tab);
   if (si && S.tab !== 'sub' && warn) { const w = $('.wrap'); if (w) w.insertAdjacentHTML('afterbegin', `<div class="al ${si.active ? '' : 'hot'}" data-act="tab" data-id="sub" style="cursor:pointer"><b>${si.active ? `💎 Langganan tamat dalam ${si.days} hari` : '⛔ Langganan ProSewa telah tamat'}</b>${si.active ? 'Perbaharui sekarang supaya tiada gangguan.' : 'Anda tidak boleh tambah penyewa baru. Tekan untuk perbaharui.'}</div>`); }
 }
 const activeT = () => S.tenants.filter(t => t.active !== false);
