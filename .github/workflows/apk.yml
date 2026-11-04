@@ -136,6 +136,25 @@ jobs:
           merge-multiple: true
       - run: ls -la apk
       - name: Terbit ke Release "latest" (muat turun terus dari telefon)
+        id: rel
+        continue-on-error: true
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: ProSewa APK (terkini)
+          body: |
+            **ProSewa-Admin.apk** — untuk tuan rumah (owner).
+            **ProSewa-Penyewa.apk** — untuk penyewa.
+            Halaman muat turun: https://prosewa.web.app/download.html
+          files: |
+            apk/ProSewa-Admin.apk
+            apk/ProSewa-Penyewa.apk
+          make_latest: true
+      - name: Tunggu sebentar (GitHub sibuk)
+        if: steps.rel.outcome == 'failure'
+        run: sleep 30
+      - name: Cuba terbit semula
+        if: steps.rel.outcome == 'failure'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
