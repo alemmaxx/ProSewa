@@ -18,7 +18,9 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Sediakan fail web
+      - name: Sediakan fail web (+ APK terkini)
+        env:
+          FETCH_APK: '1'
         run: sh build.sh
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

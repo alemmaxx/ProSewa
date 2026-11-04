@@ -39,3 +39,10 @@ App web untuk urus sewa rumah. Owner (tuan rumah) daftar dan urus penyewa. Setia
 
 ## Bahasa
 Togol **BM | EN**. Teks baru: tambah dalam kamus `I18N` (cari "Kamus BM → EN").
+
+## APK Android (Admin + Penyewa)
+Setiap push ke `main` membina 2 APK secara automatik (Actions → **Build ProSewa APK**):
+- **ProSewa-Admin.apk** — tuan rumah (`com.prokuiz.prosewa`)
+- **ProSewa-Penyewa.apk** — penyewa (`com.prokuiz.prosewa.penyewa`), link `prosewa.web.app/penyewa.html?t=…` terus buka app
+
+Halaman muat turun: https://prosewa.web.app/download.html

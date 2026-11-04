@@ -1,0 +1,141 @@
+name: Build ProSewa APK (Admin + Penyewa)
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: write
+concurrency:
+  group: apk
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - kind: admin
+            appId: com.prokuiz.prosewa
+            appName: ProSewa Admin
+            page: index.html
+            apk: ProSewa-Admin.apk
+          - kind: tenant
+            appId: com.prokuiz.prosewa.penyewa
+            appName: ProSewa Penyewa
+            page: penyewa.html
+            apk: ProSewa-Penyewa.apk
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: npm install --no-audit --no-fund
+      - name: Sediakan fail app (www)
+        run: |
+          sh build.sh
+          mkdir -p www/lib
+          cp _site/${{ matrix.page }} www/index.html
+          cp icon-192.png icon-512.png icon-t-192.png icon-t-512.png www/
+          cp node_modules/html2pdf.js/dist/html2pdf.bundle.min.js www/lib/
+          sed -i 's#<head>#<head><script>window.PROSEWA_APP="${{ matrix.kind }}"</script>#' www/index.html
+          grep -c 'PROSEWA_APP="${{ matrix.kind }}"' www/index.html
+          cat > capacitor.config.json <<JSON
+          {
+            "appId": "${{ matrix.appId }}",
+            "appName": "${{ matrix.appName }}",
+            "webDir": "www",
+            "backgroundColor": "#0a1210",
+            "plugins": {
+              "LocalNotifications": { "smallIcon": "ic_stat_ps", "iconColor": "#d9b44a" }
+            }
+          }
+          JSON
+          cat capacitor.config.json
+          ls -la www www/lib
+      - run: npx cap add android
+      - name: Ikon app & ikon notifikasi
+        run: |
+          RES=android/app/src/main/res
+          rm -rf $RES/mipmap-anydpi-v26
+          if [ "${{ matrix.kind }}" = "tenant" ]; then SRC=android-icons/penyewa/res; else SRC=android-icons/admin/res; fi
+          cp -r $SRC/* $RES/
+          printf '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">#0a1210</color>\n</resources>\n' > $RES/values/ic_launcher_background.xml
+      - name: Permission notifikasi & alarm tepat
+        run: |
+          M=android/app/src/main/AndroidManifest.xml
+          sed -i 's#<application#<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>\n    <uses-permission android:name="android.permission.VIBRATE"/>\n    <application#' $M
+          if [ "${{ matrix.kind }}" = "tenant" ]; then
+            # link penyewa (prosewa.web.app/penyewa.html?t=…) terus buka app
+            sed -i 's#</activity>#    <intent-filter android:autoVerify="true">\n                <action android:name="android.intent.action.VIEW" />\n                <category android:name="android.intent.category.DEFAULT" />\n                <category android:name="android.intent.category.BROWSABLE" />\n                <data android:scheme="https" android:host="prosewa.web.app" android:pathPrefix="/penyewa" />\n            </intent-filter>\n        </activity>#' $M
+          fi
+          cat $M
+      - name: Kunci tandatangan tetap & versi
+        run: |
+          cat >> android/app/build.gradle <<GRADLE
+
+          android {
+              defaultConfig {
+                  versionCode ${{ github.run_number }}
+                  versionName "1.0.${{ github.run_number }}"
+              }
+              signingConfigs {
+                  debug {
+                      storeFile rootProject.file('../android-signing/prosewa.keystore')
+                      storePassword 'android'
+                      keyAlias 'prosewa'
+                      keyPassword 'android'
+                  }
+              }
+              buildTypes {
+                  debug { signingConfig signingConfigs.debug }
+              }
+          }
+          GRADLE
+          tail -20 android/app/build.gradle
+      - run: npx cap sync android
+      - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
+      - run: cp android/app/build/outputs/apk/debug/app-debug.apk ${{ matrix.apk }}
+      - name: Semak APK
+        run: |
+          AAPT=$(ls -d $ANDROID_HOME/build-tools/*/ | sort -V | tail -1)aapt2
+          $AAPT dump badging ${{ matrix.apk }} | grep -E "^package|sdkVersion|targetSdk|application-label|uses-permission" || true
+          unzip -l ${{ matrix.apk }} | grep -E "assets/public/(index.html|lib/)|ic_stat_ps" || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.apk }}
+          path: ${{ matrix.apk }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: apk
+          merge-multiple: true
+      - run: ls -la apk
+      - name: Terbit ke Release "latest" (muat turun terus dari telefon)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: ProSewa APK (terkini)
+          body: |
+            **ProSewa-Admin.apk** — untuk tuan rumah (owner).
+            **ProSewa-Penyewa.apk** — untuk penyewa.
+            Halaman muat turun: https://prosewa.web.app/download.html
+          files: |
+            apk/ProSewa-Admin.apk
+            apk/ProSewa-Penyewa.apk
+          make_latest: true
+      - name: Kemas kini salinan APK di prosewa.web.app & GitHub Pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run firebase-hosting.yml --ref main -R ${{ github.repository }}
+          gh workflow run pages.yml --ref main -R ${{ github.repository }}

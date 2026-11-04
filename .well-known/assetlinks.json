@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.prokuiz.prosewa.penyewa",
+    "sha256_cert_fingerprints": ["B2:39:47:26:A3:71:46:F1:EC:13:0C:DB:0F:04:B0:05:CE:EE:0F:BA:7B:86:BA:D0:93:4C:E3:FB:A9:FB:F0:C3"]
+  }
+}]

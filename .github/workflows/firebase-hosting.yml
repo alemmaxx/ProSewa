@@ -11,7 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Sediakan fail web
+      - name: Sediakan fail web (+ APK terkini)
+        env:
+          FETCH_APK: '1'
         run: sh build.sh
       - name: Semak secret Firebase
         id: chk
