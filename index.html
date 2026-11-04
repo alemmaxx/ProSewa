@@ -1365,6 +1365,8 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) refr
     return;
   }
   if (tok) lsSet('prosewa_tenant_token', tok);
+  // iPhone: buang manifest supaya "Add to Home Screen" simpan link penuh (dengan token) — app iOS tak kongsi storan dengan Safari
+  if (/iphone|ipad|ipod/i.test(navigator.userAgent) && tok) document.querySelector('link[rel=manifest]')?.remove();
   S.mode = 'tenant'; S.token = tok || lsGet('prosewa_tenant_token');
   if (S.token) await loadTenant(S.token);
   renderTenant();

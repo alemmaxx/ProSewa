@@ -3,7 +3,7 @@
   "short_name": "ProSewa",
   "description": "ProSewa Admin: urus penyewa, bayaran, resit & peringatan",
   "start_url": "./index.html",
-  "scope": "./",
+  "scope": "./index.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0a1210",

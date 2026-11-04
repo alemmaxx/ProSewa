@@ -1,5 +1,5 @@
 // ProSewa service worker — membolehkan app di-install & dibuka laju
-const CACHE = 'prosewa-v5';
+const CACHE = 'prosewa-v6';
 const SHELL = ['./', './index.html', './penyewa.html', './manifest.webmanifest', './manifest-penyewa.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
