@@ -995,7 +995,7 @@ const FireAPI = {
     await F.deleteDoc(fdoc('tenants', tok)); return nt;
   },
   async listSub(tok, col) { await fbInit(); const s = await fb.F.getDocs(fcol('tenants', tok, col)); return s.docs.map(d => ({...d.data(), id: d.id})); },
-  watchSub(tok, col, cb) { let un = () => {}, off = false; fbInit().then(() => { if (!off) un = fb.F.onSnapshot(fcol('tenants', tok, col), s => cb(s.docs.map(d => ({...d.data(), id: d.id}))), e => console.warn('watch', col, e)); }); return () => { off = true; un(); }; },
+  watchSub(tok, col, cb) { let un = () => {}, off = false; fbInit().then(() => { if (!off) un = fb.F.onSnapshot(fcol('tenants', tok, col), s => { if (s.metadata.fromCache) return; cb(s.docs.map(d => ({...d.data(), id: d.id}))); }, e => console.warn('watch', col, e)); }); return () => { off = true; un(); }; },
   async addSub(tok, col, d) { await fbInit(); const r = await fb.F.addDoc(fcol('tenants', tok, col), d); return r.id; },
   async updateSub(tok, col, id, d) { await fbInit(); await fb.F.updateDoc(fdoc('tenants', tok, col, id), d); },
   async delSub(tok, col, id) { await fbInit(); await fb.F.deleteDoc(fdoc('tenants', tok, col, id)); },
