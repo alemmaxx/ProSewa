@@ -1,0 +1,32 @@
+name: TTS narration
+on:
+  push:
+    branches: [tts]
+jobs:
+  tts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: pip install edge-tts
+      - name: Generate
+        run: |
+          python - <<'PY'
+          import json, asyncio, edge_tts, os
+          os.makedirs('mp3', exist_ok=True)
+          lines = json.load(open('lines.json'))
+          async def one(x):
+              for v in ('ms-MY-YasminNeural',):
+                  for a in range(4):
+                      try:
+                          await edge_tts.Communicate(x['text'], v, rate='+6%').save(f"mp3/{x['id']}.mp3"); return
+                      except Exception as e:
+                          print('retry', x['id'], e); await asyncio.sleep(3)
+          async def main():
+              for x in lines: await one(x)
+          asyncio.run(main())
+          print(len(os.listdir('mp3')), 'files')
+          PY
+      - uses: actions/upload-artifact@v4
+        with: {name: mp3, path: mp3}
