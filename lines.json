@@ -1,346 +1,38 @@
 [
 {
-"id": "outro",
-"text": "Cuba ProSewa percuma empat belas hari, di prosewa titik web titik app."
+"id": "promo_00",
+"text": "Tuan rumah, penat kejar sewa setiap bulan?"
 },
 {
-"id": "v01_intro",
-"text": "Cara mula guna ProSewa."
+"id": "promo_01",
+"text": "Hantar mesej satu demi satu. Penyewa lupa. Resit pula bersepah dalam WhatsApp."
 },
 {
-"id": "v01_00",
-"text": "Buka prosewa titik web titik app di phone atau laptop. Atau pasang app ProSewa Admin untuk Android."
+"id": "promo_02",
+"text": "Inilah ProSewa. App khas untuk urus rumah dan bilik sewa."
 },
 {
-"id": "v01_01",
-"text": "Tekan Daftar baru."
+"id": "promo_03",
+"text": "Sekali pandang, anda tahu siapa sudah bayar, dan siapa belum."
 },
 {
-"id": "v01_02",
-"text": "Isi emel dan kata laluan anda. Percubaan percuma terus bermula."
+"id": "promo_04",
+"text": "Penyewa muat naik slip bayaran. Anda semak, dan tekan lulus."
 },
 {
-"id": "v01_03",
-"text": "Mula dengan maklumat syarikat. Muat naik logo, isi nama dan alamat. Semua ini akan keluar pada setiap resit."
+"id": "promo_05",
+"text": "Resit terus dijana secara automatik, lengkap dengan logo syarikat anda."
 },
 {
-"id": "v01_04",
-"text": "Kemudian isi profil dan maklumat bayaran. Penyewa akan nampak nombor akaun ini bila nak bayar sewa."
+"id": "promo_06",
+"text": "Penyewa tak perlu daftar. Cuma buka link, dan peringatan sewa sampai terus ke telefon mereka."
 },
 {
-"id": "v01_05",
-"text": "Muat naik QR DuitNow anda, supaya penyewa boleh terus imbas dan bayar."
+"id": "promo_07",
+"text": "Bil air, elektrik, IWK, dan laporan cukai, semua siap untuk e-Filing."
 },
 {
-"id": "v01_06",
-"text": "Tetapkan peringatan automatik. Contohnya, tiga hari sebelum tarikh bayar, jam sembilan pagi."
-},
-{
-"id": "v01_07",
-"text": "Aktifkan notifikasi phone, supaya anda tahu bila penyewa hantar bukti bayaran."
-},
-{
-"id": "v01_08",
-"text": "Kalau perlukan panduan, buka Manual pengguna di halaman Tetapan."
-},
-{
-"id": "v02_intro",
-"text": "Cara tambah penyewa, dan hantar link."
-},
-{
-"id": "v02_00",
-"text": "Buka tab Penyewa. Di sini ada senarai semua penyewa dan status bayaran bulan ini."
-},
-{
-"id": "v02_01",
-"text": "Tekan butang tambah di atas."
-},
-{
-"id": "v02_02",
-"text": "Isi nama dan nombor WhatsApp penyewa."
-},
-{
-"id": "v02_03",
-"text": "Isi alamat rumah atau bilik, harga sewa, dan deposit."
-},
-{
-"id": "v02_04",
-"text": "Pilih tarikh bayar dan tempoh kontrak. Penyewa akan diingatkan sebelum tarikh bayar."
-},
-{
-"id": "v02_05",
-"text": "Tekan Simpan."
-},
-{
-"id": "v02_06",
-"text": "Hantar link kepada penyewa melalui WhatsApp. Setiap penyewa ada link sendiri. Tiada login, tiada kata laluan."
-},
-{
-"id": "v02_07",
-"text": "Kalau link tersebar, tekan Tukar link. Link lama terus tak boleh digunakan."
-},
-{
-"id": "v02_08",
-"text": "Penyewa baru terus muncul dalam senarai."
-},
-{
-"id": "v02_09",
-"text": "Tekan nama penyewa untuk lihat butiran, sejarah bayaran, dan semua tindakan."
-},
-{
-"id": "v03_intro",
-"text": "Cara penyewa bayar sewa."
-},
-{
-"id": "v03_00",
-"text": "Penyewa cuma buka link yang dihantar melalui WhatsApp. Tak perlu daftar, tak perlu kata laluan."
-},
-{
-"id": "v03_01",
-"text": "Terus nampak sewa bulan ini dan tarikh bayar."
-},
-{
-"id": "v03_02",
-"text": "Salin nombor akaun, atau imbas QR, untuk bayar terus kepada tuan rumah."
-},
-{
-"id": "v03_03",
-"text": "Selepas bayar, tekan Muat naik bukti."
-},
-{
-"id": "v03_04",
-"text": "Pilih screenshot, atau PDF dari app bank."
-},
-{
-"id": "v03_05",
-"text": "Semak jumlah dan kaedah bayaran. Kalau terbayar lebih, baki akan dibawa ke bulan depan."
-},
-{
-"id": "v03_06",
-"text": "Bukti dihantar, dan sedang menunggu semakan tuan rumah."
-},
-{
-"id": "v03_07",
-"text": "Bila tuan rumah luluskan, resit terus sampai, berserta notifikasi."
-},
-{
-"id": "v03_08",
-"text": "Resit boleh disimpan sebagai PDF."
-},
-{
-"id": "v03_09",
-"text": "Semua resit tersimpan di tab Sejarah."
-},
-{
-"id": "v03_10",
-"text": "Akhir sekali, pasang app supaya dapat notifikasi peringatan sewa."
-},
-{
-"id": "v04_intro",
-"text": "Cara semak dan luluskan bayaran."
-},
-{
-"id": "v04_00",
-"text": "Bila penyewa hantar bukti bayaran, loceng dan ikon app akan tunjuk berapa yang perlu disemak."
-},
-{
-"id": "v04_01",
-"text": "Buka tab Status. Bukti bayaran ada di bahagian atas."
-},
-{
-"id": "v04_02",
-"text": "Tekan Semak bayaran."
-},
-{
-"id": "v04_03",
-"text": "Semak gambar bukti, jumlah, dan nombor rujukan. Kalau lebih atau kurang daripada sewa, terus nampak."
-},
-{
-"id": "v04_04",
-"text": "Tanda kotak ini bila wang sudah masuk ke akaun anda."
-},
-{
-"id": "v04_05",
-"text": "Kemudian tekan Luluskan. Kalau bukti salah, tekan Tolak dan tulis sebabnya."
-},
-{
-"id": "v04_06",
-"text": "Resit dijana secara automatik, bernombor, dengan logo syarikat anda."
-},
-{
-"id": "v04_07",
-"text": "Simpan sebagai PDF atau kongsi. Penyewa juga terus nampak resit dalam app mereka."
-},
-{
-"id": "v04_08",
-"text": "Status penyewa kini Dibayar."
-},
-{
-"id": "v05_intro",
-"text": "Bayaran manual, dan peringatan sewa."
-},
-{
-"id": "v05_00",
-"text": "Ada penyewa yang tak guna app, dan cuma hantar bukti bayaran kepada anda?"
-},
-{
-"id": "v05_01",
-"text": "Di tab Status, lihat bahagian Belum bayar."
-},
-{
-"id": "v05_02",
-"text": "Tekan Bayaran manual."
-},
-{
-"id": "v05_03",
-"text": "Pilih kaedah bayaran penyewa. Pindahan bank, Touch n Go, deposit tunai, atau tunai."
-},
-{
-"id": "v05_04",
-"text": "Muat naik slip kalau ada."
-},
-{
-"id": "v05_05",
-"text": "Tekan Simpan, dan resit terus dijana."
-},
-{
-"id": "v05_06",
-"text": "Untuk penyewa yang belum bayar, tekan Ingatkan. Notifikasi terus ke phone mereka."
-},
-{
-"id": "v05_07",
-"text": "Atau hantar peringatan melalui WhatsApp."
-},
-{
-"id": "v05_08",
-"text": "Peringatan automatik juga berjalan, ikut tetapan anda."
-},
-{
-"id": "v06_intro",
-"text": "Urus rumah dan bilik sewa."
-},
-{
-"id": "v06_00",
-"text": "Di tab Penyewa, tekan Hartanah."
-},
-{
-"id": "v06_01",
-"text": "Tekan Tambah rumah."
-},
-{
-"id": "v06_02",
-"text": "Isi alamat, dan pilih jenis sewaan. Sewa bilik, atau seluruh rumah."
-},
-{
-"id": "v06_03",
-"text": "Senaraikan setiap bilik dan harga sewanya. Tekan Tambah bilik untuk bilik seterusnya."
-},
-{
-"id": "v06_04",
-"text": "Bilik kosong terus nampak, termasuk berapa hari kosong dan sewa yang hilang."
-},
-{
-"id": "v06_05",
-"text": "Untuk masukkan penyewa ke bilik, edit penyewa dan pilih rumah atau bilik."
-},
-{
-"id": "v06_06",
-"text": "Kadar penghunian setiap rumah boleh dilihat sekali pandang."
-},
-{
-"id": "v07_intro",
-"text": "Laporan, bil, dan cukai."
-},
-{
-"id": "v07_00",
-"text": "Buka tab Laporan."
-},
-{
-"id": "v07_01",
-"text": "Laporan kutipan sewa menunjukkan jangkaan berbanding sewa diterima setiap bulan, dan tunggakan."
-},
-{
-"id": "v07_02",
-"text": "Simpan sebagai PDF atau Excel."
-},
-{
-"id": "v07_03",
-"text": "Di bahagian Cukai dan Perbelanjaan, pendapatan sewa bersih dikira untuk e-Filing."
-},
-{
-"id": "v07_04",
-"text": "Tekan Rekod bil bulan ini, untuk isi bil elektrik, air, dan IWK sekali gus."
-},
-{
-"id": "v07_05",
-"text": "Untuk bil tetap seperti IWK, guna Bil berulang. Sistem akan rekod setiap bulan secara automatik."
-},
-{
-"id": "v07_06",
-"text": "Perbelanjaan lain seperti cukai pintu dan pembaikan juga boleh direkod."
-},
-{
-"id": "v07_07",
-"text": "Laporan cukai siap. Simpan PDF untuk e-Filing atau ejen cukai anda."
-},
-{
-"id": "v08_intro",
-"text": "Perbaharui kontrak, dan pulangkan deposit."
-},
-{
-"id": "v08_00",
-"text": "Bila kontrak hampir tamat, amaran akan keluar tiga puluh hari sebelumnya."
-},
-{
-"id": "v08_01",
-"text": "Buka penyewa, dan tekan Perbaharui."
-},
-{
-"id": "v08_02",
-"text": "Pilih tarikh tamat baru, dan sewa baru jika berubah."
-},
-{
-"id": "v08_03",
-"text": "Kalau penyewa nak keluar, tekan Tamatkan sewa."
-},
-{
-"id": "v08_04",
-"text": "Isi tarikh keluar, dan potongan seperti pembersihan atau kerosakan."
-},
-{
-"id": "v08_05",
-"text": "Baki deposit dikira secara automatik."
-},
-{
-"id": "v08_06",
-"text": "Penyata deposit siap. Penyewa boleh lihat, dan anda boleh simpan PDF untuk rekod."
-},
-{
-"id": "v09_intro",
-"text": "Aduan kerosakan."
-},
-{
-"id": "v09_00",
-"text": "Penyewa boleh lapor kerosakan dari tab Aduan."
-},
-{
-"id": "v09_01",
-"text": "Tekan Aduan baru."
-},
-{
-"id": "v09_02",
-"text": "Pilih kategori, tulis tajuk dan penerangan. Gambar kerosakan juga boleh ditambah."
-},
-{
-"id": "v09_03",
-"text": "Tuan rumah terus dapat notifikasi, dan aduan muncul di tab Aduan."
-},
-{
-"id": "v09_04",
-"text": "Tekan Kemas kini status, pilih Dalam tindakan atau Selesai, dan tulis nota untuk penyewa."
-},
-{
-"id": "v09_05",
-"text": "Penyewa terus nampak kemas kini status aduan mereka."
+"id": "promo_08",
+"text": "Cuba ProSewa percuma empat belas hari. Layari prosewa titik web titik app. Link di bio."
 }
 ]
