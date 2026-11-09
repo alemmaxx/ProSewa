@@ -134,8 +134,10 @@ service cloud.firestore {
         allow update: if ownsTenant(tok);
         // resit yang sah / dibatalkan tidak boleh dipadam (rekod audit)
         // (kecuali dipindahkan ke link baru melalui "Tukar link" — salinan mesti sudah wujud)
+        // (atau owner pilih "Padam semua data" — tenant ditanda wipe dahulu)
         allow delete: if ownsTenant(tok) && (
           !(resource.data.status in ['confirmed', 'void'])
+          || tenant(tok).get('wipe', false) == true
           || (tenant(tok).get('movedTo', '') != '' && exists(/databases/$(database)/documents/tenants/$(tenant(tok).movedTo)/payments/$(pid)))
         );
       }

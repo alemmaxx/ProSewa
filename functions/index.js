@@ -104,11 +104,13 @@ exports.prosewaCreateBill = onRequest({region: REGION, secrets: [TOYYIBPAY_SECRE
       billEmail: user.email || 'noreply@prosewa.web.app',
       billPhone: String(owner.phone || '0100000000').replace(/\D/g, '') || '0100000000',
       billPaymentChannel: '0',
-      billChargeToCustomer: ''
+      billChargeToCustomer: '',
+      enableDuitNowQR: '1',   // DuitNow QR (perlu diaktifkan dalam akaun ToyyibPay); jika belum aktif, cuba semula tanpa QR
+      chargeDuitNowQR: '0'
     });
-    const r = await fetch(`${TP}/index.php/api/createBill`, {method: 'POST', body: form});
-    const txt = await r.text(); let j; try { j = JSON.parse(txt); } catch (e) { j = null; }
-    const billCode = Array.isArray(j) && j[0] && j[0].BillCode;
+    const send = async f => { const r = await fetch(`${TP}/index.php/api/createBill`, {method: 'POST', body: f}); const t = await r.text(); let j; try { j = JSON.parse(t); } catch (e) { j = null; } return {txt: t, code: Array.isArray(j) && j[0] && j[0].BillCode}; };
+    let {txt, code: billCode} = await send(form);
+    if (!billCode && /duitnow|qr/i.test(txt)) { form.delete('enableDuitNowQR'); form.delete('chargeDuitNowQR'); ({txt, code: billCode} = await send(form)); }   // QR belum aktif → FPX sahaja
     if (!billCode) { console.error('createBill gagal', txt); await logErr('prosewaCreateBill: ToyyibPay', txt); return res.status(502).json({error: 'ToyyibPay menolak permintaan bil.'}); }
 
     await orderRef.set({uid: user.uid, plan: plan.id, months: plan.months, amount: plan.price, billCode, status: 'pending', createdAt: FieldValue.serverTimestamp()});
