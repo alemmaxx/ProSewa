@@ -473,7 +473,7 @@ const I18N_RX = [
   [/Kutipan (\d+)% daripada jangkaan/g, 'Collected $1% of expected'],
   [/Link (\S+) disalin/g, "$1's link copied"],
   [/Ditambah (\d+) hari/g, 'Added $1 days'],
-  [/Salam, /g, 'Hi, '], [/⬆ Versi baru ProSewa ada \(/g, '⬆ New ProSewa version available ('], [/⬆ Kemas kini ke /g, '⬆ Update to '], [/🆕 Apa yang baru · /g, "🆕 What's new · "],
+  [/Salam, /g, 'Hi, '], [/Dihidupkan (.+)\. Hanya kemas kini selepas tarikh itu dipaparkan \((\d+) versi\)\./g, 'Turned on $1. Only updates after that date are shown ($2 versions).'], [/Semua kemas kini dipaparkan \((\d+) versi\)\./g, 'All updates are shown ($1 versions).'], [/⬆ Versi baru ProSewa ada \(/g, '⬆ New ProSewa version available ('], [/⬆ Kemas kini ke /g, '⬆ Update to '], [/🆕 Apa yang baru · /g, "🆕 What's new · "],
   [/(\d+) penyewa, (\d+) rekod bayaran & resit, aduan, perbelanjaan, bil, rumah & bil berulang akan dipadam kekal\. Link penyewa lama tidak boleh dibuka lagi\./g, '$1 tenants, $2 payment & receipt records, requests, expenses, bills, properties & recurring bills will be permanently deleted. Old tenant links will stop working.'],
   [/PDF ada (\d+) halaman\. Hanya 2 halaman pertama disimpan\./g, 'The PDF has $1 pages. Only the first 2 pages are saved.'],
   [/Bil & utiliti (\d{4})/g, 'Bills & utilities $1'],
@@ -505,7 +505,8 @@ const I18N_RX = [
   [/Sewa (.+?) (RM [\d,.]+) belum dibayar\./g, 'Rent for $1 ($2) is unpaid.']
 ];
 Object.assign(I18N, {
-  'LAPORAN KUTIPAN SEWA': 'RENT COLLECTION REPORT', 'Versi app': 'App version', '✓ Terkini': '✓ Up to date', 'Tekan untuk muat turun, kemudian pasang terus atas app ini. Data anda kekal.': 'Tap to download, then install over this app. Your data stays.', '🎬 Muat turun video TikTok (26 saat, MP4)': '🎬 Download TikTok video (26 sec, MP4)', '⏳ Memuat turun video…': '⏳ Downloading video…', 'BARU': 'NEW', '💰 Laporan kewangan': '💰 Financial report', 'Tempoh': 'Period', 'Masuk (langganan)': 'Income (subscriptions)', 'Caj ToyyibPay': 'ToyyibPay fees', 'Bersih diterima': 'Net received', 'Belanja sistem': 'System expenses', 'Untung bersih': 'Net profit', 'bayaran': 'payments', 'rekod': 'records', 'auto': 'auto',
+  'LAPORAN KUTIPAN SEWA': 'RENT COLLECTION REPORT', '🆕 Apa yang baru (kemas kini versi)': "🆕 What's new (version updates)", 'Papar "Apa yang baru" kepada owner': 'Show "What\'s new" to owners', 'Dimatikan: owner tidak nampak butang & senarai kemas kini.': 'Off: owners don\'t see the button or update list.',
+  'Matikan untuk sembunyi senarai lama. Bila dihidupkan semula, senarai bermula baru: hanya kemas kini yang keluar selepas itu dipaparkan.': 'Turn off to hide the old list. When turned back on, the list starts fresh: only updates released after that are shown.', '"Apa yang baru" dihidupkan. Senarai bermula baru.': '"What\'s new" turned on. The list starts fresh.', '"Apa yang baru" dimatikan.': '"What\'s new" turned off.', 'Versi app': 'App version', '✓ Terkini': '✓ Up to date', 'Tekan untuk muat turun, kemudian pasang terus atas app ini. Data anda kekal.': 'Tap to download, then install over this app. Your data stays.', '🎬 Muat turun video TikTok (26 saat, MP4)': '🎬 Download TikTok video (26 sec, MP4)', '⏳ Memuat turun video…': '⏳ Downloading video…', 'BARU': 'NEW', '💰 Laporan kewangan': '💰 Financial report', 'Tempoh': 'Period', 'Masuk (langganan)': 'Income (subscriptions)', 'Caj ToyyibPay': 'ToyyibPay fees', 'Bersih diterima': 'Net received', 'Belanja sistem': 'System expenses', 'Untung bersih': 'Net profit', 'bayaran': 'payments', 'rekod': 'records', 'auto': 'auto',
   'Tukar kadar': 'Change rate', 'setiap transaksi berjaya.': 'per successful transaction.', '📊 Lihat laporan penuh': '📊 View full report', '+ Rekod belanja sistem': '+ Record system expense', 'LAPORAN KEWANGAN LANGGANAN': 'SUBSCRIPTION FINANCIAL REPORT', 'Senarai bayaran langganan': 'Subscription payments', 'Owner': 'Owner', 'Pakej': 'Plan', 'Rujukan': 'Reference', 'Caj': 'Fee', 'Bersih': 'Net', 'Belanja': 'Expenses', 'Bil.': 'No.',
   'Lanjutan percuma (RM0, tiada caj)': 'Free extensions (RM0, no fee)', 'Jenis': 'Type', 'Kategori': 'Category', 'Keterangan': 'Description', 'Kod promo': 'Promo code', 'Manual (Super Admin)': 'Manual (Super Admin)',
   'Caj ToyyibPay ialah anggaran berdasarkan kadar yang ditetapkan. Semak penyata ToyyibPay untuk angka sebenar.': 'ToyyibPay fees are estimates based on the set rate. Check your ToyyibPay statement for actual figures.',
@@ -1255,6 +1256,10 @@ async function renderSuper() {
       <p class="muted">Harga ini dipaparkan kepada owner dan digunakan semasa cipta bil ToyyibPay.</p><button class="btn wide">Simpan harga</button></form>
     <div class="sec-h">Tempoh percubaan</div><form class="card" data-form="trial">${fld('Hari percubaan percuma', 'days', trialDays(), 'number', 'min="0" max="365" required')}
       <p class="muted">Berkuat kuasa serta-merta untuk owner yang masih dalam percubaan.</p><button class="btn wide">Simpan</button></form>
+    <div class="sec-h">🆕 Apa yang baru (kemas kini versi)</div><div class="card">
+      <label class="switch"><span>Papar "Apa yang baru" kepada owner</span><input type="checkbox" data-chg="wnToggle" ${S.config.wnOn === false ? '' : 'checked'}></label>
+      <p class="muted" style="margin:8px 0 0">${S.config.wnOn === false ? 'Dimatikan: owner tidak nampak butang & senarai kemas kini.' : S.config.wnSince ? `Dihidupkan ${dtLabel(S.config.wnSinceAt || '')}. Hanya kemas kini selepas tarikh itu dipaparkan (${wnList().length} versi).` : `Semua kemas kini dipaparkan (${wnList().length} versi).`}</p>
+      <p class="muted" style="font-size:12px;margin:6px 0 0">Matikan untuk sembunyi senarai lama. Bila dihidupkan semula, senarai bermula baru: hanya kemas kini yang keluar selepas itu dipaparkan.</p></div>
     <div class="sec-h">Promosi ProSewa</div><div class="card"><div class="kv"><span>Landing page</span><b data-raw>${esc(LANDING.replace('https://', ''))}</b></div>
       <div class="acts"><button class="btn" style="flex:1" data-act="promoKit">📣 Buka kit promosi</button><a class="btn ghost fx" href="${LANDING}" target="_blank" rel="noopener">👁</a></div></div>
     ${promoSection(promos)}
@@ -1679,7 +1684,7 @@ function oSettings() {
   const perm = NPERM;
   return header('Tetapan', 'Tetapan.', o.name ? `${o.name}${o.phone ? ' · ' + o.phone : ''}` : 'Lengkapkan maklumat anda', {btns: ownerBtns()}) + `<div class="wrap"><div class="stack">
     <div class="blk"><div class="card"><div class="acts" style="margin:0"><button class="btn" style="flex:1" data-act="manual">📘 Manual pengguna</button><button class="btn ghost" style="flex:1" data-act="reportForm">📮 Lapor masalah</button></div>
-      <button class="btn wide ghost" style="margin-top:8px;position:relative" data-act="whatsNew">🆕 Apa yang baru · v${APP_VER}${seenVer() !== APP_VER ? '<em class="newdot">BARU</em>' : ''}</button>
+      ${wnList().length ? `<button class="btn wide ghost" style="margin-top:8px;position:relative" data-act="whatsNew">🆕 Apa yang baru · v${APP_VER}${wnNew() ? '<em class="newdot">BARU</em>' : ''}</button>` : ''}
       <div class="kv" style="margin-top:8px"><span>Versi app</span><b>${verLabel()} · ${APK_NEW ? `<a href="${APK_URL[apkKind()]}" target="_blank" rel="noopener" style="color:var(--gold,#d9b44a)">⬆ Kemas kini ke 1.0.${APK_NEW}</a>` : '<span style="color:var(--green)">✓ Terkini</span>'}</b></div></div></div>
     <div class="blk"><div class="sec-h">Paparan</div><div class="card"><div class="switch">Bahasa ${langSeg()}</div><div class="switch">Tema ${themeSeg()}</div></div></div>
     <div class="blk"><div class="sec-h">Maklumat syarikat (untuk resit)</div><form class="card" data-form="company">
@@ -1856,11 +1861,14 @@ const CHANGELOG = [
    'Android apps <b>ProSewa Admin</b> & <b>ProSewa Tenant</b>, push notifications & app icon badges.',
    'Subscription promo codes, tenancy renewals, deposit statements, maintenance requests.',
    'Owners can record payments with their own slip. Consistent BM / EN reports.']}];
+// Super Admin kawal paparan: wnOn=false sembunyi semua; bila dihidupkan semula, hanya kemas kini SELEPAS tarikh itu dipaparkan (bermula baru)
+const wnList = () => { const c = S.config || {}; if (c.wnOn === false) return []; const since = c.wnSince || ''; return CHANGELOG.filter(x => !since || (/^\d/.test(x.v) && x.v > since)); };
+const wnNew = () => { const l = wnList(); return l.length && /^\d/.test(l[0].v) && seenVer() !== l[0].v; };
 const seenVer = () => { try { return localStorage.getItem('prosewa_seenVer') || ''; } catch (e) { return ''; } };
 function whatsNew() {
   const en = LANG === 'en';
-  try { localStorage.setItem('prosewa_seenVer', APP_VER); } catch (e) {}
-  openModal(en ? '🆕 What\'s new' : '🆕 Apa yang baru', `<div class="manual" data-raw>${CHANGELOG.map((c, i) => `<details ${i === 0 ? 'open' : ''}><summary>${/^\d/.test(c.v) ? 'v' + c.v : (en ? c.vEn : c.v)}${c.v === APP_VER ? (en ? ' · current' : ' · semasa') : ''}</summary><ul>${(en ? c.en : c.bm).map(x => `<li>${x}</li>`).join('')}</ul></details>`).join('')}</div>
+  try { localStorage.setItem('prosewa_seenVer', (wnList()[0] || {}).v || APP_VER); } catch (e) {}
+  openModal(en ? '🆕 What\'s new' : '🆕 Apa yang baru', `<div class="manual" data-raw>${wnList().map((c, i) => `<details ${i === 0 ? 'open' : ''}><summary>${/^\d/.test(c.v) ? 'v' + c.v : (en ? c.vEn : c.v)}${c.v === APP_VER ? (en ? ' · current' : ' · semasa') : ''}</summary><ul>${(en ? c.en : c.bm).map(x => `<li>${x}</li>`).join('')}</ul></details>`).join('')}</div>
     <div class="acts" style="margin-top:10px"><button class="btn" style="flex:1" data-act="manual">📘 ${en ? 'User manual' : 'Manual pengguna'}</button></div>`);
   const b = document.querySelector('[data-act=whatsNew] .newdot'); if (b) b.remove();
 }
@@ -2503,6 +2511,7 @@ const CHANGES = {
   revOk: el => { const b = $('#revApprove'); if (b) b.disabled = !el.checked; },
   propType: el => { const f = el.closest('form'), w = f.elements.type.value === 'whole'; $('#wholeBox').hidden = !w; $('#roomBox').hidden = w; const r = f.elements.rent; if (r) w ? r.setAttribute('required', '') : r.removeAttribute('required'); },
   unitPick: el => { const [pid, uid] = el.value.split('|'), p = (S.props || []).find(x => x.id === pid), u = p && unitsOf(p).find(x => x.id === uid), f = el.closest('form'); if (!u) return; f.elements.address.value = unitLabel(p, u); if (+u.rent) f.elements.rent.value = u.rent; },
+  wnToggle: async el => { const on = el.checked, d = on ? {wnOn: true, wnSince: APP_VER, wnSinceAt: nowStr()} : {wnOn: false}; await API.setConfig(d); Object.assign(S.config, d); toast(on ? tr('"Apa yang baru" dihidupkan. Senarai bermula baru.') : tr('"Apa yang baru" dimatikan.')); renderSuper(); },
   finPer: el => { S.finPer = el.value; renderSuper(); },
   kitLang: el => { S.kitLang = el.value; promoKit(); }, kitCode: el => { S.kitCode = el.value; promoKit(); },
   endCalc: el => { const f = el.closest('form'), t = S.tenants.find(x => x.id === f.elements.id.value), c = depCalc(t, Object.fromEntries(new FormData(f))); const b = $('#endRefund'); if (b) { b.textContent = c.due > 0 ? `${tr('Baki perlu dibayar penyewa')}: ${RM(c.due)}` : RM(c.refund); b.style.color = c.due > 0 ? 'var(--red)' : 'var(--green)'; } },
