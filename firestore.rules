@@ -83,9 +83,12 @@ service cloud.firestore {
 
     // Ralat app & laporan masalah pengguna — sesiapa boleh hantar (saiz terhad), hanya Super Admin boleh baca / padam
     match /sysErrors/{id} {
-      allow read, delete: if isSuper();
-      allow update: if false;
-      allow create: if request.resource.data.keys().hasOnly(['src', 'where', 'msg', 'at', 'ver', 'ua', 'who', 'contact'])
+      // owner boleh baca laporan sendiri (status & balasan Super Admin)
+      allow read: if isSuper() || (signedIn() && resource.data.get('uid', '') == request.auth.uid);
+      allow delete: if isSuper();
+      allow update: if isSuper() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'reply', 'repliedAt']);
+      allow create: if request.resource.data.keys().hasOnly(['src', 'where', 'msg', 'at', 'ver', 'ua', 'who', 'contact', 'uid'])
+        && (!('uid' in request.resource.data) || (signedIn() && request.resource.data.uid == request.auth.uid))
         && request.resource.data.src in ['web', 'apk', 'report']
         && request.resource.data.msg is string && request.resource.data.msg.size() <= 1000
         && request.resource.data.at is string && request.resource.data.at.size() <= 20

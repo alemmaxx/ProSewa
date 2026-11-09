@@ -17,7 +17,7 @@
  *   firebase functions:secrets:set TOYYIBPAY_SECRET_KEY --project kukusanmy
  */
 const {onRequest} = require('firebase-functions/v2/https');
-const {onDocumentWritten, onDocumentCreated} = require('firebase-functions/v2/firestore');
+const {onDocumentWritten, onDocumentCreated, onDocumentUpdated} = require('firebase-functions/v2/firestore');
 const {onSchedule} = require('firebase-functions/v2/scheduler');
 const {getMessaging} = require('firebase-admin/messaging');
 const {defineSecret} = require('firebase-functions/params');
@@ -404,5 +404,16 @@ exports.prosewaHealthNow = onRequest({region: REGION}, async (req, res) => {
 
 exports.prosewaOnReport = onDocumentCreated({document: 'sysErrors/{id}', database: 'prosewa', region: DB_REGION}, async ev => {
   const r = ev.data.data(); if (!r || r.src !== 'report') return;
+  if (r.uid) await toOwner(r.uid, l => l === 'en' ? {title: '📮 Report received', body: 'Thank you. The ProSewa team will review it and update you here.'} : {title: '📮 Laporan diterima', body: 'Terima kasih. Pasukan ProSewa akan semak dan maklumkan anda di sini.'}).catch(() => {});
   await pushTo('uid', SUPER_UID, l => ({title: l === 'en' ? '📮 Problem report from user' : '📮 Laporan masalah daripada pengguna', body: `${r.who || ''}${r.where ? ' · ' + r.where : ''}: ${String(r.msg || '').slice(0, 200)}`}), 'https://prosewa.web.app/index.html#super');
+});
+
+// Super Admin kemas kini status laporan → maklumkan owner yang melapor
+exports.prosewaOnReportUpdate = onDocumentUpdated({document: 'sysErrors/{id}', database: 'prosewa', region: DB_REGION}, async ev => {
+  const b = ev.data.before.data() || {}, a = ev.data.after.data() || {};
+  if (a.src !== 'report' || !a.uid || ((b.status || '') === (a.status || '') && (b.reply || '') === (a.reply || ''))) return;
+  const done = a.status === 'done';
+  await toOwner(a.uid, l => l === 'en'
+    ? {title: done ? '✅ Your problem has been resolved' : '👀 Your report is being reviewed', body: a.reply || 'Open ProSewa → Settings → My reports.'}
+    : {title: done ? '✅ Masalah anda telah diselesaikan' : '👀 Laporan anda sedang disemak', body: a.reply || 'Buka ProSewa → Tetapan → Laporan saya.'});
 });
