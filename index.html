@@ -26,6 +26,9 @@
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:15px;line-height:1.5}
+/* elak "Touch to Search" Google / pilih teks tidak sengaja bila tekan perkataan (teks dalam borang masih boleh dipilih & disalin) */
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+input,textarea,select,[contenteditable],.linkbox,.selectable{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
 button,input,select,textarea{font-family:var(--f)}
 #app{max-width:760px;margin:0 auto;min-height:100vh;padding-bottom:100px}
 /* header */
@@ -1546,7 +1549,7 @@ function oStatus() {
       <div class="acts"><button class="btn sm" data-act="reviewPay" data-id="${p.id}">🔍 Semak bayaran</button></div></div>`).join('') + '</div>'
     : '<div class="empty">Tiada bukti bayaran baru.</div>';
 
-  h += `<div class="sec-h">⏳ Belum bayar (${unpaid.length}) ${unpaid.length ? `<button class="btn sm ghost" data-act="remindForm">🔔 Peringatan</button>` : ''}</div>`;
+  h += `<div class="sec-h">⏳ Belum bayar (${unpaid.length})</div>`;
   h += unpaid.length ? `<div class="tcgrid">${unpaid.map(({t, s}) => `<div class="tc ${tcCls(s)}"><div class="t1"><div>${chip(s)}<h4>${esc(t.name)}</h4><div class="muted">${RM(t.rent)} · akhir ${dateLabel(s.due)}</div></div>${cdBox(s)}</div>
       <div class="acts"><button class="btn sm" data-act="remindNow" data-id="${t.id}">🔔 Ingatkan</button><button class="btn sm ghost" data-act="cashForm" data-id="${t.id}">📝 Bayaran manual</button><a class="btn sm wa fx" href="${waLink(t.phone, 'Salam ' + t.name + ', ')}" target="_blank" rel="noopener">💬</a></div></div>`).join('')}</div>`
     : '<div class="empty">Semua penyewa sudah bayar 🎉</div>';
