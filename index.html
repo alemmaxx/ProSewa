@@ -378,7 +378,7 @@ const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); retu
 
 function toast(msg, type = '', ms = 2800) { const t = $('#toast'); t.textContent = tr(msg); t.className = 'on ' + type; clearTimeout(toast._t); toast._t = setTimeout(() => t.className = '', ms); }
 function openModal(title, html) { $('#mt').textContent = title; $('#mb').innerHTML = html; $('#modal').classList.add('on'); }
-function closeModal() { $('#modal').classList.remove('on'); $('#mb').innerHTML = ''; if (ask._r) { const r = ask._r; ask._r = null; r(false); } }
+function closeModal() { $('#modal').classList.remove('on'); $('#mb').innerHTML = ''; if (S._needRender) liveRender(); if (ask._r) { const r = ask._r; ask._r = null; r(false); } }
 // Pengesahan dalam popup (ada butang ✕), ganti confirm() browser
 function ask(msg, ok = 'Ya', cls = 'red') {
   if (ask._r) { const r = ask._r; ask._r = null; r(false); }
@@ -862,6 +862,7 @@ const LocalAPI = {
   async rekeyTenant(tok) { const nt = genToken(); L.tenants[nt] = L.tenants[tok]; const sb = L.sub[tok] || {payments: {}, reminders: {}};
     Object.values(sb.payments).forEach(p => p.tenantId = nt); Object.values(sb.reminders).forEach(r => r.tenantId = nt); Object.values(sb.issues || {}).forEach(r => r.tenantId = nt); L.sub[nt] = sb; delete L.tenants[tok]; delete L.sub[tok]; lsave(); return nt; },
   async listSub(tok, col) { return Object.entries((L.sub[tok] || {})[col] || {}).map(([id, x]) => ({...clone(x), id})); },
+  watchSub() { return () => {}; },
   async addSub(tok, col, d) { const id = genId(); ((L.sub[tok] = L.sub[tok] || {payments: {}, reminders: {}})[col] = L.sub[tok][col] || {})[id] = clone(d); lsave(); return id; },
   async updateSub(tok, col, id, d) { Object.assign(L.sub[tok][col][id], clone(d)); lsave(); },
   async delSub(tok, col, id) { delete L.sub[tok][col][id]; lsave(); },
@@ -984,6 +985,7 @@ const FireAPI = {
     await F.deleteDoc(fdoc('tenants', tok)); return nt;
   },
   async listSub(tok, col) { await fbInit(); const s = await fb.F.getDocs(fcol('tenants', tok, col)); return s.docs.map(d => ({...d.data(), id: d.id})); },
+  watchSub(tok, col, cb) { let un = () => {}, off = false; fbInit().then(() => { if (!off) un = fb.F.onSnapshot(fcol('tenants', tok, col), s => cb(s.docs.map(d => ({...d.data(), id: d.id}))), e => console.warn('watch', col, e)); }); return () => { off = true; un(); }; },
   async addSub(tok, col, d) { await fbInit(); const r = await fb.F.addDoc(fcol('tenants', tok, col), d); return r.id; },
   async updateSub(tok, col, id, d) { await fbInit(); await fb.F.updateDoc(fdoc('tenants', tok, col, id), d); },
   async delSub(tok, col, id) { await fbInit(); await fb.F.deleteDoc(fdoc('tenants', tok, col, id)); },
@@ -1160,7 +1162,7 @@ async function refresh() {
   const ae = document.activeElement; if (ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) && $('#app').contains(ae)) return;   // jangan ganggu bila sedang menaip
   _refreshing = true;
   try {
-    if (S.mode === 'owner' || S.mode === 'locked') { await loadOwner(); (S.uid !== SUPER_UID && !subInfo()?.active) ? renderLocked() : (S.mode === 'locked' ? (S.mode = 'owner', renderOwner()) : renderOwner()); }
+    if (S.mode === 'owner' || S.mode === 'locked') { await loadOwner(); ownerWatch(); (S.uid !== SUPER_UID && !subInfo()?.active) ? renderLocked() : (S.mode === 'locked' ? (S.mode = 'owner', renderOwner()) : renderOwner()); }
     else if (S.mode === 'tenant') { await loadTenant(S.token); renderTenant(); }
     if (_connErr) { _connErr = false; showSysBan(); }
   } catch (e) { console.error(e); if (/unavailable|network|offline|fetch/i.test(String(e.code || e.message))) { _connErr = true; showSysBan(); } else reportErr(e.stack || e.message, 'refresh'); } finally { _refreshing = false; checkSys(); }
@@ -2442,6 +2444,50 @@ async function autoNotif() {
   const pm = await notifPerm().catch(() => 'denied'); if (pm === 'granted') { lsSet('prosewa_np_auto', 1); return pushRegister(); }
   lsSet('prosewa_np_auto', 1); setTimeout(() => ACTIONS.enableNotif().catch(() => {}), 1200);
 }
+/* ---------- Kemas kini masa nyata (tanpa perlu refresh) ---------- */
+let _watch = [], _watchKey = '', _rT = null;
+function liveRender() {   // lukis semula selepas data berubah; tunggu jika popup terbuka / sedang menaip
+  clearTimeout(_rT); _rT = setTimeout(() => {
+    const ae = document.activeElement;
+    if ($('#modal').classList.contains('on') || S.dirty || (ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName))) { S._needRender = true; return; }
+    S._needRender = false;
+    if (S.mode === 'owner') { renderOwner(); ownerTick(); } else if (S.mode === 'tenant' && S.t) renderTenant();
+  }, 250);
+}
+function unwatchAll() { _watch.forEach(u => { try { u(); } catch (e) {} }); _watch = []; _watchKey = ''; }
+function ownerWatch() {
+  if (!ONLINE || S.mode !== 'owner') return;
+  const ids = activeT().map(t => t.id).sort(), key = 'o:' + ids.join(',');
+  if (key === _watchKey) return; unwatchAll(); _watchKey = key;
+  for (const id of ids) {
+    _watch.push(API.watchSub(id, 'payments', list => {
+      const before = new Set(S.payments.filter(p => p.tenantId === id && p.status === 'pending').map(p => p.id));
+      S.payments = [...S.payments.filter(p => p.tenantId !== id), ...list.map(p => ({...p, tenantId: p.tenantId || id}))];
+      const nw = list.filter(p => p.status === 'pending' && !before.has(p.id));
+      if (nw.length && _watchReady) { toast(`🧾 Bukti bayaran baru: ${nw[0].tenantName}`, '', 5000); if (document.hidden || !_pushTok) phoneNotify('🧾 Bukti bayaran baru', `${nw[0].tenantName} · ${monthLabel(nw[0].month)} · ${RM(nw[0].amount)}`); }
+      liveRender();
+    }));
+    _watch.push(API.watchSub(id, 'issues', list => {
+      const before = new Set((S.issues || []).filter(i => i.tenantId === id).map(i => i.id));
+      S.issues = [...(S.issues || []).filter(i => i.tenantId !== id), ...list.map(i => ({...i, tenantId: i.tenantId || id}))];
+      const nw = list.filter(i => i.status === 'new' && !before.has(i.id));
+      if (nw.length && _watchReady) toast(`🛠️ Aduan kerosakan baru: ${nw[0].tenantName}`, '', 5000);
+      liveRender();
+    }));
+  }
+  _watchReady = false; setTimeout(() => _watchReady = true, 4000);   // abaikan data awal semasa mula
+}
+let _watchReady = false;
+function tenantWatch() {
+  if (!ONLINE || !S.token || !S.t) return;
+  const key = 't:' + S.token; if (key === _watchKey) return; unwatchAll(); _watchKey = key;
+  for (const col of ['payments', 'reminders', 'issues']) _watch.push(API.watchSub(S.token, col, list => {
+    if (col === 'payments') { const was = Object.fromEntries((S.payments || []).map(p => [p.id, p.status])); const ok = list.find(p => p.status === 'confirmed' && was[p.id] && was[p.id] !== 'confirmed');
+      if (ok && _watchReady) { toast(`✅ Bayaran diluluskan · Resit ${ok.receiptNo}`, '', 5000); if (document.hidden || !_pushTok) phoneNotify('✅ Bayaran diluluskan', `Resit ${ok.receiptNo} untuk ${monthLabel(ok.month)} sedia.`); } }
+    S[col] = list; liveRender();
+  }));
+  _watchReady = false; setTimeout(() => _watchReady = true, 4000);
+}
 async function cacheFirst(key, load) {   // muat dari salinan phone; true jika berjaya
   if (!ONLINE || !lsGet(key)) return false;
   CACHE_READ = true;
@@ -2465,7 +2511,7 @@ async function enterOwner(uid, opts = {}) {
   if (!isSuper() && !subInfo()?.active) { renderLocked(); return; }
   S.mode = 'owner'; S.tab = opts.tab || S.tab || 'status'; renderOwner(); ownerTick(); lsSet('prosewa_owner_dev', true); pushRegister();
   lsSet('prosewa_c_' + uid, 1);
-  autoNotif();
+  ownerWatch(); autoNotif();
 }
 
 /* ===================== TINDAKAN ===================== */
@@ -2573,7 +2619,7 @@ const ACTIONS = {
   copyLink: async id => { const t = S.tenants.find(x => x.id === id); const u = tenantUrl(t); try { await navigator.clipboard.writeText(u); toast(`Link ${t.name.split(' ')[0]} disalin ✅`); } catch (e) { shareLink(id); } },
   copy: async v => { try { await navigator.clipboard.writeText(v); toast('Disalin.'); } catch (e) { prompt('Salin:', v); } },
   logout: () => openModal('Log Keluar', `<p style="margin-top:0">Anda pasti mahu log keluar dari ProSewa?</p><div class="acts"><button class="btn red" style="flex:1" data-act="logoutYes">Ya, log keluar</button><button class="btn ghost" style="flex:1" data-act="closeModal">Batal</button></div>`),
-  logoutYes: async () => { closeModal(); await API.logout(); S.uid = null; S.mode = null; S.authView = 'login'; lsSet('prosewa_push_reg', ''); renderLogin(); },
+  logoutYes: async () => { closeModal(); unwatchAll(); await API.logout(); S.uid = null; S.mode = null; S.authView = 'login'; lsSet('prosewa_push_reg', ''); renderLogin(); },
   delTenant: async id => {
     const t = S.tenants.find(x => x.id === id);
     if (!await ask(`Padam ${t.name}? Link penyewa akan dimatikan. Rekod bayaran lama kekal dalam laporan.`)) return;
@@ -2842,7 +2888,7 @@ document.addEventListener('click', async e => {
   try { await fn(el.dataset.id, el); } catch (err) { console.error(err); toast(authMsg(err), 'err'); if (err.code || err.name !== 'Error') reportErr(`${el.dataset.act}: ${err.code || ''} ${err.stack || err.message}`, 'action'); }
 });
 $('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
-document.addEventListener('input', e => { if (e.target.closest('#app form')) S.dirty = true; });
+document.addEventListener('input', e => { if (e.target.closest('#app form[data-form]')) S.dirty = true; });
 document.addEventListener('input', e => { const f = e.target.closest('form[data-chg=endCalc]'); if (f) CHANGES.endCalc(f); });
 document.addEventListener('change', e => { if (e.target.closest('#app form') && !e.target.closest('[data-chg]')) S.dirty = true; });
 document.addEventListener('change', e => { const el = e.target.closest('[data-chg]'); if (el && CHANGES[el.dataset.chg]) CHANGES[el.dataset.chg](el); });
@@ -2917,7 +2963,7 @@ function nativeInit() {
   if (S.token && await cacheFirst('prosewa_ct_' + S.token, async () => { await loadTenant(S.token); return !!S.t; })) renderTenant();
   if (S.token) { await loadTenant(S.token); lsSet('prosewa_ct_' + S.token, !!S.t); }
   renderTenant();
-  if (S.t) autoNotif();
+  if (S.t) { tenantWatch(); autoNotif(); }
 })();
 setTimeout(checkApk, 4000); setInterval(checkApk, 6 * 3600e3);
 </script>
