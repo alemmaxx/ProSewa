@@ -203,9 +203,9 @@ const dl = (iso, l) => { const [y, m, d] = String(iso || '').split('-'); return 
 async function pushTo(field, value, build, url) {
   const snap = await db.collection('devices').where(field, '==', value).get();
   if (snap.empty) return 0;
-  const msgs = snap.docs.map(d => { const l = d.data().lang === 'en' ? 'en' : 'bm', m = build(l);
+  const msgs = snap.docs.map(d => { const l = d.data().lang === 'en' ? 'en' : 'bm', m = build(l), tag = 'ps' + require('crypto').createHash('md5').update(m.title + '|' + m.body + '|' + myNow()).digest('hex').slice(0, 16);   // tag sama = notifikasi berganda (token lama & baru pada phone sama) digabung jadi satu
     return {token: d.id, notification: {title: m.title, body: m.body}, data: {title: m.title, body: m.body, url: url || ''},
-      android: {priority: 'high', notification: {icon: 'ic_stat_ps', color: '#d9b44a', sound: 'default'}}, webpush: {headers: {Urgency: 'high'}}}; });
+      android: {priority: 'high', collapseKey: tag, notification: {icon: 'ic_stat_ps', color: '#d9b44a', sound: 'default', tag}}, webpush: {headers: {Urgency: 'high'}}}; });
   const r = await getMessaging().sendEach(msgs);
   db.doc('health/admin').set({push: {sent: FieldValue.increment(r.successCount), fail: FieldValue.increment(r.failureCount)}}, {merge: true}).catch(() => {});
   const dead = r.responses.map((x, i) => !x.success && /registration-token-not-registered|invalid-registration-token|invalid-argument/.test(x.error && x.error.code || '') ? snap.docs[i].ref : null).filter(Boolean);
