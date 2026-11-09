@@ -375,7 +375,12 @@ const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); retu
 
 function toast(msg, type = '', ms = 2800) { const t = $('#toast'); t.textContent = tr(msg); t.className = 'on ' + type; clearTimeout(toast._t); toast._t = setTimeout(() => t.className = '', ms); }
 function openModal(title, html) { $('#mt').textContent = title; $('#mb').innerHTML = html; $('#modal').classList.add('on'); }
-function closeModal() { $('#modal').classList.remove('on'); $('#mb').innerHTML = ''; }
+function closeModal() { $('#modal').classList.remove('on'); $('#mb').innerHTML = ''; if (ask._r) { const r = ask._r; ask._r = null; r(false); } }
+// Pengesahan dalam popup (ada butang ✕), ganti confirm() browser
+function ask(msg, ok = 'Ya', cls = 'red') {
+  if (ask._r) { const r = ask._r; ask._r = null; r(false); }
+  return new Promise(res => { openModal('Pengesahan', `<p style="margin-top:0">${esc(tr(msg))}</p><div class="acts"><button class="btn ${cls}" style="flex:1" data-act="askYes">${esc(tr(ok))}</button><button class="btn ghost" style="flex:1" data-act="closeModal">Batal</button></div>`); ask._r = res; });
+}
 async function hashPass(p) {
   try { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('prosewa:' + p)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); }
   catch (e) { let h = 0; for (const c of 'prosewa:' + p) h = (h * 31 + c.charCodeAt(0)) | 0; return 'x' + h; }
@@ -510,7 +515,7 @@ const I18N_RX = [
   [/Sewa (.+?) (RM [\d,.]+) belum dibayar\./g, 'Rent for $1 ($2) is unpaid.']
 ];
 Object.assign(I18N, {
-  'LAPORAN KUTIPAN SEWA': 'RENT COLLECTION REPORT', '🆕 Apa yang baru (kemas kini versi)': "🆕 What's new (version updates)", 'Papar "Apa yang baru" kepada owner': 'Show "What\'s new" to owners', 'Dimatikan: owner tidak nampak butang & senarai kemas kini.': 'Off: owners don\'t see the button or update list.',
+  'LAPORAN KUTIPAN SEWA': 'RENT COLLECTION REPORT', 'Pengesahan': 'Confirm', 'Benarkan': 'Allow', '🆕 Apa yang baru (kemas kini versi)': "🆕 What's new (version updates)", 'Papar "Apa yang baru" kepada owner': 'Show "What\'s new" to owners', 'Dimatikan: owner tidak nampak butang & senarai kemas kini.': 'Off: owners don\'t see the button or update list.',
   'Matikan untuk sembunyi senarai lama. Bila dihidupkan semula, senarai bermula baru: hanya kemas kini yang keluar selepas itu dipaparkan.': 'Turn off to hide the old list. When turned back on, the list starts fresh: only updates released after that are shown.', '"Apa yang baru" dihidupkan. Senarai bermula baru.': '"What\'s new" turned on. The list starts fresh.', '"Apa yang baru" dimatikan.': '"What\'s new" turned off.', 'Versi app': 'App version', '✓ Terkini': '✓ Up to date', 'Tekan untuk muat turun, kemudian pasang terus atas app ini. Data anda kekal.': 'Tap to download, then install over this app. Your data stays.', '🎬 Muat turun video TikTok (26 saat, MP4)': '🎬 Download TikTok video (26 sec, MP4)', '⏳ Memuat turun video…': '⏳ Downloading video…', 'BARU': 'NEW', '💰 Laporan kewangan': '💰 Financial report', 'Tempoh': 'Period', 'Masuk (langganan)': 'Income (subscriptions)', 'Caj ToyyibPay': 'ToyyibPay fees', 'Bersih diterima': 'Net received', 'Belanja sistem': 'System expenses', 'Untung bersih': 'Net profit', 'bayaran': 'payments', 'rekod': 'records', 'auto': 'auto',
   'Tukar kadar': 'Change rate', 'setiap transaksi berjaya.': 'per successful transaction.', '📊 Lihat laporan penuh': '📊 View full report', '+ Rekod belanja sistem': '+ Record system expense', 'LAPORAN KEWANGAN LANGGANAN': 'SUBSCRIPTION FINANCIAL REPORT', 'Senarai bayaran langganan': 'Subscription payments', 'Owner': 'Owner', 'Pakej': 'Plan', 'Rujukan': 'Reference', 'Caj': 'Fee', 'Bersih': 'Net', 'Belanja': 'Expenses', 'Bil.': 'No.',
   'Lanjutan percuma (RM0, tiada caj)': 'Free extensions (RM0, no fee)', 'Jenis': 'Type', 'Kategori': 'Category', 'Keterangan': 'Description', 'Kod promo': 'Promo code', 'Manual (Super Admin)': 'Manual (Super Admin)',
@@ -1101,7 +1106,7 @@ function tenantNotifs(t, payments, reminders, settings) {
 }
 
 /* ---------- State ---------- */
-const S = {mode: null, tab: 'tenants', month: curMonth(), year: new Date().getFullYear(), uid: null, owner: null, settings: DEFAULT_SETTINGS, sub: null, config: {}, subPayments: [],
+const S = {mode: null, tab: 'status', month: curMonth(), year: new Date().getFullYear(), uid: null, owner: null, settings: DEFAULT_SETTINGS, sub: null, config: {}, subPayments: [],
   tenants: [], payments: [], reminders: [], t: null, tTab: 'home', authView: 'login'};
 
 async function loadOwner() {
@@ -2384,11 +2389,11 @@ const ACTIONS = {
   issueFilter: id => { S.issueFilter = id; renderOwner(); },
   issuePhoto: id => { const i = S.issues.find(x => x.id === id); if (i?.photo) openModal('Gambar Aduan', `<img class="proofbig" src="${i.photo}" alt="">`); },
   billForm: () => billForm(), recForm: id => recForm(id),
-  recStop: async id => { if (!confirm('Hentikan bil berulang ini? Bil yang sudah direkod kekal.')) return; await API.updateRecurring(id, {active: false, endMonth: curMonth()}); closeModal(); toast('Bil berulang dihentikan.'); await refresh(); },
+  recStop: async id => { if (!await ask('Hentikan bil berulang ini? Bil yang sudah direkod kekal.')) return; await API.updateRecurring(id, {active: false, endMonth: curMonth()}); closeModal(); toast('Bil berulang dihentikan.'); await refresh(); },
   tenView: id => { S.tenView = id; renderOwner(); },
   tenantInto: v => tenantForm(null, v),
   propForm: v => propForm(v),
-  propDel: async id => { const p = S.props.find(x => x.id === id); if (S.tenants.some(t => t.active !== false && t.propertyId === id)) return toast('Rumah ini masih ada penyewa aktif. Tamatkan sewa mereka dahulu.', 'err'); if (!confirm(`Padam ${p.name}? Rekod bayaran lama kekal dalam laporan.`)) return; await API.delProp(id); closeModal(); toast('Dipadam.'); await refresh(); },
+  propDel: async id => { const p = S.props.find(x => x.id === id); if (S.tenants.some(t => t.active !== false && t.propertyId === id)) return toast('Rumah ini masih ada penyewa aktif. Tamatkan sewa mereka dahulu.', 'err'); if (!await ask(`Padam ${p.name}? Rekod bayaran lama kekal dalam laporan.`)) return; await API.delProp(id); closeModal(); toast('Dipadam.'); await refresh(); },
   roomAdd: () => { const box = $('#roomRows'), i = box.querySelectorAll('.room').length; box.insertAdjacentHTML('beforeend', `<div class="grid2 room">${hid('rid' + i, genId().slice(0, 6))}${fld('Nama bilik', 'rn' + i, 'Bilik ' + String.fromCharCode(65 + i), 'text')}<div class="fld"><span>${tr('Sewa (RM)')}</span><div style="display:flex;gap:6px"><input name="rr${i}" type="number" step="0.01" min="0" inputmode="decimal" style="flex:1"><button type="button" class="btn sm red" data-act="roomDel" aria-label="Buang">✕</button></div></div></div>`); },
   roomDel: (id, el) => el.closest('.room').remove(),
   reauthGoogle: async () => { try { await API.reauth({google: true}); } catch (e) { if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return; throw e; } await finishPass(); },
@@ -2396,13 +2401,14 @@ const ACTIONS = {
   renewForm: id => renewForm(id), endForm: id => endForm(id), depStatement: id => depStatement(id),
   depPdf: id => { const t = S.tenants.find(x => x.id === id) || S.t; printHTML(depStatementHTML(t), tr('Penyata Deposit') + ' ' + t.name); },
   promoFilter: id => { S.promoFilter = id; renderSuper(); },
+  askYes: () => { const r = ask._r; ask._r = null; closeModal(); if (r) r(true); },
   promoKit: () => promoKit(), whatsNew: () => whatsNew(),
   finView: () => finView(), finCsv: () => finCsv(), feeForm: () => feeForm(), sysExpForm: () => sysExpForm(),
   finPdf: () => printHTML(finReportHTML(), tr('Laporan Kewangan') + ' ' + finData().per),
-  sysExpDel: async id => { if (!confirm(tr('Padam rekod belanja ini?'))) return; await API.delSysExp(id); S.sysExp = S.sysExp.filter(e => e.id !== id); closeModal(); toast(tr('Dipadam.')); renderSuper(); },
+  sysExpDel: async id => { if (!await ask(tr('Padam rekod belanja ini?'))) return; await API.delSysExp(id); S.sysExp = S.sysExp.filter(e => e.id !== id); closeModal(); toast(tr('Dipadam.')); renderSuper(); },
   healthNow: async (id, el) => { el.disabled = true; el.textContent = '⏳ …'; try { S.health = await API.healthNow(); toast('Semakan selesai.'); } finally { renderSuper(); } },
   healthTest: async () => { const r = await API.healthNow({test: true}); toast(r.sent ? `Amaran ujian dihantar ke ${r.sent} peranti ✅` : 'Tiada peranti Super Admin berdaftar. Log masuk di APK / web, aktifkan notifikasi, kemudian cuba lagi.', r.sent ? '' : 'err'); },
-  clearErrs: async () => { if (!confirm('Padam semua rekod ralat?')) return; await API.clearErrors(S.sysErrs || []); toast('Dipadam.'); renderSuper(); },
+  clearErrs: async () => { if (!await ask('Padam semua rekod ralat?')) return; await API.clearErrors(S.sysErrs || []); toast('Dipadam.'); renderSuper(); },
   manual: () => manualModal(),
   reportForm: () => reportForm(),
   kitCopy: async k => { const c = S.kitCaps[+k]; try { await navigator.clipboard.writeText(c); toast('Disalin.'); } catch (e) { prompt('Salin:', c); } },
@@ -2414,7 +2420,7 @@ const ACTIONS = {
   promoCopyAll: async () => { const t = localISO(), c = (S.promos || []).filter(p => !p.used && !(p.expires && p.expires < t)).map(p => p.code).join('\n'); try { await navigator.clipboard.writeText(c); toast('Disalin.'); } catch (e) { prompt('Salin:', c); } },
   promoEdit: code => { const p = S.promos.find(x => x.code === code); openModal('Edit Kod Promo', `<form data-form="promoEdit">${hid('code', code)}<div class="linkbox" data-raw>${esc(code)}</div>
       ${fld('Hari langganan percuma', 'days', p.days, 'number', 'min="1" max="3650" required')}${fld('Guna sebelum (pilihan)', 'expires', p.expires || '', 'date')}${fld('Nota (pilihan)', 'note', p.note || '')}<button class="btn wide" style="margin-top:10px">Simpan</button></form>`); },
-  promoDel: async code => { if (!confirm(`Padam kod ${code}?`)) return; await API.delPromo(code); toast('Dipadam.'); renderSuper(); },
+  promoDel: async code => { if (!await ask(`Padam kod ${code}?`)) return; await API.delPromo(code); toast('Dipadam.'); renderSuper(); },
   superAdd: async v => {
     const [uid, n] = v.split('|'); const o = S.owners.find(x => x.uid === uid), si = subInfo(fsub(o.sub));
     const end = addDays(extendFrom(si), +n);
@@ -2423,7 +2429,7 @@ const ACTIONS = {
     toast(`Ditambah ${n} hari.`); renderSuper();
   },
   superTrial: async uid => { await API.setSub(uid, {plan: 'trial', start: localISO()}); toast('Percubaan diset semula.'); renderSuper(); },
-  superExpire: async uid => { if (!confirm('Tamatkan langganan owner sekarang? (untuk uji)')) return; const o = S.owners.find(x => x.uid === uid), si = subInfo(fsub(o.sub)); await API.setSub(uid, {plan: si && si.plan !== 'trial' ? si.plan : 'monthly', start: si?.start || localISO(), end: addDays(localISO(), -1)}); toast('Langganan ditamatkan.'); renderSuper(); },
+  superExpire: async uid => { if (!await ask('Tamatkan langganan owner sekarang? (untuk uji)')) return; const o = S.owners.find(x => x.uid === uid), si = subInfo(fsub(o.sub)); await API.setSub(uid, {plan: si && si.plan !== 'trial' ? si.plan : 'monthly', start: si?.start || localISO(), end: addDays(localISO(), -1)}); toast('Langganan ditamatkan.'); renderSuper(); },
   google: async () => { try { const r = await API.google(); if (r) { S.lastEmail = r.email; if (!ONLINE) await enterOwner(r.uid); } } catch (e) { if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') throw e; } },
   qrRemove: (id, el) => { const f = el.closest('form'); f.dataset.qr = ''; $('#qrPrev').innerHTML = '<span class="muted">Tiada QR</span>'; el.remove(); S.dirty = true; toast('Tekan Simpan profil untuk buang QR.'); },
   qrView: () => { const q = S.owner?.qr; if (!q) return; openModal('QR Bayaran', `<img src="${q}" alt="QR" style="width:100%;border-radius:12px;background:#fff"><button class="btn wide" style="margin-top:10px" data-act="saveQR">⬇ Simpan QR ke phone</button>${isNative() ? '' : '<p class="muted" style="text-align:center">iPhone: tekan lama pada gambar QR → Simpan ke Foto.</p>'}`); },
@@ -2447,11 +2453,11 @@ const ACTIONS = {
   logoutYes: async () => { closeModal(); await API.logout(); S.uid = null; S.mode = null; S.authView = 'login'; lsSet('prosewa_push_reg', ''); renderLogin(); },
   delTenant: async id => {
     const t = S.tenants.find(x => x.id === id);
-    if (!confirm(`Padam ${t.name}? Link penyewa akan dimatikan. Rekod bayaran lama kekal dalam laporan.`)) return;
+    if (!await ask(`Padam ${t.name}? Link penyewa akan dimatikan. Rekod bayaran lama kekal dalam laporan.`)) return;
     closeModal(); await API.updateTenant(id, {active: false, endedAt: curMonth(), moveOut: localISO()});
     toast('Penyewa dibuang.'); await refresh();
   },
-  newToken: async id => { if (!confirm('Tukar link? Link lama tidak boleh digunakan lagi.')) return; closeModal(); renderLoading(); const nt = await API.rekeyTenant(id); await loadOwner(); renderOwner(); shareLink(nt); toast('Link baru dijana.'); },
+  newToken: async id => { if (!await ask('Tukar link? Link lama tidak boleh digunakan lagi.')) return; closeModal(); renderLoading(); const nt = await API.rekeyTenant(id); await loadOwner(); renderOwner(); shareLink(nt); toast('Link baru dijana.'); },
   approve: async id => {
     const p = S.payments.find(x => x.id === id);
     await API.updateSub(p.tenantId, 'payments', id, {status: 'confirmed', receiptNo: await nextRcpt(), confirmedAt: nowStr()});
@@ -2464,7 +2470,7 @@ const ACTIONS = {
   repView: id => { S.repView = id; renderOwner(); },
   expForm: id => expForm(id),
   expProof: id => { const e = S.expenses.find(x => x.id === id); openModal('Resit Perbelanjaan', `<img class="proofbig" src="${e.proof}" alt=""><div class="kv"><span>${esc(e.category)}</span><b>${RM(e.amount)}</b></div><div class="kv"><span>Tarikh</span><b>${dateLabel(e.date)}</b></div>`); },
-  delExp: async id => { if (!confirm('Padam perbelanjaan ini?')) return; const e = S.expenses.find(x => x.id === id), r = e?.recId && (S.recurring || []).find(x => x.id === e.recId); if (r) await API.updateRecurring(r.id, {skip: [...(r.skip || []), e.date.slice(0, 7)]}).catch(() => {}); await API.delExpense(id); toast('Dipadam.'); await refresh(); },
+  delExp: async id => { if (!await ask('Padam perbelanjaan ini?')) return; const e = S.expenses.find(x => x.id === id), r = e?.recId && (S.recurring || []).find(x => x.id === e.recId); if (r) await API.updateRecurring(r.id, {skip: [...(r.skip || []), e.date.slice(0, 7)]}).catch(() => {}); await API.delExpense(id); toast('Dipadam.'); await refresh(); },
   collPdf: () => printHTML(collReportHTML(S.year), tr('Laporan Kutipan') + ' ' + S.year),
   taxPdf: () => printHTML(taxReportHTML(S.year), tr('Laporan Sewa') + ' ' + S.year),
   taxCsv: () => {
@@ -2478,14 +2484,14 @@ const ACTIONS = {
     const csv = '\ufeff' + rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
     saveFile(`ProSewa-${tr('Laporan-Cukai')}-${y}.csv`, csv, 'text/csv');
   },
-  delPay: async id => { if (!confirm('Padam rekod bayaran ini?')) return; await API.delSub(tokOfPay(id), 'payments', id); closeModal(); toast('Dipadam.'); await refresh(); },
+  delPay: async id => { if (!await ask('Padam rekod bayaran ini?')) return; await API.delSub(tokOfPay(id), 'payments', id); closeModal(); toast('Dipadam.'); await refresh(); },
   delReminder: async id => { const r = S.reminders.find(x => x.id === id); await API.delSub(r.tenantId, 'reminders', id); toast('Peringatan dibatalkan.'); await refresh(); },
   enableNotif: async () => {
     let r;
     if (isNative()) {
       const LN = CP('LocalNotifications'); if (!LN) return toast('Phone/browser ini tidak sokong notifikasi. Install app dahulu.', 'err');
       r = (await LN.requestPermissions().catch(() => ({}))).display;
-      if (r === 'granted' && LN.checkExactNotificationSetting) { const ex = await LN.checkExactNotificationSetting().catch(() => null); if (ex && ex.exact_alarm !== 'granted' && confirm('Benarkan "Alarm & peringatan" supaya notifikasi sampai tepat pada masanya walaupun app ditutup?')) await LN.changeExactNotificationSetting().catch(() => {}); }
+      if (r === 'granted' && LN.checkExactNotificationSetting) { const ex = await LN.checkExactNotificationSetting().catch(() => null); if (ex && ex.exact_alarm !== 'granted' && await ask('Benarkan "Alarm & peringatan" supaya notifikasi sampai tepat pada masanya walaupun app ditutup?', 'Benarkan', '')) await LN.changeExactNotificationSetting().catch(() => {}); }
     } else {
       if (!('Notification' in window)) return toast('Phone/browser ini tidak sokong notifikasi. Install app dahulu.', 'err');
       r = await Notification.requestPermission();
@@ -2737,9 +2743,8 @@ function nativeInit() {
   CP('LocalNotifications')?.createChannel?.({id: 'badge', name: 'Belum dibaca', description: 'Lencana pada ikon app', importance: 2, visibility: 1, vibration: false}).catch(() => {});
   const A = CP('App'); if (!A) return;
   A.addListener('backButton', () => {
-    if ($('#modal').classList.contains('on')) return closeModal();
-    if (S.mode === 'owner' && S.tab !== 'status') { S.tab = 'status'; return renderOwner(); }
-    if (S.mode === 'tenant' && S.tTab !== 'home') { S.tTab = 'home'; return renderTenant(); }
+    // Butang back = keluar app sahaja (navigasi guna tab & butang ✕ pada popup)
+    if ($('#modal').classList.contains('on')) closeModal();
     A.minimizeApp ? A.minimizeApp() : A.exitApp();
   });
   A.addListener('appStateChange', st => {
