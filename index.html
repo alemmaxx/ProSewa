@@ -203,6 +203,7 @@ header .lang{margin-bottom:0}
 .finst{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.finst>div{background:var(--soft,rgba(255,255,255,.04));border:1px solid var(--line);border-radius:12px;padding:10px}
 .finst span{display:block;font-size:12px;color:var(--muted)}.finst b{display:block;font-size:17px;margin-top:2px}.finst b.g{color:var(--green)}.finst b.r{color:var(--red)}.finst em{font-style:normal;font-size:11.5px;color:var(--muted)}
 .finrep #taxrep{background:#fff;color:#111;border-radius:12px;padding:12px;font-size:12px;overflow-x:auto}
+.newdot{font-style:normal;background:var(--red,#e5484d);color:#fff;font:700 10.5px var(--f);padding:2px 7px;border-radius:999px;margin-left:8px;vertical-align:middle}
 header .hpill{height:38px;padding:0 14px;font-size:14px;border-radius:10px;display:inline-flex;align-items:center;gap:6px;flex:none}
 .pw{position:relative}.pw input{padding-right:50px}
 .pw .eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:42px;height:38px;border:0;border-radius:8px;background:none;font-size:18px;cursor:pointer;opacity:.7}
@@ -472,7 +473,7 @@ const I18N_RX = [
   [/Kutipan (\d+)% daripada jangkaan/g, 'Collected $1% of expected'],
   [/Link (\S+) disalin/g, "$1's link copied"],
   [/Ditambah (\d+) hari/g, 'Added $1 days'],
-  [/Salam, /g, 'Hi, '],
+  [/Salam, /g, 'Hi, '], [/🆕 Apa yang baru · /g, "🆕 What's new · "],
   [/(\d+) penyewa, (\d+) rekod bayaran & resit, aduan, perbelanjaan, bil, rumah & bil berulang akan dipadam kekal\. Link penyewa lama tidak boleh dibuka lagi\./g, '$1 tenants, $2 payment & receipt records, requests, expenses, bills, properties & recurring bills will be permanently deleted. Old tenant links will stop working.'],
   [/PDF ada (\d+) halaman\. Hanya 2 halaman pertama disimpan\./g, 'The PDF has $1 pages. Only the first 2 pages are saved.'],
   [/Bil & utiliti (\d{4})/g, 'Bills & utilities $1'],
@@ -504,7 +505,7 @@ const I18N_RX = [
   [/Sewa (.+?) (RM [\d,.]+) belum dibayar\./g, 'Rent for $1 ($2) is unpaid.']
 ];
 Object.assign(I18N, {
-  'LAPORAN KUTIPAN SEWA': 'RENT COLLECTION REPORT', '💰 Laporan kewangan': '💰 Financial report', 'Tempoh': 'Period', 'Masuk (langganan)': 'Income (subscriptions)', 'Caj ToyyibPay': 'ToyyibPay fees', 'Bersih diterima': 'Net received', 'Belanja sistem': 'System expenses', 'Untung bersih': 'Net profit', 'bayaran': 'payments', 'rekod': 'records', 'auto': 'auto',
+  'LAPORAN KUTIPAN SEWA': 'RENT COLLECTION REPORT', 'BARU': 'NEW', '💰 Laporan kewangan': '💰 Financial report', 'Tempoh': 'Period', 'Masuk (langganan)': 'Income (subscriptions)', 'Caj ToyyibPay': 'ToyyibPay fees', 'Bersih diterima': 'Net received', 'Belanja sistem': 'System expenses', 'Untung bersih': 'Net profit', 'bayaran': 'payments', 'rekod': 'records', 'auto': 'auto',
   'Tukar kadar': 'Change rate', 'setiap transaksi berjaya.': 'per successful transaction.', '📊 Lihat laporan penuh': '📊 View full report', '+ Rekod belanja sistem': '+ Record system expense', 'LAPORAN KEWANGAN LANGGANAN': 'SUBSCRIPTION FINANCIAL REPORT', 'Senarai bayaran langganan': 'Subscription payments', 'Owner': 'Owner', 'Pakej': 'Plan', 'Rujukan': 'Reference', 'Caj': 'Fee', 'Bersih': 'Net', 'Belanja': 'Expenses', 'Bil.': 'No.',
   'Lanjutan percuma (RM0, tiada caj)': 'Free extensions (RM0, no fee)', 'Jenis': 'Type', 'Kategori': 'Category', 'Keterangan': 'Description', 'Kod promo': 'Promo code', 'Manual (Super Admin)': 'Manual (Super Admin)',
   'Caj ToyyibPay ialah anggaran berdasarkan kadar yang ditetapkan. Semak penyata ToyyibPay untuk angka sebenar.': 'ToyyibPay fees are estimates based on the set rate. Check your ToyyibPay statement for actual figures.',
@@ -773,7 +774,7 @@ const PLANS = [
   {id: 'yearly', name: 'Setahun', months: 12, price: 179.00, tag: 'Paling jimat'}
 ];
 const TRIAL_DAYS = 14;   // asal; Super Admin boleh ubah dalam panel #super (disimpan dalam config/app)
-const APP_VER = '2026.11.04';
+const APP_VER = '2026.11.09';
 const HEALTH_URL = 'https://asia-southeast1-kukusanmy.cloudfunctions.net/prosewaHealthNow';
 const PROMO_URL = 'https://asia-southeast1-kukusanmy.cloudfunctions.net/prosewaRedeemPromo';   // Cloud Function kod promo
 const TOYYIBPAY = {createBillUrl: 'https://asia-southeast1-kukusanmy.cloudfunctions.net/prosewaCreateBill'};   // Cloud Function (folder functions/)
@@ -1362,10 +1363,10 @@ const promoCaps = (l, code, days) => {
   const t = trialDays(), link = LANDING + (l === 'en' ? '?lang=en' : '');
   const cB = code ? `\n🎟️ Kod promo: ${code} (+${days} hari percuma, sekali guna)` : '', cE = code ? `\n🎟️ Promo code: ${code} (+${days} free days, single use)` : '';
   return l === 'en' ? [
-    ['WhatsApp / Facebook', `🏠 Own a rental house or room? Tired of chasing rent every month?\n\nProSewa helps landlords manage everything in one app:\n✅ Tenants upload payment proof, receipts are issued automatically\n🔔 Rent reminders & notifications straight to tenants' phones\n📊 Collection & tax reports (ready for e-Filing)\n🏠 Houses, rooms & vacancies, plus electricity, water & IWK bills\n📄 Tenancy, deposit & maintenance requests\n📱 Web + Android app, tenants don't need to log in\n\nTry it FREE for ${t} days 👉 ${link}${cE}`],
+    ['WhatsApp / Facebook', `🏠 Own a rental house or room? Tired of chasing rent every month?\n\nProSewa helps landlords manage everything in one app:\n✅ Tenants upload payment proof, you review & approve, receipts are issued automatically\n💰 Overpayments carried to next month automatically\n🔔 Rent reminders & notifications straight to tenants' phones\n📊 Collection & tax reports (ready for e-Filing)\n🏠 Houses, rooms & vacancies, plus electricity, water & IWK bills\n📄 Tenancy, deposit & maintenance requests\n📱 Web + Android app, tenants don't need to log in\n\nTry it FREE for ${t} days 👉 ${link}${cE}`],
     ['TikTok / Instagram', `Landlords, stop chasing rent on WhatsApp 😅 ProSewa: automatic receipts, rent reminders, vacant-room tracking, bills & tax reports. Free ${t}-day trial, link in bio 🏠${cE}\n\n#rentalproperty #landlordmalaysia #roomforrent #propertymalaysia #prosewa`],
     ['Ringkas / Short', `ProSewa: the rental management app. Automatic receipts, rent reminders & tax reports. Free for ${t} days: ${link}${cE}`]] : [
-    ['WhatsApp / Facebook', `🏠 Ada rumah / bilik sewa? Penat kejar sewa setiap bulan?\n\nProSewa bantu tuan rumah urus semuanya dalam satu app:\n✅ Penyewa muat naik bukti bayaran, resit keluar automatik\n🔔 Peringatan sewa & notifikasi terus ke phone penyewa\n📊 Laporan kutipan & cukai (sedia untuk e-Filing)\n🏠 Rumah, bilik & bilik kosong, serta bil elektrik, air & IWK\n📄 Kontrak, deposit & aduan kerosakan\n📱 Web + App Android, penyewa tak perlu login\n\nCuba PERCUMA ${t} hari 👉 ${link}${cB}`],
+    ['WhatsApp / Facebook', `🏠 Ada rumah / bilik sewa? Penat kejar sewa setiap bulan?\n\nProSewa bantu tuan rumah urus semuanya dalam satu app:\n✅ Penyewa muat naik bukti bayaran, anda semak & lulus, resit keluar automatik\n💰 Terlebih bayar dibawa ke bulan depan secara automatik\n🔔 Peringatan sewa & notifikasi terus ke phone penyewa\n📊 Laporan kutipan & cukai (sedia untuk e-Filing)\n🏠 Rumah, bilik & bilik kosong, serta bil elektrik, air & IWK\n📄 Kontrak, deposit & aduan kerosakan\n📱 Web + App Android, penyewa tak perlu login\n\nCuba PERCUMA ${t} hari 👉 ${link}${cB}`],
     ['TikTok / Instagram', `Tuan rumah, stop kejar sewa dalam WhatsApp 😅 ProSewa: resit automatik, peringatan sewa, bilik kosong, bil & laporan cukai. Percuma ${t} hari, link di bio 🏠${cB}\n\n#rumahsewa #tuanrumah #sewarumah #biliksewa #landlordmalaysia #prosewa`],
     ['Ringkas', `ProSewa: app urus rumah sewa. Resit automatik, peringatan sewa & laporan cukai. Percuma ${t} hari: ${link}${cB}`]];
 };
@@ -1665,7 +1666,8 @@ function oSettings() {
   const o = S.owner, s = S.settings;
   const perm = NPERM;
   return header('Tetapan', 'Tetapan.', o.name ? `${o.name}${o.phone ? ' · ' + o.phone : ''}` : 'Lengkapkan maklumat anda', {btns: ownerBtns()}) + `<div class="wrap"><div class="stack">
-    <div class="blk"><div class="card"><div class="acts" style="margin:0"><button class="btn" style="flex:1" data-act="manual">📘 Manual pengguna</button><button class="btn ghost" style="flex:1" data-act="reportForm">📮 Lapor masalah</button></div></div></div>
+    <div class="blk"><div class="card"><div class="acts" style="margin:0"><button class="btn" style="flex:1" data-act="manual">📘 Manual pengguna</button><button class="btn ghost" style="flex:1" data-act="reportForm">📮 Lapor masalah</button></div>
+      <button class="btn wide ghost" style="margin-top:8px;position:relative" data-act="whatsNew">🆕 Apa yang baru · v${APP_VER}${seenVer() !== APP_VER ? '<em class="newdot">BARU</em>' : ''}</button></div></div>
     <div class="blk"><div class="sec-h">Paparan</div><div class="card"><div class="switch">Bahasa ${langSeg()}</div><div class="switch">Tema ${themeSeg()}</div></div></div>
     <div class="blk"><div class="sec-h">Maklumat syarikat (untuk resit)</div><form class="card" data-form="company">
       <div class="logobox"><div id="logoPrev">${o.logo ? `<img src="${o.logo}" alt="logo">` : '<span class="muted">Tiada logo</span>'}</div>
@@ -1755,23 +1757,23 @@ function issueForm(id) {
 /* ===================== MANUAL PENGGUNA (owner) ===================== */
 const MANUAL = [
  ['🚀 Mula guna (5 minit)', '🚀 Getting started (5 minutes)',
-  '<ol><li>Pergi ke <b>Tetapan → Profil & maklumat bayaran</b>: isi nama, telefon, bank, no. akaun dan muat naik <b>QR DuitNow</b> anda. Penyewa nampak maklumat ini.</li><li>Di <b>Maklumat syarikat</b>: muat naik logo, nama & alamat syarikat, No. SSM/SST dan awalan no. resit. Ini muncul pada resit.</li><li>Di <b>Peringatan automatik</b>: pilih berapa hari sebelum tarikh bayar & jam notifikasi dihantar kepada penyewa.</li><li>Tekan <b>🔔 Aktifkan notifikasi phone</b>, kemudian <b>🧪 Uji notifikasi</b>.</li></ol>',
-  '<ol><li>Go to <b>Settings → Profile & payment details</b>: enter your name, phone, bank, account number and upload your <b>DuitNow QR</b>. Tenants see these details.</li><li>Under <b>Company details</b>: upload your logo, company name & address, SSM/SST numbers and receipt prefix. These appear on receipts.</li><li>Under <b>Automatic reminders</b>: choose how many days before the due date & what time tenants are notified.</li><li>Tap <b>🔔 Enable phone notifications</b>, then <b>🧪 Test notification</b>.</li></ol>'],
+  '<ol><li>Pergi ke <b>Tetapan → Profil & maklumat bayaran</b>: isi nama, telefon, bank, no. akaun dan muat naik <b>QR DuitNow</b> anda. Penyewa nampak maklumat ini.</li><li>Di <b>Maklumat syarikat</b>: muat naik logo, nama & alamat syarikat, No. SSM/SST dan awalan no. resit. Ini muncul pada resit.</li><li>Di <b>Peringatan automatik</b>: pilih berapa hari sebelum tarikh bayar & jam notifikasi dihantar kepada penyewa.</li><li>Tekan <b>🔔 Aktifkan notifikasi phone</b>, kemudian <b>🧪 Uji notifikasi</b>.</li></ol><p>Lepas setiap kemas kini, tekan <b>🆕 Apa yang baru</b> di Tetapan untuk lihat perubahan.</p>',
+  '<ol><li>Go to <b>Settings → Profile & payment details</b>: enter your name, phone, bank, account number and upload your <b>DuitNow QR</b>. Tenants see these details.</li><li>Under <b>Company details</b>: upload your logo, company name & address, SSM/SST numbers and receipt prefix. These appear on receipts.</li><li>Under <b>Automatic reminders</b>: choose how many days before the due date & what time tenants are notified.</li><li>Tap <b>🔔 Enable phone notifications</b>, then <b>🧪 Test notification</b>.</li></ol><p>After every update, tap <b>🆕 What\'s new</b> in Settings to see the changes.</p>'],
  ['👥 Tambah penyewa & hantar link', '👥 Add tenants & send their link',
-  '<ol><li>Tekan butang <b>+</b> di atas. Isi nama, telefon, alamat (rumah / bilik), sewa, deposit, tarikh bayar, tarikh mula & <b>tamat kontrak</b>.</li><li>Selepas simpan, tekan <b>Hantar link via WhatsApp</b>. Penyewa cuma buka link itu, <b>tiada login</b>.</li><li>Penyewa Android boleh pasang <b>APK ProSewa Penyewa</b> dan tampal link sekali sahaja.</li><li>Link tersebar? Tekan 🔗 → <b>Tukar link</b>. Link lama terus tidak boleh digunakan.</li></ol>',
-  '<ol><li>Tap the <b>+</b> button at the top. Enter name, phone, address (house / room), rent, deposit, due day, start date & <b>tenancy end</b>.</li><li>After saving, tap <b>Send link via WhatsApp</b>. Tenants just open the link, <b>no login</b>.</li><li>Android tenants can install the <b>ProSewa Tenant APK</b> and paste the link once.</li><li>Link leaked? Tap 🔗 → <b>Change link</b>. The old link stops working immediately.</li></ol>'],
+  '<ol><li>Tekan butang <b>+</b> di atas. Isi nama, telefon, alamat (rumah / bilik), sewa, deposit, tarikh bayar, tarikh mula & <b>tamat kontrak</b>.</li><li>Selepas simpan, tekan <b>Hantar link via WhatsApp</b>. Penyewa cuma buka link itu, <b>tiada login</b>.</li><li>Tab <b>Penyewa</b> tunjuk senarai ringkas dengan status besar <b>DIBAYAR / BELUM BAYAR</b>. Tekan nama penyewa untuk butiran, sejarah 6 bulan, link, edit, perbaharui & tamatkan sewa.</li><li>Penyewa Android boleh pasang <b>APK ProSewa Penyewa</b> dan tampal link sekali sahaja.</li><li>Link tersebar? Buka penyewa → <b>Tukar link</b>. Link lama terus tidak boleh digunakan.</li></ol>',
+  '<ol><li>Tap the <b>+</b> button at the top. Enter name, phone, address (house / room), rent, deposit, due day, start date & <b>tenancy end</b>.</li><li>After saving, tap <b>Send link via WhatsApp</b>. Tenants just open the link, <b>no login</b>.</li><li>The <b>Tenants</b> tab shows a compact list with a big <b>PAID / UNPAID</b> status. Tap a tenant for details, 6-month history, link, edit, renew & end tenancy.</li><li>Android tenants can install the <b>ProSewa Tenant APK</b> and paste the link once.</li><li>Link leaked? Open the tenant → <b>Change link</b>. The old link stops working immediately.</li></ol>'],
  ['🏘️ Rumah & bilik (Hartanah)', '🏘️ Houses & rooms (Properties)',
   '<ol><li>Di tab <b>Penyewa</b>, tekan <b>🏠 Hartanah</b> → <b>Tambah rumah</b>. Pilih <b>Sewa bilik</b> (senaraikan bilik & sewa) atau <b>Seluruh rumah / unit</b>.</li><li>Bilik tanpa penyewa ditanda <b>kosong</b>, dengan bilangan hari dan sewa yang hilang sebulan. Tekan <b>+ Masukkan penyewa</b> terus dari bilik itu.</li><li>Penyewa sedia ada: tekan ✏️ Edit dan pilih <b>Rumah / bilik</b>.</li><li>Bila sewa ditamatkan (🚪), bilik terus jadi kosong. Laporan cukai dikira ikut rumah.</li></ol><p>Pilihan sahaja: penyewa tanpa rumah tetap berfungsi seperti biasa.</p>',
   '<ol><li>In the <b>Tenants</b> tab, tap <b>🏠 Properties</b> → <b>Add property</b>. Choose <b>Room rental</b> (list the rooms & rent) or <b>Whole house / unit</b>.</li><li>Rooms without a tenant are marked <b>vacant</b>, with the number of days and the rent lost per month. Tap <b>+ Add tenant</b> straight from that room.</li><li>Existing tenants: tap ✏️ Edit and choose a <b>Property / room</b>.</li><li>When a tenancy ends (🚪), the room becomes vacant automatically. The tax report is grouped by property.</li></ol><p>Optional: tenants without a property keep working as usual.</p>'],
  ['💳 Terima bayaran & resit', '💳 Payments & receipts',
-  '<ol><li>Penyewa bayar ke akaun / QR anda dan muat naik slip (<b>gambar atau PDF</b> dari app bank). Anda dapat notifikasi <b>🧾 Bukti bayaran baru</b>.</li><li>Buka tab <b>Status</b> → semak gambar → <b>✓ Lulus & hantar resit</b> atau <b>Tolak</b> (dengan sebab).</li><li>Penyewa bayar tunai / tak guna app? Tekan <b>💵 Rekod bayaran</b> pada kad penyewa dan muat naik slip sendiri (gambar atau PDF).</li><li>Resit boleh disimpan sebagai PDF atau dihantar melalui WhatsApp. No. resit berturutan dan tidak berulang.</li><li>Tersilap? Buka resit → <b>Batal resit</b> (dengan sebab). Resit sah tidak boleh dipadam, untuk rekod audit.</li></ol>',
-  '<ol><li>Tenants pay to your account / QR and upload the slip (<b>image or PDF</b> from their bank app). You get a <b>🧾 New payment proof</b> notification.</li><li>Open the <b>Status</b> tab → check the image → <b>✓ Approve & send receipt</b> or <b>Reject</b> (with a reason).</li><li>Tenant pays cash / doesn\'t use the app? Tap <b>💵 Record payment</b> on the tenant card and upload the slip yourself (image or PDF).</li><li>Receipts can be saved as PDF or sent via WhatsApp. Receipt numbers run in sequence and are never reused.</li><li>Made a mistake? Open the receipt → <b>Void receipt</b> (with a reason). Valid receipts cannot be deleted, for audit purposes.</li></ol>'],
+  '<ol><li>Penyewa bayar ke akaun / QR anda dan muat naik slip (<b>gambar atau PDF</b> dari app bank). Anda dapat notifikasi <b>🧾 Bukti bayaran baru</b>.</li><li>Buka tab <b>Status</b> (tab pertama) → tekan <b>🔍 Semak bayaran</b>. Semak bukti, jumlah berbanding sewa, kaedah & rujukan. Tanda <b>Saya telah semak bukti ini</b>, kemudian <b>Luluskan</b>, atau <b>Tolak</b> (dengan sebab).</li><li>Penyewa tak guna app dan cuma hantar bukti kepada anda? Di tab Status, tekan <b>📝 Bayaran manual</b> pada penyewa itu, pilih <b>Kaedah bayaran penyewa</b> (Pindahan bank, Touch \'n Go, Deposit tunai bank, Tunai) dan muat naik slip.</li><li><b>Terbayar lebih?</b> Lebihan dibawa ke bulan depan secara automatik sebagai <b>kredit</b>. Penyewa nampak nota bahawa lebihan akan ditolak bulan depan.</li><li>Resit boleh disimpan sebagai PDF atau dihantar melalui WhatsApp. No. resit berturutan dan tidak berulang.</li><li>Tersilap? Buka resit → <b>Batal resit</b> (dengan sebab). Resit sah tidak boleh dipadam, untuk rekod audit.</li></ol>',
+  '<ol><li>Tenants pay to your account / QR and upload the slip (<b>image or PDF</b> from their bank app). You get a <b>🧾 New payment proof</b> notification.</li><li>Open the <b>Status</b> tab (first tab) → tap <b>🔍 Review payment</b>. Check the proof, the amount against the rent, the method & reference. Tick <b>I have checked this proof</b>, then <b>Approve</b>, or <b>Reject</b> (with a reason).</li><li>Tenant doesn\'t use the app and just sends you proof? In the Status tab, tap <b>📝 Manual payment</b> for that tenant, choose the <b>Payment method by tenant</b> (Bank transfer, Touch \'n Go, Cash bank deposit, Cash by hand) and upload the slip.</li><li><b>Overpaid?</b> The extra is carried to next month automatically as <b>credit</b>. The tenant sees a note that it will be deducted next month.</li><li>Receipts can be saved as PDF or sent via WhatsApp. Receipt numbers run in sequence and are never reused.</li><li>Made a mistake? Open the receipt → <b>Void receipt</b> (with a reason). Valid receipts cannot be deleted, for audit purposes.</li></ol>'],
  ['🔔 Peringatan & notifikasi', '🔔 Reminders & notifications',
-  '<ul><li><b>Automatik:</b> penyewa dapat peringatan sebelum tarikh bayar dan bila sewa tertunggak (ikut Tetapan).</li><li><b>Manual:</b> di tab Status, tekan <b>🔔 Ingatkan</b> (terus) atau <b>⏰ Jadual</b> (pilih tarikh & masa).</li><li>Notifikasi sampai walaupun app ditutup. Ikon app tunjuk <b>lencana</b> bila ada perkara belum disemak.</li><li>Tiada notifikasi? Tetapan → <b>🧪 Uji notifikasi</b>, dan pastikan notifikasi ProSewa dibenarkan dalam Tetapan phone.</li></ul>',
-  '<ul><li><b>Automatic:</b> tenants get a reminder before the due date and when rent is overdue (based on Settings).</li><li><b>Manual:</b> in the Status tab, tap <b>🔔 Remind</b> (now) or <b>⏰ Schedule</b> (pick a date & time).</li><li>Notifications arrive even when the app is closed. The app icon shows a <b>badge</b> when something needs your attention.</li><li>No notifications? Settings → <b>🧪 Test notification</b>, and make sure ProSewa notifications are allowed in your phone settings.</li></ul>'],
+  '<ul><li><b>Automatik:</b> penyewa dapat peringatan sebelum tarikh bayar dan bila sewa tertunggak (ikut Tetapan).</li><li><b>Manual:</b> di tab Status, tekan <b>🔔 Ingatkan</b> pada penyewa yang belum bayar. Notifikasi terus dihantar ke phone penyewa.</li><li>Notifikasi sampai walaupun app ditutup. Ikon app tunjuk <b>lencana</b> bila ada perkara belum disemak.</li><li>Tiada notifikasi? Tetapan → <b>🧪 Uji notifikasi</b>, dan pastikan notifikasi ProSewa dibenarkan dalam Tetapan phone.</li></ul>',
+  '<ul><li><b>Automatic:</b> tenants get a reminder before the due date and when rent is overdue (based on Settings).</li><li><b>Manual:</b> in the Status tab, tap <b>🔔 Remind</b> on an unpaid tenant. A notification goes straight to their phone.</li><li>Notifications arrive even when the app is closed. The app icon shows a <b>badge</b> when something needs your attention.</li><li>No notifications? Settings → <b>🧪 Test notification</b>, and make sure ProSewa notifications are allowed in your phone settings.</li></ul>'],
  ['📄 Kontrak & deposit', '📄 Tenancy & deposit',
-  '<ul><li>Isi <b>Tamat kontrak</b> pada penyewa. 30 hari sebelum tamat, amaran keluar di tab Penyewa dan notifikasi dihantar.</li><li>Tekan <b>📄 Perbaharui</b>: pilih tarikh tamat baru & sewa baru (berkuat kuasa bulan depan).</li><li>Penyewa keluar? Tekan <b>🚪</b> → isi tarikh keluar, tolak tunggakan & potongan (pembersihan, kerosakan, bil). Sistem kira baki deposit dan jana <b>Penyata Deposit</b> yang penyewa boleh lihat.</li></ul>',
-  '<ul><li>Fill in <b>Tenancy end</b> for each tenant. 30 days before it ends, a warning appears in the Tenants tab and notifications are sent.</li><li>Tap <b>📄 Renew</b>: choose the new end date & new rent (applies from next month).</li><li>Tenant moving out? Tap <b>🚪</b> → enter the move-out date, deduct arrears & charges (cleaning, damage, bills). The system calculates the deposit balance and creates a <b>Deposit Statement</b> the tenant can view.</li></ul>'],
+  '<ul><li>Isi <b>Tamat kontrak</b> pada penyewa. 30 hari sebelum tamat, amaran keluar di tab Penyewa dan notifikasi dihantar.</li><li>Buka penyewa → <b>📄 Perbaharui</b>: pilih tarikh tamat baru & sewa baru (berkuat kuasa bulan depan).</li><li>Penyewa keluar? Buka penyewa → <b>🚪 Tamatkan sewa</b> → isi tarikh keluar, tolak tunggakan & potongan (pembersihan, kerosakan, bil). Sistem kira baki deposit dan jana <b>Penyata Deposit</b> yang penyewa boleh lihat.</li></ul>',
+  '<ul><li>Fill in <b>Tenancy end</b> for each tenant. 30 days before it ends, a warning appears in the Tenants tab and notifications are sent.</li><li>Open the tenant → <b>📄 Renew</b>: choose the new end date & new rent (applies from next month).</li><li>Tenant moving out? Open the tenant → <b>🚪 End tenancy</b> → enter the move-out date, deduct arrears & charges (cleaning, damage, bills). The system calculates the deposit balance and creates a <b>Deposit Statement</b> the tenant can view.</li></ul>'],
  ['🛠️ Aduan kerosakan', '🛠️ Maintenance requests',
   '<ul><li>Penyewa hantar aduan (kategori, penerangan, gambar) dari tab <b>Aduan</b> di app mereka.</li><li>Anda dapat notifikasi. Buka tab <b>Aduan</b> → <b>Kemas kini status</b> (Dalam tindakan / Selesai) dan tulis nota, contohnya tarikh tukang datang.</li><li>Penyewa dimaklumkan setiap kali status berubah.</li></ul>',
   '<ul><li>Tenants send requests (category, description, photo) from the <b>Requests</b> tab in their app.</li><li>You get notified. Open the <b>Requests</b> tab → <b>Update status</b> (In progress / Resolved) and add a note, e.g. when the repairer will come.</li><li>Tenants are notified every time the status changes.</li></ul>'],
@@ -1779,15 +1781,76 @@ const MANUAL = [
   '<ul><li><b>Kutipan sewa:</b> jangkaan vs diterima setiap bulan, tunggakan ikut penyewa. Simpan sebagai PDF atau CSV (Excel).</li><li><b>Cukai & Perbelanjaan:</b> tekan <b>+ Perbelanjaan</b> untuk rekod cukai pintu, cukai tanah, insurans, pembaikan dan lain-lain (boleh lampir resit).</li><li><b>💡 Bil & utiliti:</b> tekan <b>Rekod bil bulan ini</b> untuk elektrik, air, IWK, internet sekali gus ikut rumah. Bil tetap (IWK, maintenance, internet) tetapkan sekali di <b>Bil berulang</b>, dan sistem rekod setiap bulan secara automatik.</li><li>Angka <b>Pendapatan sewa bersih</b> ialah rujukan untuk e-Filing LHDN. Sahkan perbelanjaan yang dibenarkan dengan LHDN / ejen cukai.</li></ul>',
   '<ul><li><b>Rent collection:</b> expected vs received each month, arrears by tenant. Save as PDF or CSV (Excel).</li><li><b>Tax & Expenses:</b> tap <b>+ Expense</b> to record assessment tax, quit rent, insurance, repairs and more (you can attach receipts).</li><li><b>💡 Bills & utilities:</b> tap <b>Record this month\'s bills</b> to enter electricity, water, IWK and internet at once, per property. Set fixed bills (IWK, maintenance, internet) once under <b>Recurring bills</b> and the system records them every month automatically.</li><li>The <b>Net rental income</b> figure is a reference for LHDN e-Filing. Confirm allowable expenses with LHDN / your tax agent.</li></ul>'],
  ['💎 Langganan & kod promo', '💎 Subscription & promo codes',
-  '<ul><li>Tab <b>Langganan</b> tunjuk baki hari. Pilih pakej dan bayar melalui ToyyibPay (FPX / DuitNow). Hari baru disambung selepas tarikh tamat semasa.</li><li>Ada kod promo? Tampal di <b>🎟️ Ada kod promo?</b> dan tekan <b>Guna</b>. Setiap kod sekali guna.</li><li>Jika langganan tamat, anda dan penyewa tidak dapat buka app sehingga bayaran dibuat. Data anda kekal selamat.</li></ul>',
-  '<ul><li>The <b>Subscription</b> tab shows the days left. Choose a plan and pay via ToyyibPay (FPX / DuitNow). New days are added after the current end date.</li><li>Have a promo code? Paste it under <b>🎟️ Have a promo code?</b> and tap <b>Apply</b>. Each code can be used once.</li><li>If the subscription ends, you and your tenants cannot open the app until payment is made. Your data stays safe.</li></ul>'],
+  '<ul><li>Tab <b>Langganan</b> tunjuk baki hari. Pilih pakej dan bayar melalui ToyyibPay (FPX online banking atau imbas DuitNow QR). Hari baru disambung selepas tarikh tamat semasa.</li><li>Ada kod promo? Tampal di <b>🎟️ Ada kod promo?</b> dan tekan <b>Guna</b>. Setiap kod sekali guna.</li><li>Jika langganan tamat, anda dan penyewa tidak dapat buka app sehingga bayaran dibuat. Data anda kekal selamat.</li></ul>',
+  '<ul><li>The <b>Subscription</b> tab shows the days left. Choose a plan and pay via ToyyibPay (FPX online banking or scan DuitNow QR). New days are added after the current end date.</li><li>Have a promo code? Paste it under <b>🎟️ Have a promo code?</b> and tap <b>Apply</b>. Each code can be used once.</li><li>If the subscription ends, you and your tenants cannot open the app until payment is made. Your data stays safe.</li></ul>'],
  ['📱 App Android, tablet & laptop', '📱 Android app, tablet & laptop',
   '<ul><li>Muat turun <b>ProSewa Admin</b> (owner) dan <b>ProSewa Penyewa</b> di prosewa.web.app/download.html. Pasang terus atas versi lama untuk kemas kini.</li><li>Di laptop / iPhone: buka prosewa.web.app dan tekan <b>⬇ Pasang</b>.</li><li>Dalam APK, log masuk guna emel & kata laluan. Akaun Google: tetapkan kata laluan dahulu di versi web (Tetapan → Keselamatan).</li></ul>',
   '<ul><li>Download <b>ProSewa Admin</b> (owner) and <b>ProSewa Tenant</b> at prosewa.web.app/download.html. Install over the old version to update.</li><li>On a laptop / iPhone: open prosewa.web.app and tap <b>⬇ Install</b>.</li><li>In the APK, sign in with email & password. Google accounts: set a password first on the web version (Settings → Security).</li></ul>'],
+ ['🔐 Akaun, log keluar & padam data', '🔐 Account, sign out & delete data',
+  '<ul><li><b>Lupa kata laluan:</b> di skrin log masuk, tekan <b>Lupa kata laluan?</b>. Semak Inbox <b>dan folder Spam</b> untuk emel reset.</li><li><b>Tukar kata laluan:</b> Tetapan → Keselamatan. Anda akan diminta kata laluan semasa dahulu.</li><li><b>Log keluar</b> sentiasa minta pengesahan, supaya tidak tertekan secara tidak sengaja.</li><li><b>Mula semula dari kosong:</b> Tetapan → <b>⚠️ Zon bahaya → Padam semua data</b>. Taip PADAM dan kata laluan log masuk. Semua penyewa, bayaran, laporan, rumah & bil dipadam dan link penyewa lama tidak lagi sah. No. resit diteruskan, kecuali anda tanda <b>Mula semula no. resit dari 000001</b>. Tindakan ini <b>tidak boleh dibatalkan</b>.</li></ul>',
+  '<ul><li><b>Forgot password:</b> on the sign-in screen, tap <b>Forgot password?</b>. Check your Inbox <b>and Spam folder</b> for the reset email.</li><li><b>Change password:</b> Settings → Security. You will be asked for your current password.</li><li><b>Sign out</b> always asks for confirmation, so you don\'t tap it by accident.</li><li><b>Start fresh:</b> Settings → <b>⚠️ Danger zone → Delete all data</b>. Type PADAM and your sign-in password. All tenants, payments, reports, properties & bills are deleted and old tenant links stop working. Receipt numbers continue unless you tick <b>Restart receipt numbers</b>. This <b>cannot be undone</b>.</li></ul>'],
  ['⚠️ Jika ada masalah', '⚠️ If something goes wrong',
   '<ul><li>Jika sistem ada gangguan, <b>jalur amaran</b> muncul di atas skrin dan hilang sendiri bila pulih. Data anda selamat.</li><li>Tiada internet? Jalur 📡 muncul. App akan muat semula data bila sambungan kembali.</li><li>Masih bermasalah? Tekan <b>📮 Lapor masalah</b> di bawah. Laporan terus sampai kepada pasukan ProSewa.</li></ul>',
   '<ul><li>If the system has a disruption, a <b>warning bar</b> appears at the top of the screen and disappears when it recovers. Your data is safe.</li><li>No internet? A 📡 bar appears. The app reloads data when the connection is back.</li><li>Still having trouble? Tap <b>📮 Report a problem</b> below. Your report goes straight to the ProSewa team.</li></ul>']
 ];
+/* ===================== APA YANG BARU (changelog) — tambah entri di atas setiap kali update ===================== */
+const CHANGELOG = [
+ {v: '2026.11.09', bm: [
+   'Tab <b>Status</b> kini tab pertama, <b>Penyewa</b> tab kedua.',
+   '<b>🔍 Semak bayaran</b> sebelum lulus: bukti besar, jumlah berbanding sewa, lebih / kurang. Butang Luluskan aktif selepas tanda "Saya telah semak".',
+   '<b>Terbayar lebih</b> dibawa ke bulan depan sebagai kredit. Penyewa nampak nota lebihan akan ditolak bulan depan.',
+   'Senarai penyewa lebih ringkas dengan status besar <b>DIBAYAR / BELUM BAYAR</b>. Tekan nama untuk popup butiran & tindakan.',
+   '"Tunai" ditukar kepada <b>📝 Bayaran manual</b>, dengan pilihan Kaedah bayaran penyewa: Pindahan bank, Touch \'n Go, Deposit tunai bank, Tunai (tangan).',
+   'Hanya butang <b>🔔 Ingatkan</b> (Jadual dibuang). "Laporan ikut rumah" dibuang.',
+   'Paparan penyewa: <b>✓ DIBAYAR</b> lebih besar, "Sila bayar sebelum" disembunyi bila sudah bayar.',
+   '<b>Padam semua data</b> untuk mula semula (Tetapan → Zon bahaya), disahkan dengan kata laluan log masuk.',
+   'Pengesahan sebelum <b>log keluar</b>.',
+   'Bayaran langganan ToyyibPay kini boleh pilih <b>DuitNow QR</b>.',
+   'Lupa kata laluan: mesej lebih jelas (semak folder Spam).',
+   'Butang <b>🆕 Apa yang baru</b> ini di Tetapan.'],
+  en: [
+   'The <b>Status</b> tab is now first, <b>Tenants</b> second.',
+   '<b>🔍 Review payment</b> before approving: large proof, amount vs rent, over / short. Approve unlocks after ticking "I have checked".',
+   '<b>Overpayments</b> carry to next month as credit. Tenants see a note that the extra will be deducted next month.',
+   'Compact tenant list with a big <b>PAID / UNPAID</b> status. Tap a name for a details & actions popup.',
+   '"Cash" is now <b>📝 Manual payment</b>, with Payment method by tenant: Bank transfer, Touch \'n Go, Cash bank deposit, Cash by hand.',
+   'Only a <b>🔔 Remind</b> button (Schedule removed). "Report by property" removed.',
+   'Tenant view: bigger <b>✓ PAID</b>, "Please pay by" hidden once paid.',
+   '<b>Delete all data</b> to start fresh (Settings → Danger zone), confirmed with your sign-in password.',
+   'Confirmation before <b>signing out</b>.',
+   'ToyyibPay subscription payments can now use <b>DuitNow QR</b>.',
+   'Forgot password: clearer message (check your Spam folder).',
+   'This <b>🆕 What\'s new</b> button in Settings.']},
+ {v: '2026.11.04', bm: [
+   '<b>💡 Bil & utiliti</b>: rekod elektrik, air, IWK & internet ikut rumah, dan bil berulang automatik setiap bulan.',
+   'Muat naik slip & resit dalam bentuk <b>PDF</b> (selain gambar).',
+   '<b>🏘️ Hartanah</b>: rumah & bilik, bilik kosong, kadar penghunian & sewa yang hilang.',
+   'Pemantauan sistem: jalur amaran bila ada gangguan, dan <b>📮 Lapor masalah</b>.',
+   '<b>📘 Manual pengguna</b> dalam Tetapan.',
+   'Tab Aduan dipindahkan ke sebelah Langganan. Tukar kata laluan kini minta kata laluan semasa.'],
+  en: [
+   '<b>💡 Bills & utilities</b>: record electricity, water, IWK & internet per property, with recurring bills every month.',
+   'Upload slips & receipts as <b>PDF</b> (as well as images).',
+   '<b>🏘️ Properties</b>: houses & rooms, vacancies, occupancy rate & lost rent.',
+   'System monitoring: a warning bar during disruptions, and <b>📮 Report a problem</b>.',
+   '<b>📘 User manual</b> in Settings.',
+   'Requests tab moved next to Subscription. Changing your password now asks for the current one.']},
+ {v: 'Sebelum ini', vEn: 'Earlier', bm: [
+   'App Android <b>ProSewa Admin</b> & <b>ProSewa Penyewa</b>, notifikasi push & lencana ikon app.',
+   'Kod promo langganan, kontrak & pembaharuan, penyata deposit, aduan kerosakan.',
+   'Owner boleh rekod bayaran dengan slip sendiri. Laporan BM / EN yang konsisten.'],
+  en: [
+   'Android apps <b>ProSewa Admin</b> & <b>ProSewa Tenant</b>, push notifications & app icon badges.',
+   'Subscription promo codes, tenancy renewals, deposit statements, maintenance requests.',
+   'Owners can record payments with their own slip. Consistent BM / EN reports.']}];
+const seenVer = () => { try { return localStorage.getItem('prosewa_seenVer') || ''; } catch (e) { return ''; } };
+function whatsNew() {
+  const en = LANG === 'en';
+  try { localStorage.setItem('prosewa_seenVer', APP_VER); } catch (e) {}
+  openModal(en ? '🆕 What\'s new' : '🆕 Apa yang baru', `<div class="manual" data-raw>${CHANGELOG.map((c, i) => `<details ${i === 0 ? 'open' : ''}><summary>${/^\d/.test(c.v) ? 'v' + c.v : (en ? c.vEn : c.v)}${c.v === APP_VER ? (en ? ' · current' : ' · semasa') : ''}</summary><ul>${(en ? c.en : c.bm).map(x => `<li>${x}</li>`).join('')}</ul></details>`).join('')}</div>
+    <div class="acts" style="margin-top:10px"><button class="btn" style="flex:1" data-act="manual">📘 ${en ? 'User manual' : 'Manual pengguna'}</button></div>`);
+  const b = document.querySelector('[data-act=whatsNew] .newdot'); if (b) b.remove();
+}
 function manualModal() {
   const en = LANG === 'en';
   openModal(en ? '📘 User Manual' : '📘 Manual Pengguna', `<div class="manual" data-raw><p style="margin-top:0">${en ? 'A quick guide to every part of ProSewa. Tap a topic to open it.' : 'Panduan ringkas setiap bahagian ProSewa. Tekan topik untuk buka.'}</p>
@@ -2300,7 +2363,7 @@ const ACTIONS = {
   renewForm: id => renewForm(id), endForm: id => endForm(id), depStatement: id => depStatement(id),
   depPdf: id => { const t = S.tenants.find(x => x.id === id) || S.t; printHTML(depStatementHTML(t), tr('Penyata Deposit') + ' ' + t.name); },
   promoFilter: id => { S.promoFilter = id; renderSuper(); },
-  promoKit: () => promoKit(),
+  promoKit: () => promoKit(), whatsNew: () => whatsNew(),
   finView: () => finView(), finCsv: () => finCsv(), feeForm: () => feeForm(), sysExpForm: () => sysExpForm(),
   finPdf: () => printHTML(finReportHTML(), tr('Laporan Kewangan') + ' ' + finData().per),
   sysExpDel: async id => { if (!confirm(tr('Padam rekod belanja ini?'))) return; await API.delSysExp(id); S.sysExp = S.sysExp.filter(e => e.id !== id); closeModal(); toast(tr('Dipadam.')); renderSuper(); },
