@@ -53,8 +53,12 @@ jobs:
           cp icon-192.png icon-512.png icon-t-192.png icon-t-512.png www/
           cp node_modules/html2pdf.js/dist/html2pdf.bundle.min.js www/lib/
           cp node_modules/pdfjs-dist/build/pdf.min.js node_modules/pdfjs-dist/build/pdf.worker.min.js www/lib/
+          # Pustaka Firebase dibundel dalam APK (tak perlu muat turun setiap kali buka app)
+          FBV=$(grep -o "FB_VER = '[^']*'" index.html | cut -d"'" -f2); mkdir -p www/lib/fb
+          for m in app auth firestore messaging; do curl -sSLf "https://www.gstatic.com/firebasejs/$FBV/firebase-$m.js" -o www/lib/fb/firebase-$m.js; done
+          sed -i "s#https://www.gstatic.com/firebasejs/$FBV/#./#g" www/lib/fb/*.js; ls -la www/lib/fb; grep -c "gstatic.com/firebasejs" www/lib/fb/*.js || true
           FCMJS=""; [ "${{ steps.fcm.outputs.on }}" = "1" ] && FCMJS="window.PROSEWA_FCM=true;"
-          sed -i "s#<head>#<head><script>window.PROSEWA_APP=\"${{ matrix.kind }}\";window.PROSEWA_BUILD=${{ github.run_number }};$FCMJS</script>#" www/index.html
+          sed -i "s#<head>#<head><script>window.PROSEWA_APP=\"${{ matrix.kind }}\";window.PROSEWA_BUILD=${{ github.run_number }};window.PROSEWA_FBLOCAL=1;$FCMJS</script>#" www/index.html
           grep -c 'PROSEWA_APP="${{ matrix.kind }}"' www/index.html
           cat > capacitor.config.json <<JSON
           {
