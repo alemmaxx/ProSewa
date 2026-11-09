@@ -473,7 +473,7 @@ const I18N_RX = [
   [/Kutipan (\d+)% daripada jangkaan/g, 'Collected $1% of expected'],
   [/Link (\S+) disalin/g, "$1's link copied"],
   [/Ditambah (\d+) hari/g, 'Added $1 days'],
-  [/Salam, /g, 'Hi, '], [/🆕 Apa yang baru · /g, "🆕 What's new · "],
+  [/Salam, /g, 'Hi, '], [/⬆ Versi baru ProSewa ada \(/g, '⬆ New ProSewa version available ('], [/⬆ Kemas kini ke /g, '⬆ Update to '], [/🆕 Apa yang baru · /g, "🆕 What's new · "],
   [/(\d+) penyewa, (\d+) rekod bayaran & resit, aduan, perbelanjaan, bil, rumah & bil berulang akan dipadam kekal\. Link penyewa lama tidak boleh dibuka lagi\./g, '$1 tenants, $2 payment & receipt records, requests, expenses, bills, properties & recurring bills will be permanently deleted. Old tenant links will stop working.'],
   [/PDF ada (\d+) halaman\. Hanya 2 halaman pertama disimpan\./g, 'The PDF has $1 pages. Only the first 2 pages are saved.'],
   [/Bil & utiliti (\d{4})/g, 'Bills & utilities $1'],
@@ -505,7 +505,7 @@ const I18N_RX = [
   [/Sewa (.+?) (RM [\d,.]+) belum dibayar\./g, 'Rent for $1 ($2) is unpaid.']
 ];
 Object.assign(I18N, {
-  'LAPORAN KUTIPAN SEWA': 'RENT COLLECTION REPORT', '🎬 Muat turun video TikTok (26 saat, MP4)': '🎬 Download TikTok video (26 sec, MP4)', '⏳ Memuat turun video…': '⏳ Downloading video…', 'BARU': 'NEW', '💰 Laporan kewangan': '💰 Financial report', 'Tempoh': 'Period', 'Masuk (langganan)': 'Income (subscriptions)', 'Caj ToyyibPay': 'ToyyibPay fees', 'Bersih diterima': 'Net received', 'Belanja sistem': 'System expenses', 'Untung bersih': 'Net profit', 'bayaran': 'payments', 'rekod': 'records', 'auto': 'auto',
+  'LAPORAN KUTIPAN SEWA': 'RENT COLLECTION REPORT', 'Versi app': 'App version', '✓ Terkini': '✓ Up to date', 'Tekan untuk muat turun, kemudian pasang terus atas app ini. Data anda kekal.': 'Tap to download, then install over this app. Your data stays.', '🎬 Muat turun video TikTok (26 saat, MP4)': '🎬 Download TikTok video (26 sec, MP4)', '⏳ Memuat turun video…': '⏳ Downloading video…', 'BARU': 'NEW', '💰 Laporan kewangan': '💰 Financial report', 'Tempoh': 'Period', 'Masuk (langganan)': 'Income (subscriptions)', 'Caj ToyyibPay': 'ToyyibPay fees', 'Bersih diterima': 'Net received', 'Belanja sistem': 'System expenses', 'Untung bersih': 'Net profit', 'bayaran': 'payments', 'rekod': 'records', 'auto': 'auto',
   'Tukar kadar': 'Change rate', 'setiap transaksi berjaya.': 'per successful transaction.', '📊 Lihat laporan penuh': '📊 View full report', '+ Rekod belanja sistem': '+ Record system expense', 'LAPORAN KEWANGAN LANGGANAN': 'SUBSCRIPTION FINANCIAL REPORT', 'Senarai bayaran langganan': 'Subscription payments', 'Owner': 'Owner', 'Pakej': 'Plan', 'Rujukan': 'Reference', 'Caj': 'Fee', 'Bersih': 'Net', 'Belanja': 'Expenses', 'Bil.': 'No.',
   'Lanjutan percuma (RM0, tiada caj)': 'Free extensions (RM0, no fee)', 'Jenis': 'Type', 'Kategori': 'Category', 'Keterangan': 'Description', 'Kod promo': 'Promo code', 'Manual (Super Admin)': 'Manual (Super Admin)',
   'Caj ToyyibPay ialah anggaran berdasarkan kadar yang ditetapkan. Semak penyata ToyyibPay untuk angka sebenar.': 'ToyyibPay fees are estimates based on the set rate. Check your ToyyibPay statement for actual figures.',
@@ -775,6 +775,16 @@ const PLANS = [
 ];
 const TRIAL_DAYS = 14;   // asal; Super Admin boleh ubah dalam panel #super (disimpan dalam config/app)
 const APP_VER = '2026.11.09';
+const APP_BUILD = +(window.PROSEWA_BUILD || 0);   // no. binaan APK (1.0.N); 0 = web
+let APK_NEW = 0;   // no. binaan APK terkini di server (jika lebih baru)
+const verLabel = () => 'v' + APP_VER + (APP_BUILD ? ` · APK 1.0.${APP_BUILD}` : ' · web');
+async function checkApk() {   // APK sahaja: bandingkan dengan versi APK terkini di prosewa.web.app
+  if (!APP_BUILD || !navigator.onLine) return;
+  try { const r = await fetch(WEB_BASE + 'apk-version.json?' + Date.now(), {cache: 'no-store'}); const j = await r.json();
+    if (+j.build > APP_BUILD) { APK_NEW = +j.build; if (S.mode === 'owner') renderOwner(); else if (S.t && typeof renderTenant === 'function') renderTenant(); } } catch (e) {}
+}
+const apkKind = () => (window.PROSEWA_APP === 'tenant' || IS_TENANT_SITE) ? 'tenant' : 'admin';
+const updBar = () => APK_NEW ? `<a class="al ok" href="${APK_URL[apkKind()]}" target="_blank" rel="noopener" style="display:block;text-decoration:none;color:inherit"><b>⬆ Versi baru ProSewa ada (1.0.${APK_NEW})</b>Tekan untuk muat turun, kemudian pasang terus atas app ini. Data anda kekal.</a>` : '';
 const HEALTH_URL = 'https://asia-southeast1-kukusanmy.cloudfunctions.net/prosewaHealthNow';
 const PROMO_URL = 'https://asia-southeast1-kukusanmy.cloudfunctions.net/prosewaRedeemPromo';   // Cloud Function kod promo
 const TOYYIBPAY = {createBillUrl: 'https://asia-southeast1-kukusanmy.cloudfunctions.net/prosewaCreateBill'};   // Cloud Function (folder functions/)
@@ -1424,6 +1434,7 @@ function renderOwner() {
   const si = subInfo(), warn = si && si.days <= 5;
   $('#app').innerHTML = v() + nav([['status', '💳', 'Status', pend], ['tenants', '👥', 'Penyewa'], ['report', '📊', 'Laporan'], ['issues', '🛠️', 'Aduan', isNew], ['sub', '💎', 'Langganan', warn ? '!' : 0], ['settings', '⚙️', 'Tetapan']], S.tab);
   superFab();
+  if (APK_NEW) { const w = $('.wrap'); if (w) w.insertAdjacentHTML('afterbegin', updBar()); }
   if (si && S.tab !== 'sub' && warn) { const w = $('.wrap'); if (w) w.insertAdjacentHTML('afterbegin', `<div class="al ${si.active ? '' : 'hot'}" data-act="tab" data-id="sub" style="cursor:pointer"><b>${si.active ? `💎 Langganan tamat dalam ${si.days} hari` : '⛔ Langganan ProSewa telah tamat'}</b>${si.active ? 'Perbaharui sekarang supaya tiada gangguan.' : 'Anda tidak boleh tambah penyewa baru. Tekan untuk perbaharui.'}</div>`); }
 }
 const activeT = () => S.tenants.filter(t => t.active !== false);
@@ -1668,7 +1679,8 @@ function oSettings() {
   const perm = NPERM;
   return header('Tetapan', 'Tetapan.', o.name ? `${o.name}${o.phone ? ' · ' + o.phone : ''}` : 'Lengkapkan maklumat anda', {btns: ownerBtns()}) + `<div class="wrap"><div class="stack">
     <div class="blk"><div class="card"><div class="acts" style="margin:0"><button class="btn" style="flex:1" data-act="manual">📘 Manual pengguna</button><button class="btn ghost" style="flex:1" data-act="reportForm">📮 Lapor masalah</button></div>
-      <button class="btn wide ghost" style="margin-top:8px;position:relative" data-act="whatsNew">🆕 Apa yang baru · v${APP_VER}${seenVer() !== APP_VER ? '<em class="newdot">BARU</em>' : ''}</button></div></div>
+      <button class="btn wide ghost" style="margin-top:8px;position:relative" data-act="whatsNew">🆕 Apa yang baru · v${APP_VER}${seenVer() !== APP_VER ? '<em class="newdot">BARU</em>' : ''}</button>
+      <div class="kv" style="margin-top:8px"><span>Versi app</span><b>${verLabel()} · ${APK_NEW ? `<a href="${APK_URL[apkKind()]}" target="_blank" rel="noopener" style="color:var(--gold,#d9b44a)">⬆ Kemas kini ke 1.0.${APK_NEW}</a>` : '<span style="color:var(--green)">✓ Terkini</span>'}</b></div></div></div>
     <div class="blk"><div class="sec-h">Paparan</div><div class="card"><div class="switch">Bahasa ${langSeg()}</div><div class="switch">Tema ${themeSeg()}</div></div></div>
     <div class="blk"><div class="sec-h">Maklumat syarikat (untuk resit)</div><form class="card" data-form="company">
       <div class="logobox"><div id="logoPrev">${o.logo ? `<img src="${o.logo}" alt="logo">` : '<span class="muted">Tiada logo</span>'}</div>
@@ -1785,8 +1797,8 @@ const MANUAL = [
   '<ul><li>Tab <b>Langganan</b> tunjuk baki hari. Pilih pakej dan bayar melalui ToyyibPay (FPX online banking atau imbas DuitNow QR). Hari baru disambung selepas tarikh tamat semasa.</li><li>Ada kod promo? Tampal di <b>🎟️ Ada kod promo?</b> dan tekan <b>Guna</b>. Setiap kod sekali guna.</li><li>Jika langganan tamat, anda dan penyewa tidak dapat buka app sehingga bayaran dibuat. Data anda kekal selamat.</li></ul>',
   '<ul><li>The <b>Subscription</b> tab shows the days left. Choose a plan and pay via ToyyibPay (FPX online banking or scan DuitNow QR). New days are added after the current end date.</li><li>Have a promo code? Paste it under <b>🎟️ Have a promo code?</b> and tap <b>Apply</b>. Each code can be used once.</li><li>If the subscription ends, you and your tenants cannot open the app until payment is made. Your data stays safe.</li></ul>'],
  ['📱 App Android, tablet & laptop', '📱 Android app, tablet & laptop',
-  '<ul><li>Muat turun <b>ProSewa Admin</b> (owner) dan <b>ProSewa Penyewa</b> di prosewa.web.app/download.html. Pasang terus atas versi lama untuk kemas kini.</li><li>Di laptop / iPhone: buka prosewa.web.app dan tekan <b>⬇ Pasang</b>.</li><li>Dalam APK, log masuk guna emel & kata laluan. Akaun Google: tetapkan kata laluan dahulu di versi web (Tetapan → Keselamatan).</li></ul>',
-  '<ul><li>Download <b>ProSewa Admin</b> (owner) and <b>ProSewa Tenant</b> at prosewa.web.app/download.html. Install over the old version to update.</li><li>On a laptop / iPhone: open prosewa.web.app and tap <b>⬇ Install</b>.</li><li>In the APK, sign in with email & password. Google accounts: set a password first on the web version (Settings → Security).</li></ul>'],
+  '<ul><li>Muat turun <b>ProSewa Admin</b> (owner) dan <b>ProSewa Penyewa</b> di prosewa.web.app/download.html. Pasang terus atas versi lama untuk kemas kini. Bila ada versi baru, jalur <b>⬆ Versi baru ProSewa ada</b> muncul dalam app. Semak versi anda di Tetapan → <b>Versi app</b>.</li><li>Di laptop / iPhone: buka prosewa.web.app dan tekan <b>⬇ Pasang</b>.</li><li>Dalam APK, log masuk guna emel & kata laluan. Akaun Google: tetapkan kata laluan dahulu di versi web (Tetapan → Keselamatan).</li></ul>',
+  '<ul><li>Download <b>ProSewa Admin</b> (owner) and <b>ProSewa Tenant</b> at prosewa.web.app/download.html. Install over the old version to update. When a new version is out, a <b>⬆ New ProSewa version available</b> bar appears in the app. Check your version under Settings → <b>App version</b>.</li><li>On a laptop / iPhone: open prosewa.web.app and tap <b>⬇ Install</b>.</li><li>In the APK, sign in with email & password. Google accounts: set a password first on the web version (Settings → Security).</li></ul>'],
  ['🔐 Akaun, log keluar & padam data', '🔐 Account, sign out & delete data',
   '<ul><li><b>Lupa kata laluan:</b> di skrin log masuk, tekan <b>Lupa kata laluan?</b>. Semak Inbox <b>dan folder Spam</b> untuk emel reset.</li><li><b>Tukar kata laluan:</b> Tetapan → Keselamatan. Anda akan diminta kata laluan semasa dahulu.</li><li><b>Log keluar</b> sentiasa minta pengesahan, supaya tidak tertekan secara tidak sengaja.</li><li><b>Mula semula dari kosong:</b> Tetapan → <b>⚠️ Zon bahaya → Padam semua data</b>. Taip PADAM dan kata laluan log masuk. Semua penyewa, bayaran, laporan, rumah & bil dipadam dan link penyewa lama tidak lagi sah. No. resit diteruskan, kecuali anda tanda <b>Mula semula no. resit dari 000001</b>. Tindakan ini <b>tidak boleh dibatalkan</b>.</li></ul>',
   '<ul><li><b>Forgot password:</b> on the sign-in screen, tap <b>Forgot password?</b>. Check your Inbox <b>and Spam folder</b> for the reset email.</li><li><b>Change password:</b> Settings → Security. You will be asked for your current password.</li><li><b>Sign out</b> always asks for confirmation, so you don\'t tap it by accident.</li><li><b>Start fresh:</b> Settings → <b>⚠️ Danger zone → Delete all data</b>. Type PADAM and your sign-in password. All tenants, payments, reports, properties & bills are deleted and old tenant links stop working. Receipt numbers continue unless you tick <b>Restart receipt numbers</b>. This <b>cannot be undone</b>.</li></ul>'],
@@ -1808,7 +1820,7 @@ const CHANGELOG = [
    'Pengesahan sebelum <b>log keluar</b>.',
    'Bayaran langganan ToyyibPay kini boleh pilih <b>DuitNow QR</b>.',
    'Lupa kata laluan: mesej lebih jelas (semak folder Spam).',
-   'Butang <b>🆕 Apa yang baru</b> ini di Tetapan.'],
+   'Butang <b>🆕 Apa yang baru</b> ini di Tetapan, dan <b>Versi app</b>: APK beritahu bila ada versi baru untuk dimuat turun.'],
   en: [
    'The <b>Status</b> tab is now first, <b>Tenants</b> second.',
    '<b>🔍 Review payment</b> before approving: large proof, amount vs rent, over / short. Approve unlocks after ticking "I have checked".',
@@ -1821,7 +1833,7 @@ const CHANGELOG = [
    'Confirmation before <b>signing out</b>.',
    'ToyyibPay subscription payments can now use <b>DuitNow QR</b>.',
    'Forgot password: clearer message (check your Spam folder).',
-   'This <b>🆕 What\'s new</b> button in Settings.']},
+   'This <b>🆕 What\'s new</b> button in Settings, plus <b>App version</b>: the APK tells you when a newer version is ready to download.']},
  {v: '2026.11.04', bm: [
    '<b>💡 Bil & utiliti</b>: rekod elektrik, air, IWK & internet ikut rumah, dan bil berulang automatik setiap bulan.',
    'Muat naik slip & resit dalam bentuk <b>PDF</b> (selain gambar).',
@@ -1857,7 +1869,7 @@ function manualModal() {
   openModal(en ? '📘 User Manual' : '📘 Manual Pengguna', `<div class="manual" data-raw><p style="margin-top:0">${en ? 'A quick guide to every part of ProSewa. Tap a topic to open it.' : 'Panduan ringkas setiap bahagian ProSewa. Tekan topik untuk buka.'}</p>
     ${MANUAL.map(([tb, te, bb, be], i) => `<details ${i === 0 ? 'open' : ''}><summary>${en ? te : tb}</summary>${en ? be : bb}</details>`).join('')}</div>
     <div class="acts" style="margin-top:10px"><button class="btn" style="flex:1" data-act="reportForm">📮 Lapor masalah</button><a class="btn ghost" style="flex:1" href="${LANDING}" target="_blank" rel="noopener">🌐 prosewa.web.app</a></div>
-    <p class="muted" style="text-align:center;margin:8px 0 0">ProSewa v${APP_VER}</p>`);
+    <p class="muted" style="text-align:center;margin:8px 0 0">ProSewa ${verLabel()}</p>`);
 }
 function reportForm() {
   openModal('Lapor Masalah', `<form data-form="report"><p class="muted" style="margin-top:0">Terangkan apa yang berlaku. Laporan terus dihantar kepada pasukan ProSewa.</p>
@@ -1895,6 +1907,7 @@ function tHome(notifs, unread) {
   const t = S.t, o = S.owner || {}, cm = curMonth(), s = monthStatus(t, cm, S.payments), a = arrears(t, S.payments);
   const canPay = !['paid', 'pending'].includes(s.code);
   let h = header('Sewa saya', `Salam, ${t.name.split(' ')[0]}.`, t.address, {btns: tenantBtns(unread)}) + `<div class="wrap">`;
+  h += updBar();
   if (!isStandalone()) h += `<div class="instbig"><div><b>Pasang app ProSewa Penyewa</b><span class="muted">Dapat notifikasi & buka terus dari skrin utama</span></div><button class="btn sm" data-act="install">⬇ Pasang</button></div>`;
   if (notifs[0] && unread) h += `<div class="al" data-act="ttab" data-id="notif" style="cursor:pointer"><b>${notifs[0].ic} ${esc(notifs[0].title)}</b>${(notifs[0].raw ? `<span data-raw>${esc(notifs[0].body)}</span>` : esc(notifs[0].body))}</div>`;
   h += `<div class="tc ${tcCls(s)}"><div class="t1"><div>${s.code === 'paid' ? '<div class="paidbig">✓ DIBAYAR</div>' : chip(s)}<h4>Sewa ${monthLabel(cm)}</h4><div class="big">${RM(s.rent)}</div>${s.code === 'paid' ? '' : `<div class="muted">Sila bayar sebelum <b style="color:var(--ink)">${dateLabel(s.due)}</b>${s.bal && s.paid ? ` · baki <b style="color:var(--ink)">${RM(s.bal)}</b>` : ''}</div>`}</div>${s.code === 'paid' ? '' : cdBox(s)}</div>
@@ -2756,6 +2769,7 @@ function nativeInit() {
   if (S.token) await loadTenant(S.token);
   renderTenant();
 })();
+setTimeout(checkApk, 4000); setInterval(checkApk, 6 * 3600e3);
 </script>
 </body>
 </html>

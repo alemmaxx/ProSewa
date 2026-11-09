@@ -21,5 +21,6 @@ if [ -n "$FETCH_APK" ]; then
   for f in ProSewa-Admin.apk ProSewa-Penyewa.apk; do
     curl -sSLf -o _site/$f https://github.com/alemmaxx/ProSewa/releases/download/latest/$f && echo "APK: $f" || echo "APK $f belum ada dalam Release"
   done
+  curl -sSLf -o _site/apk-version.json https://github.com/alemmaxx/ProSewa/releases/download/latest/apk-version.json && cat _site/apk-version.json || echo "apk-version.json belum ada"
 fi
 echo "_site siap:"; ls _site
