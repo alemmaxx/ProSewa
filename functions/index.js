@@ -370,6 +370,16 @@ exports.prosewaHealthNow = onRequest({region: REGION}, async (req, res) => {
       const n = await toOwner(SUPER_UID, l => l === 'en' ? {title: '🧪 ProSewa test alert', body: 'The system alarm is working. You will be notified here if there is a problem.'} : {title: '🧪 Amaran ujian ProSewa', body: 'Sistem amaran berfungsi. Anda akan dimaklumkan di sini jika berlaku masalah.'});
       return res.json({sent: n});
     }
+    const dg = (req.body || {}).diag;
+    if (dg) {   // diagnostik owner tertentu (Super Admin): peranti push & pesanan ToyyibPay
+      const uid = String(dg).slice(0, 128);
+      const dev = await db.collection('devices').where('uid', '==', uid).get();
+      const ord = await db.collection('subOrders').where('uid', '==', uid).get();
+      const ten = await db.collection('tenants').where('ownerId', '==', uid).get();
+      let tdev = 0; for (const t of ten.docs.filter(d => d.data().active !== false)) tdev += (await db.collection('devices').where('tok', '==', t.id).count().get()).data().count;
+      return res.json({devices: dev.docs.map(d => ({platform: d.data().platform, at: d.data().at, lang: d.data().lang})), tenantDevices: tdev,
+        orders: ord.docs.map(d => { const o = d.data(); return {status: o.status, amount: o.amount, plan: o.plan, billCode: o.billCode, at: o.createdAt && o.createdAt.toDate ? o.createdAt.toDate().toISOString() : ''}; }).sort((a, b) => b.at.localeCompare(a.at)).slice(0, 10)});
+    }
     return res.json(await runHealth('manual'));
   } catch (e) { console.error(e); return res.status(500).json({error: 'Ralat pelayan. Cuba lagi.'}); }
 });

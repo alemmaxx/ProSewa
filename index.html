@@ -209,6 +209,9 @@ header .lang{margin-bottom:0}
 .finst span{display:block;font-size:12px;color:var(--muted)}.finst b{display:block;font-size:17px;margin-top:2px}.finst b.g{color:var(--green)}.finst b.r{color:var(--red)}.finst em{font-style:normal;font-size:11.5px;color:var(--muted)}
 .finrep #taxrep{background:#fff;color:#111;border-radius:12px;padding:12px;font-size:12px;overflow-x:auto}
 .newdot{font-style:normal;background:var(--red,#e5484d);color:#fff;font:700 10.5px var(--f);padding:2px 7px;border-radius:999px;margin-left:8px;vertical-align:middle}
+.dgbox{border-radius:14px;padding:12px 14px;border:1px solid var(--line);background:rgba(255,255,255,.03)}.dgbox>b{display:block;font-size:16px}.dgbox>.muted{display:block;font-size:12.5px;margin-bottom:4px}
+.dgbox.ok{border-color:rgba(63,211,154,.45);background:rgba(63,211,154,.08)}.dgbox.warn{border-color:rgba(232,201,106,.5);background:rgba(232,201,106,.08)}.dgbox.bad{border-color:rgba(229,72,77,.55);background:rgba(229,72,77,.08)}.dgbox.run{border-color:rgba(217,180,74,.4)}
+.dgs{border-top:1px dashed var(--line);padding:7px 0;font-size:13.5px}.dgs em{font-style:normal;color:var(--muted);font-size:12px}.dgs.run{opacity:.6}.dgd{color:var(--muted);font-size:12.5px;word-break:break-word;margin-top:2px}.dgf{font-size:12.5px;margin-top:3px;color:var(--gold,#e8c96a)}
 header .hpill{height:38px;padding:0 14px;font-size:14px;border-radius:10px;display:inline-flex;align-items:center;gap:6px;flex:none}
 .pw{position:relative}.pw input{padding-right:50px}
 .pw .eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:42px;height:38px;border:0;border-radius:8px;background:none;font-size:18px;cursor:pointer;opacity:.7}
@@ -1364,12 +1367,92 @@ function superFab() {   // butang terapung kanan: tukar antara app owner & panel
   b.innerHTML = inSuper ? '🏠<span>App</span>' : `🛡️<span>Super</span>${S.repNew ? `<em class="sfb">${S.repNew}</em>` : ''}`; b.title = inSuper ? tr('Kembali ke app') : tr('Panel Super Admin');
   if (LANG === 'en') trNode(b);
 }
+/* ---------- Diagnostik terperinci (Super Admin): semakan berantai + diagnosis laporan pengguna ---------- */
+function diagBox() {
+  const d = S.diag;
+  const reps = (S.sysErrs || []).filter(e => e.src === 'report');
+  if (!d && reps.length) return `<div id="diagbox" class="dgbox warn"><b>📮 ${reps.length} laporan pengguna</b><span class="muted">Tekan "🔬 Diagnosis" pada laporan di bawah untuk semak punca & cara baiki.</span></div>`;
+  if (!d) return `<div id="diagbox" class="dgbox ok"><b>✅ Tiada isu dilaporkan</b><span class="muted">Tekan "Jalankan diagnostik" untuk semakan berantai penuh, atau "🔬 Diagnosis" pada laporan pengguna di bawah.</span></div>`;
+  const bad = d.steps.filter(x => x.st === 'bad'), warn = d.steps.filter(x => x.st === 'warn');
+  const cls = d.running ? 'run' : bad.length ? 'bad' : warn.length ? 'warn' : 'ok';
+  const head = d.running ? `⏳ ${esc(d.title)}… (${d.steps.length})` : bad.length ? `❌ ${bad.length} isu perlu dibaiki` : warn.length ? `⚠️ ${warn.length} amaran` : '✅ Tiada isu dikesan';
+  const ic = {ok: '✅', warn: '⚠️', bad: '❌', info: 'ℹ️'};
+  return `<div id="diagbox" class="dgbox ${cls}"><b>${head}</b><span class="muted">${esc(d.title)}${d.at ? ' · ' + dtLabel(d.at) : ''}</span>
+    ${d.steps.map(x => `<div class="dgs ${x.st}"><div>${ic[x.st] || '•'} <b>${esc(x.name)}</b>${x.ms != null ? ` <em>${x.ms < 1000 ? x.ms + 'ms' : (x.ms / 1000).toFixed(1) + 's'}</em>` : ''}</div>${x.detail ? `<div class="dgd" data-raw>${esc(x.detail)}</div>` : ''}${x.fix && x.st !== 'ok' ? `<div class="dgf">🔧 ${esc(x.fix)}</div>` : ''}</div>`).join('')}</div>`;
+}
+const diagPaint = () => { const b = $('#diagbox'); if (b) b.outerHTML = diagBox(); };
+async function diagStep(name, fn) {
+  const x = {name, st: 'run'}; S.diag.steps.push(x); diagPaint();
+  const t0 = performance.now();
+  try { const r = await fn() || {}; Object.assign(x, {st: r.st || 'ok', detail: r.detail || '', fix: r.fix || ''}); }
+  catch (e) { Object.assign(x, {st: 'bad', detail: (e && e.message) || String(e), fix: x.fix || ''}); }
+  x.ms = Math.round(performance.now() - t0); diagPaint(); return x;
+}
+const minsAgo = at => at ? Math.round((new Date() - new Date(String(at).replace(' ', 'T') + (String(at).length <= 16 ? ':00' : ''))) / 60000) : 1e9;
+async function runDiag(rep) {
+  if (S.diag?.running) return;
+  S.diag = {title: rep ? `Diagnosis laporan: ${rep.who || '-'}${rep.where ? ' · ' + rep.where : ''}` : 'Diagnostik penuh sistem', steps: [], running: true};
+  diagPaint(); $('#diagbox')?.scrollIntoView({behavior: 'smooth', block: 'start'});
+  const reach = async url => { const t = performance.now(); await fetch(url + (url.includes('?') ? '&' : '?') + 't=' + Date.now(), {mode: 'no-cors', cache: 'no-store'}); return Math.round(performance.now() - t); };
+  // --- rangkaian umum
+  await diagStep('Sambungan internet peranti ini', async () => navigator.onLine ? {} : {st: 'bad', detail: 'Peranti ini offline.', fix: 'Sambung WiFi / data, kemudian cuba lagi.'});
+  await diagStep('Laman owner (prosewa.web.app)', async () => { const ms = await reach(WEB_BASE + 'index.html'); return ms > 4000 ? {st: 'warn', detail: 'Perlahan.', fix: 'Semak status Firebase Hosting (status.firebase.google.com).'} : {}; });
+  await diagStep('Laman penyewa (penyewa.html)', async () => { await reach(WEB_BASE + 'penyewa.html'); return {}; });
+  await diagStep('Fail versi APK', async () => { const r = await fetch(WEB_BASE + 'apk-version.json?' + Date.now(), {cache: 'no-store'}); if (!r.ok) return {st: 'warn', detail: 'apk-version.json tiada (' + r.status + ').', fix: 'Jalankan semula workflow "Build ProSewa APK" di GitHub Actions.'}; const j = await r.json(); return {detail: `APK terkini 1.0.${j.build}`}; });
+  await diagStep('Log masuk (Firebase Auth)', async () => { if (!ONLINE) return {st: 'info', detail: 'Mod peranti (ujian).'}; await API.idToken(); return {detail: 'Token sah.'}; });
+  await diagStep('Database: baca tetapan', async () => { const c = await API.getConfig(); return {detail: `config/app OK · ${Object.keys(c || {}).length} medan`}; });
+  await diagStep('Database: senarai owner', async () => { const l = await API.listOwners(); S.owners = l; return {detail: `${l.length} owner · ${l.filter(o => subInfo(fsub(o.sub))?.active).length} aktif`}; });
+  let h = null;
+  await diagStep('Pelayan (Cloud Functions)', async () => { if (!ONLINE) return {st: 'info', detail: 'Mod peranti (ujian).'}; h = await API.healthNow(); S.health = h; return {detail: `Tahap: ${h.level || '-'}`}; });
+  if (h) {
+    const c = h.checks || {};
+    await diagStep('Database dari pelayan', async () => c.db?.ok ? {detail: (c.db.ms ?? '-') + 'ms'} : {st: 'bad', detail: c.db?.err || c.db?.status || 'Gagal', fix: 'Semak kuota & status Firestore di Firebase Console (projek kukusanmy, DB prosewa).'});
+    await diagStep('ToyyibPay', async () => c.toyyib?.ok ? {detail: (c.toyyib.ms ?? '-') + 'ms'} : {st: 'bad', detail: c.toyyib?.err || c.toyyib?.status || 'Tidak dapat dihubungi', fix: 'Semak toyyibpay.com. Jika lama, maklumkan owner bayaran langganan tergendala buat sementara.'});
+    await diagStep('Penjadual notifikasi (setiap 30 minit)', async () => { const m = minsAgo(c.lastTick); return m > 75 ? {st: 'bad', detail: c.lastTick ? `Terakhir ${m} minit lalu` : 'Tiada rekod', fix: 'Deploy semula: firebase deploy --only functions:prosewa --project kukusanmy. Semak Cloud Scheduler aktif.'} : {detail: `Terakhir ${m} minit lalu`}; });
+    await diagStep('Push notification (30 minit)', async () => { const p = c.push || {}; return p.fail > 0 && p.fail >= p.sent ? {st: 'warn', detail: `${p.sent || 0} berjaya · ${p.fail} gagal`, fix: 'Peranti lama / token tamat dibuang automatik. Minta pengguna buka app & aktifkan notifikasi semula.'} : {detail: `${p.sent || 0} berjaya · ${p.fail || 0} gagal`}; });
+    await diagStep('Ralat function & app (30 minit)', async () => { const e = c.errors || {}; return (e.fn || 0) + (e.app || 0) > 5 ? {st: 'warn', detail: `function ${e.fn || 0} · app ${e.app || 0}`, fix: 'Lihat senarai ralat di bawah & log Cloud Functions.'} : {detail: `function ${e.fn || 0} · app ${e.app || 0}`}; });
+  }
+  await diagStep('Notifikasi di peranti ini', async () => { const pm = await notifPerm(); return pm === 'granted' ? {detail: 'Dibenarkan'} : {st: 'warn', detail: 'Status: ' + pm, fix: 'Tetapan → 🔔 Aktifkan notifikasi phone, supaya amaran sistem & laporan sampai.'}; });
+  await diagStep('Ralat app 24 jam (semua pengguna)', async () => { const l = (await API.listErrors().catch(() => [])).filter(e => e.src !== 'report' && minsAgo(e.at) < 1440); S.sysErrs = await API.listErrors().catch(() => S.sysErrs);
+    return l.length ? {st: l.length > 10 ? 'bad' : 'warn', detail: `${l.length} ralat. Terkini: ${l.slice(0, 3).map(e => `[${e.where || e.src}] ${String(e.msg).slice(0, 80)}`).join(' | ')}`, fix: 'Ralat berulang di tempat sama = pepijat. Hantar mesej ralat kepada pembangun untuk dibaiki.'} : {detail: 'Tiada'}; });
+  // --- diagnosis owner yang melapor
+  if (rep) {
+    const u8 = (String(rep.who || '').match(/·\s*([A-Za-z0-9]{6,})\s*$/) || [])[1] || '';
+    const o = (S.owners || []).find(x => u8 && x.uid.startsWith(u8));
+    await diagStep('Kenal pasti owner pelapor', async () => o ? {detail: `${o.name || '-'} · ${o.email || ''} · ${o.uid}`} : {st: 'warn', detail: u8 ? `UID ${u8}… tidak ditemui.` : 'Laporan tiada UID (mungkin dari penyewa / belum log masuk).', fix: 'Hubungi pelapor melalui maklumat hubungan dalam laporan.'});
+    await diagStep('Versi app pelapor', async () => { const ua = String(rep.ua || ''), plat = /ProSewa|wv\)/i.test(ua) ? 'APK Android' : /iphone|ipad/i.test(ua) ? 'iPhone/iPad' : /android/i.test(ua) ? 'Android (browser)' : 'Komputer / lain'; return rep.ver && rep.ver !== APP_VER ? {st: 'warn', detail: `${plat} · versi ${rep.ver} (terkini ${APP_VER})`, fix: 'Minta pengguna muat semula halaman / pasang APK terkini, kemudian cuba lagi.'} : {detail: `${plat} · versi ${rep.ver || '-'}`}; });
+    if (o) {
+      const uid = o.uid;
+      await diagStep('Langganan owner', async () => { const si = subInfo(fsub(o.sub)); return !si ? {st: 'warn', detail: 'Tiada rekod langganan.', fix: 'Tambah hari melalui senarai Owner di bawah.'} : si.active ? {detail: `${si.planName} · ${si.days} hari lagi`} : {st: 'bad', detail: `Tamat ${dateLabel(si.end)} → owner & penyewa disekat.`, fix: 'Owner perlu bayar / anda tambah hari (+30 hari) di senarai Owner.'}; });
+      let ten = [];
+      await diagStep('Penyewa & link', async () => { ten = await API.listTenants(uid); const act = ten.filter(t => t.active !== false), noTok = act.filter(t => !t.token && !t.id), noPh = act.filter(t => !t.phone);
+        return {st: noPh.length ? 'warn' : 'ok', detail: `${act.length} aktif · ${ten.length - act.length} tamat${noPh.length ? ` · ${noPh.length} tiada no. telefon` : ''}`, fix: noPh.length ? 'Penyewa tanpa no. telefon tak boleh terima link / peringatan WhatsApp.' : ''}; });
+      await diagStep('Rekod bayaran & resit', async () => { const act = ten.filter(t => t.active !== false); const pays = (await Promise.all(act.map(t => API.listSub(t.id, 'payments').catch(() => [])))).flat();
+        const pend = pays.filter(p => p.status === 'pending'), old = pend.filter(p => minsAgo(p.submittedAt) > 3 * 1440), noR = pays.filter(p => p.status === 'confirmed' && !p.receiptNo);
+        const seen = {}, dup = []; pays.filter(p => p.receiptNo).forEach(p => { if (seen[p.receiptNo]) dup.push(p.receiptNo); seen[p.receiptNo] = 1; });
+        const st = noR.length || dup.length ? 'bad' : old.length ? 'warn' : 'ok';
+        return {st, detail: `${pays.length} rekod · ${pend.length} menunggu semakan${old.length ? ` (${old.length} lebih 3 hari)` : ''}${noR.length ? ` · ${noR.length} lulus tanpa no. resit` : ''}${dup.length ? ` · no. resit berulang: ${[...new Set(dup)].join(', ')}` : ''}`,
+          fix: noR.length || dup.length ? 'Data resit tidak konsisten: batal & lulus semula bayaran tersebut, atau hubungi pembangun.' : old.length ? 'Owner belum semak bukti bayaran lama. Ingatkan owner buka tab Status.' : ''}; });
+      await diagStep('Ralat app daripada owner ini (7 hari)', async () => { const l = (S.sysErrs || []).filter(e => e.src !== 'report' && String(e.who || '').includes(uid.slice(0, 8)) && minsAgo(e.at) < 7 * 1440);
+        return l.length ? {st: 'bad', detail: l.slice(0, 4).map(e => `${dtLabel(e.at)} [${e.where || e.src}] ${String(e.msg).slice(0, 120)}`).join(' | '), fix: 'Ralat ini kemungkinan punca laporan. Salin mesej ralat untuk dibaiki.'} : {detail: 'Tiada ralat direkod.'}; });
+      if (ONLINE) await diagStep('Peranti notifikasi & bayaran ToyyibPay', async () => { const r = await API.healthNow({diag: uid});
+        if (!r || !r.devices) return {st: 'warn', detail: 'Function belum dikemas kini.', fix: 'Deploy functions: firebase deploy --only functions:prosewa --project kukusanmy'};
+        const pend = (r.orders || []).filter(x => x.status === 'pending');
+        const st = !r.devices.length ? 'warn' : 'ok';
+        return {st, detail: `Owner: ${r.devices.length} peranti (${r.devices.map(d => d.platform).join(', ') || '-'}) · peranti penyewa: ${r.tenantDevices} · pesanan ToyyibPay: ${(r.orders || []).length} (${pend.length} belum selesai)`,
+          fix: !r.devices.length ? 'Owner belum aktifkan notifikasi: minta buka Tetapan → 🔔 Aktifkan notifikasi phone.' : pend.length ? 'Pesanan belum selesai: owner mungkin batal bayaran, atau callback ToyyibPay gagal. Semak di dashboard ToyyibPay (billCode).' : ''}; });
+    }
+  }
+  S.diag.running = false; S.diag.at = nowStr(); diagPaint();
+}
 function healthSection() {
   const h = S.health || {}, lv = {ok: ['🟢', 'Normal'], warn: ['🟠', 'Amaran / perlahan'], down: ['🔴', 'Gangguan']}[h.level || 'ok'] || ['⚪', '-'], c = h.checks || {}, en = LANG === 'en';
   const ms = x => x ? (x.ok ? `<span style="color:var(--green)">✓</span> ${x.ms != null ? (x.ms / 1000).toFixed(1) + 's' : ''}` : `<span style="color:var(--red)">✕ ${esc(x.status || x.err || '')}</span>`) : '-';
   const stale = h.at && (new Date() - new Date(h.at.replace(' ', 'T') + ':00')) > 75 * 60e3;
   const errs = S.sysErrs || [], now = nowStr(), noticeOn = SYS.notice && (!SYS.noticeUntil || SYS.noticeUntil > now);
-  return `<div class="sec-h">🩺 Status sistem</div><div class="card">
+  return `<div class="sec-h">🔬 Diagnostik terperinci</div><div class="card">${diagBox()}
+    <div class="acts"><button class="btn" style="flex:1" data-act="diagRun">🔬 Jalankan diagnostik penuh</button></div></div>
+  <div class="sec-h">🩺 Status sistem</div><div class="card">
     <div class="kv"><span>Tahap</span><b>${lv[0]} ${lv[1]}</b></div>
     <div class="kv"><span>Semakan terakhir</span><b>${h.at ? dtLabel(h.at) : '-'} ${h.src === 'manual' ? '(manual)' : ''}</b></div>
     <div class="kv"><span>Pengguna nampak jalur amaran</span><b>${(h.pubLevel && h.pubLevel !== 'ok') || noticeOn ? '✓' : '✕'}</b></div>
@@ -1386,7 +1469,7 @@ function healthSection() {
     ${area('Mesej (kosongkan untuk buang notis)', 'notice', SYS.notice || '', 'maxlength="200" placeholder="cth: Penyelenggaraan sistem malam ini 11 malam – 12 tengah malam."')}
     <div class="grid2">${sel('Jenis', 'noticeLevel', [['info', 'ℹ️ Makluman'], ['warn', '🛠️ Penyelenggaraan'], ['down', '⚠️ Gangguan']], SYS.noticeLevel || 'info')}${fld('Papar sehingga (pilihan)', 'noticeUntil', (SYS.noticeUntil || '').slice(0, 16), 'datetime-local')}</div>
     <p class="muted">Dipaparkan sebagai jalur di atas skrin semua owner & penyewa. ${noticeOn ? '<b style="color:var(--green)">Sedang dipaparkan.</b>' : ''}</p><button class="btn wide">Simpan notis</button></form>
-  <div class="sec-h">🐞 Ralat & laporan pengguna (${errs.length})</div><div class="card">${errs.length ? errs.map(e => `<div class="iss">${e.src === 'report' && String(e.at) > (S.repPrev || '') ? '<em class="newdot" style="margin:0 6px 0 0">BARU</em>' : ''}<b>${e.src === 'report' ? '📮 Laporan pengguna' : e.src === 'fn' ? '⚙️ Function' : e.src === 'apk' ? '🤖 APK' : '🌐 Web'}</b> · ${dtLabel(e.at)}${e.where ? ` · <span data-raw>${esc(e.where)}</span>` : ''}${e.who ? ` · <span data-raw>${esc(e.who)}</span>` : ''}${e.contact ? ` · <span data-raw>${esc(e.contact)}</span>` : ''}<div class="muted" data-raw style="font-size:12.5px;word-break:break-word;white-space:pre-line">${esc(String(e.msg).slice(0, 300))}</div></div>`).join('') + '<div class="acts"><button class="btn sm red" data-act="clearErrs">🗑 Padam semua</button></div>' : '<p class="muted" style="margin:0">Tiada ralat. 👍</p>'}</div>`;
+  <div class="sec-h">🐞 Ralat & laporan pengguna (${errs.length})</div><div class="card">${errs.length ? errs.map(e => `<div class="iss">${e.src === 'report' && String(e.at) > (S.repPrev || '') ? '<em class="newdot" style="margin:0 6px 0 0">BARU</em>' : ''}<b>${e.src === 'report' ? '📮 Laporan pengguna' : e.src === 'fn' ? '⚙️ Function' : e.src === 'apk' ? '🤖 APK' : '🌐 Web'}</b> · ${dtLabel(e.at)}${e.where ? ` · <span data-raw>${esc(e.where)}</span>` : ''}${e.who ? ` · <span data-raw>${esc(e.who)}</span>` : ''}${e.contact ? ` · <span data-raw>${esc(e.contact)}</span>` : ''}<div class="muted" data-raw style="font-size:12.5px;word-break:break-word;white-space:pre-line">${esc(String(e.msg).slice(0, 300))}</div>${e.src === 'report' ? `<button class="btn sm" style="margin-top:6px" data-act="diagRep" data-id="${e.id}">🔬 Diagnosis</button>` : ''}</div>`).join('') + '<div class="acts"><button class="btn sm red" data-act="clearErrs">🗑 Padam semua</button></div>' : '<p class="muted" style="margin:0">Tiada ralat. 👍</p>'}</div>`;
 }
 const LANDING = WEB_BASE + 'promo.html';
 const promoCaps = (l, code, days) => {
@@ -2402,6 +2485,7 @@ const ACTIONS = {
   depPdf: id => { const t = S.tenants.find(x => x.id === id) || S.t; printHTML(depStatementHTML(t), tr('Penyata Deposit') + ' ' + t.name); },
   promoFilter: id => { S.promoFilter = id; renderSuper(); },
   askYes: () => { const r = ask._r; ask._r = null; closeModal(); if (r) r(true); },
+  diagRun: () => runDiag(), diagRep: id => runDiag((S.sysErrs || []).find(e => e.id === id)),
   promoKit: () => promoKit(), whatsNew: () => whatsNew(),
   finView: () => finView(), finCsv: () => finCsv(), feeForm: () => feeForm(), sysExpForm: () => sysExpForm(),
   finPdf: () => printHTML(finReportHTML(), tr('Laporan Kewangan') + ' ' + finData().per),
