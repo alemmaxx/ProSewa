@@ -370,6 +370,24 @@ exports.prosewaHealthNow = onRequest({region: REGION}, async (req, res) => {
       const n = await toOwner(SUPER_UID, l => l === 'en' ? {title: '🧪 ProSewa test alert', body: 'The system alarm is working. You will be notified here if there is a problem.'} : {title: '🧪 Amaran ujian ProSewa', body: 'Sistem amaran berfungsi. Anda akan dimaklumkan di sini jika berlaku masalah.'});
       return res.json({sent: n});
     }
+    const delUid = (req.body || {}).deleteOwner;
+    if (delUid) {   // padam owner TIDAK AKTIF & semua datanya (subPayments dikekalkan untuk laporan kewangan)
+      const uid = String(delUid).slice(0, 128);
+      if (uid === SUPER_UID) return res.status(400).json({error: 'Tidak boleh padam akaun Super Admin.'});
+      const sub = (await db.doc(`subs/${uid}`).get()).data();
+      let endD = sub && sub.plan !== 'trial' ? sub.end : null;
+      if (sub && sub.plan === 'trial') sub.start = sub.start || (sub.startTs && sub.startTs.toDate ? sub.startTs.toDate().toISOString().slice(0, 10) : '');
+      if (sub && !endD && sub.start) { const td = +(((await db.doc('config/app').get()).data() || {}).trialDays ?? 14); const d = new Date(sub.start + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + td); endD = d.toISOString().slice(0, 10); }
+      if (endD && endD >= myNow().slice(0, 10)) return res.status(400).json({error: 'Owner masih aktif. Tamatkan langganan dahulu.'});
+      let n = 0;
+      const ten = await db.collection('tenants').where('ownerId', '==', uid).get();
+      for (const t of ten.docs) { await db.recursiveDelete(t.ref); n++; }
+      for (const col of ['expenses', 'properties', 'recurring']) { const q = await db.collection(col).where('ownerId', '==', uid).get(); for (const d of q.docs) { await d.ref.delete(); n++; } }
+      for (const [col, f] of [['devices', 'uid'], ['subOrders', 'uid']]) { const q = await db.collection(col).where(f, '==', uid).get(); for (const d of q.docs) { await d.ref.delete(); n++; } }
+      for (const path of [`owners/${uid}`, `ownerPriv/${uid}`, `subs/${uid}`]) { await db.doc(path).delete().catch(() => {}); n++; }
+      await getAuth().deleteUser(uid).catch(e => console.warn('deleteUser', e.message));
+      return res.json({ok: true, docs: n});
+    }
     const dg = (req.body || {}).diag;
     if (dg) {   // diagnostik owner tertentu (Super Admin): peranti push & pesanan ToyyibPay
       const uid = String(dg).slice(0, 128);
