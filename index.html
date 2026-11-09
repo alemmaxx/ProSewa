@@ -505,7 +505,7 @@ const I18N_RX = [
   [/Sewa (.+?) (RM [\d,.]+) belum dibayar\./g, 'Rent for $1 ($2) is unpaid.']
 ];
 Object.assign(I18N, {
-  'LAPORAN KUTIPAN SEWA': 'RENT COLLECTION REPORT', 'BARU': 'NEW', '💰 Laporan kewangan': '💰 Financial report', 'Tempoh': 'Period', 'Masuk (langganan)': 'Income (subscriptions)', 'Caj ToyyibPay': 'ToyyibPay fees', 'Bersih diterima': 'Net received', 'Belanja sistem': 'System expenses', 'Untung bersih': 'Net profit', 'bayaran': 'payments', 'rekod': 'records', 'auto': 'auto',
+  'LAPORAN KUTIPAN SEWA': 'RENT COLLECTION REPORT', '🎬 Muat turun video TikTok (26 saat, MP4)': '🎬 Download TikTok video (26 sec, MP4)', '⏳ Memuat turun video…': '⏳ Downloading video…', 'BARU': 'NEW', '💰 Laporan kewangan': '💰 Financial report', 'Tempoh': 'Period', 'Masuk (langganan)': 'Income (subscriptions)', 'Caj ToyyibPay': 'ToyyibPay fees', 'Bersih diterima': 'Net received', 'Belanja sistem': 'System expenses', 'Untung bersih': 'Net profit', 'bayaran': 'payments', 'rekod': 'records', 'auto': 'auto',
   'Tukar kadar': 'Change rate', 'setiap transaksi berjaya.': 'per successful transaction.', '📊 Lihat laporan penuh': '📊 View full report', '+ Rekod belanja sistem': '+ Record system expense', 'LAPORAN KEWANGAN LANGGANAN': 'SUBSCRIPTION FINANCIAL REPORT', 'Senarai bayaran langganan': 'Subscription payments', 'Owner': 'Owner', 'Pakej': 'Plan', 'Rujukan': 'Reference', 'Caj': 'Fee', 'Bersih': 'Net', 'Belanja': 'Expenses', 'Bil.': 'No.',
   'Lanjutan percuma (RM0, tiada caj)': 'Free extensions (RM0, no fee)', 'Jenis': 'Type', 'Kategori': 'Category', 'Keterangan': 'Description', 'Kod promo': 'Promo code', 'Manual (Super Admin)': 'Manual (Super Admin)',
   'Caj ToyyibPay ialah anggaran berdasarkan kadar yang ditetapkan. Semak penyata ToyyibPay untuk angka sebenar.': 'ToyyibPay fees are estimates based on the set rate. Check your ToyyibPay statement for actual figures.',
@@ -1381,6 +1381,7 @@ function promoKit() {
     <div class="sec-h">🎬 Iklan TikTok / Reels (1080×1920)</div>
     <div class="ttgrid">${[1, 2, 3, 4, 5].map(i => `<button type="button" class="ttc" data-act="ttDl" data-id="${i}"><img src="shots/tiktok-${i}.jpg" onerror="if(!this.dataset.f){this.dataset.f=1;this.src=WEB_BASE+this.getAttribute('src')}" alt="" loading="lazy"><span>⬇ ${i}</span></button>`).join('')}</div>
     <button class="btn wide" style="margin-top:8px" data-act="ttDlAll">⬇ Muat turun semua (5 gambar)</button>
+    <button class="btn wide ink" style="margin-top:8px" data-act="ttVid">🎬 Muat turun video TikTok (26 saat, MP4)</button>
     <p class="muted" style="font-size:12.5px">Saiz menegak TikTok, Reels & Status WhatsApp. Gunakan teks "TikTok / Instagram" di bawah sebagai kapsyen.</p>
     <div class="sec-h">Teks iklan</div>
     <div class="grid2"><label class="fld"><span>Bahasa teks</span><select data-chg="kitLang"><option value="bm" ${l === 'bm' ? 'selected' : ''}>BM</option><option value="en" ${l === 'en' ? 'selected' : ''}>EN</option></select></label>
@@ -2374,6 +2375,7 @@ const ACTIONS = {
   reportForm: () => reportForm(),
   kitCopy: async k => { const c = S.kitCaps[+k]; try { await navigator.clipboard.writeText(c); toast('Disalin.'); } catch (e) { prompt('Salin:', c); } },
   kitShare: async () => { const d = {title: 'ProSewa', text: S.kitCaps[2], url: LANDING}; if (navigator.share) { try { await navigator.share(d); } catch (e) {} } else { try { await navigator.clipboard.writeText(S.kitCaps[0]); toast('Disalin.'); } catch (e) {} } },
+  ttVid: async () => { toast('⏳ Memuat turun video…'); let r = await fetch('shots/prosewa-tiktok.mp4').catch(() => null); if (!r || !r.ok) r = await fetch(WEB_BASE + 'shots/prosewa-tiktok.mp4'); await saveFile('ProSewa-TikTok-Promo.mp4', await r.blob(), 'video/mp4'); },
   ttDl: async i => { let r = await fetch(`shots/tiktok-${i}.jpg`).catch(() => null); if (!r || !r.ok) r = await fetch(`${WEB_BASE}shots/tiktok-${i}.jpg`); await saveFile(`ProSewa-TikTok-${i}.jpg`, await r.blob(), 'image/jpeg'); },
   ttDlAll: async () => { for (const i of [1, 2, 3, 4, 5]) { await ACTIONS.ttDl(i); await new Promise(r => setTimeout(r, isNative() ? 300 : 700)); } toast('5 gambar iklan dimuat turun ✅'); },
   kitPoster: async () => { let r = await fetch('shots/og.jpg').catch(() => null); if (!r || !r.ok) r = await fetch(WEB_BASE + 'shots/og.jpg'); const b = await r.blob(); await saveFile('ProSewa-poster.jpg', b, 'image/jpeg'); },
