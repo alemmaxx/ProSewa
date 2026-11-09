@@ -212,6 +212,10 @@ header .lang{margin-bottom:0}
 .dgbox{border-radius:14px;padding:12px 14px;border:1px solid var(--line);background:rgba(255,255,255,.03)}.dgbox>b{display:block;font-size:16px}.dgbox>.muted{display:block;font-size:12.5px;margin-bottom:4px}
 .dgbox.ok{border-color:rgba(63,211,154,.45);background:rgba(63,211,154,.08)}.dgbox.warn{border-color:rgba(232,201,106,.5);background:rgba(232,201,106,.08)}.dgbox.bad{border-color:rgba(229,72,77,.55);background:rgba(229,72,77,.08)}.dgbox.run{border-color:rgba(217,180,74,.4)}
 .dgs{border-top:1px dashed var(--line);padding:7px 0;font-size:13.5px}.dgs em{font-style:normal;color:var(--muted);font-size:12px}.dgs.run{opacity:.6}.dgd{color:var(--muted);font-size:12.5px;word-break:break-word;margin-top:2px}.dgf{font-size:12.5px;margin-top:3px;color:var(--gold,#e8c96a)}
+.mfig{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin:10px 0 12px}.mfig figure{margin:0;text-align:center}
+.mfig img{width:100%;max-width:260px;border-radius:14px;border:3px solid #1d2a25;box-shadow:0 6px 18px rgba(0,0,0,.35);display:block;margin:0 auto;background:#0a1210}
+.mfig figure{cursor:zoom-in}.mfig figure.big{grid-column:1/-1;cursor:zoom-out}.mfig figure.big img{max-width:100%}
+.mfig figcaption{font-size:12.5px;line-height:1.35;margin-top:6px;color:var(--muted)}
 header .hpill{height:38px;padding:0 14px;font-size:14px;border-radius:10px;display:inline-flex;align-items:center;gap:6px;flex:none}
 .pw{position:relative}.pw input{padding-right:50px}
 .pw .eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:42px;height:38px;border:0;border-radius:8px;background:none;font-size:18px;cursor:pointer;opacity:.7}
@@ -1951,6 +1955,7 @@ const CHANGELOG = [
    'Pengesahan sebelum <b>log keluar</b>.',
    'Bayaran langganan ToyyibPay kini boleh pilih <b>DuitNow QR</b>.',
    'Lupa kata laluan: mesej lebih jelas (semak folder Spam).',
+   '<b>📘 Manual pengguna bergambar</b>: setiap topik ada gambar skrin dengan keterangan.',
    'Butang <b>🆕 Apa yang baru</b> ini di Tetapan, dan <b>Versi app</b>: APK beritahu bila ada versi baru untuk dimuat turun.'],
   en: [
    'The <b>Status</b> tab is now first, <b>Tenants</b> second.',
@@ -1964,6 +1969,7 @@ const CHANGELOG = [
    'Confirmation before <b>signing out</b>.',
    'ToyyibPay subscription payments can now use <b>DuitNow QR</b>.',
    'Forgot password: clearer message (check your Spam folder).',
+   '<b>📘 Illustrated user manual</b>: every topic has screenshots with explanations.',
    'This <b>🆕 What\'s new</b> button in Settings, plus <b>App version</b>: the APK tells you when a newer version is ready to download.']},
  {v: '2026.11.04', bm: [
    '<b>💡 Bil & utiliti</b>: rekod elektrik, air, IWK & internet ikut rumah, dan bil berulang automatik setiap bulan.',
@@ -1998,10 +2004,25 @@ function whatsNew() {
     <div class="acts" style="margin-top:10px"><button class="btn" style="flex:1" data-act="manual">📘 ${en ? 'User manual' : 'Manual pengguna'}</button></div>`);
   const b = document.querySelector('[data-act=whatsNew] .newdot'); if (b) b.remove();
 }
+// Gambar manual (shots/manual/*.jpg) + keterangan di bawah gambar, ikut susunan topik MANUAL
+const MANUAL_IMG = [
+ [['m01a', 'Maklumat syarikat: logo, nama & alamat yang keluar pada resit.', 'Company details: the logo, name & address shown on receipts.'], ['m01b', 'Profil & maklumat bayaran: bank, no. akaun & QR DuitNow untuk penyewa.', 'Profile & payment details: bank, account no. & DuitNow QR for tenants.']],
+ [['m02a', 'Tekan + di atas untuk buka borang tambah penyewa.', 'Tap + at the top to open the add-tenant form.'], ['m02b', 'Link khas penyewa: hantar via WhatsApp atau salin.', 'Private tenant link: send via WhatsApp or copy.'], ['m02c', 'Senarai penyewa dengan status bayaran & bulan.', 'Tenant list with payment status & month.'], ['m02d', 'Tekan nama: butiran, sejarah 6 bulan & semua tindakan.', 'Tap a name: details, 6-month history & all actions.']],
+ [['m03', 'Hartanah: kadar penghunian, bilik kosong & sewa yang hilang.', 'Properties: occupancy, vacant rooms & lost rent.']],
+ [['m04a', 'Tab Status: bukti bayaran baru di bahagian atas.', 'Status tab: new payment proofs at the top.'], ['m04b', 'Semak bayaran: tanda kotak, kemudian Lulus & hantar resit.', 'Review payment: tick the box, then Approve & send receipt.'], ['m04c', 'Resit bernombor dijana automatik.', 'A numbered receipt is created automatically.'], ['m04d', 'Bayaran manual untuk penyewa yang tak guna app.', 'Manual payment for tenants who don\'t use the app.']],
+ [['m05', 'Belum bayar: Ingatkan, Bayaran manual atau WhatsApp.', 'Unpaid: Remind, Manual payment or WhatsApp.']],
+ [['m06', 'Tamatkan sewa: potongan & baki deposit dikira automatik.', 'End tenancy: deductions & deposit balance are calculated automatically.']],
+ [['m07', 'Tab Aduan: kemas kini status aduan penyewa.', 'Requests tab: update the status of tenant requests.']],
+ [['m08b', 'Kutipan sewa: jangkaan vs diterima setiap bulan.', 'Rent collection: expected vs received each month.'], ['m08a', 'Bil & utiliti ikut rumah, untuk laporan cukai.', 'Bills & utilities by property, for the tax report.']],
+ [['m09', 'Tab Langganan: baki hari & pilih pakej.', 'Subscription tab: days left & choose a plan.']],
+ [],
+ [['m11', 'Padam semua data: taip PADAM & kata laluan log masuk.', 'Delete all data: type PADAM & your sign-in password.']],
+ [['m12', 'Lapor masalah terus kepada pasukan ProSewa.', 'Report a problem straight to the ProSewa team.']]];
+const manImgs = (i, en) => { const l = MANUAL_IMG[i] || []; return l.length ? `<div class="mfig">${l.map(([f, bm, e]) => `<figure onclick="this.classList.toggle('big')"><img src="shots/manual/${f}.jpg" onerror="if(!this.dataset.f){this.dataset.f=1;this.src=WEB_BASE+this.getAttribute('src')}" alt="" loading="lazy"><figcaption>${en ? e : bm}</figcaption></figure>`).join('')}</div>` : ''; };
 function manualModal() {
   const en = LANG === 'en';
-  openModal(en ? '📘 User Manual' : '📘 Manual Pengguna', `<div class="manual" data-raw><p style="margin-top:0">${en ? 'A quick guide to every part of ProSewa. Tap a topic to open it.' : 'Panduan ringkas setiap bahagian ProSewa. Tekan topik untuk buka.'}</p>
-    ${MANUAL.map(([tb, te, bb, be], i) => `<details ${i === 0 ? 'open' : ''}><summary>${en ? te : tb}</summary>${en ? be : bb}</details>`).join('')}</div>
+  openModal(en ? '📘 User Manual' : '📘 Manual Pengguna', `<div class="manual" data-raw><p style="margin-top:0">${en ? 'A quick guide to every part of ProSewa. Tap a topic to open it, and tap a picture to enlarge it.' : 'Panduan ringkas setiap bahagian ProSewa. Tekan topik untuk buka, dan tekan gambar untuk besarkan.'}</p>
+    ${MANUAL.map(([tb, te, bb, be], i) => `<details ${i === 0 ? 'open' : ''}><summary>${en ? te : tb}</summary>${manImgs(i, en)}${en ? be : bb}</details>`).join('')}</div>
     <div class="acts" style="margin-top:10px"><button class="btn" style="flex:1" data-act="reportForm">📮 Lapor masalah</button><a class="btn ghost" style="flex:1" href="${LANDING}" target="_blank" rel="noopener">🌐 prosewa.web.app</a></div>
     <p class="muted" style="text-align:center;margin:8px 0 0">ProSewa ${verLabel()}</p>`);
 }
