@@ -47,6 +47,11 @@ service cloud.firestore {
       allow write: if isSuper();
     }
 
+    // Belanja sistem Super Admin (laporan kewangan)
+    match /sysExpenses/{id} {
+      allow read, write: if isSuper();
+    }
+
     // Pesanan bayaran ToyyibPay (ditulis oleh Cloud Function sahaja)
     match /subOrders/{id} {
       allow read: if isSuper() || (signedIn() && resource.data.uid == request.auth.uid);

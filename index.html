@@ -198,6 +198,11 @@ table.rep tr.tot td{font-weight:800;border-bottom:0;color:var(--gold)}
 .lang button:first-child{border-radius:10px 0 0 10px}.lang button:last-child{border-radius:0 10px 10px 0;border-left:0}
 .lang button.on{background:var(--ink);color:var(--bg)}
 header .lang{margin-bottom:0}
+.sfab{position:fixed;right:0;top:46%;z-index:5;border:0;border-radius:14px 0 0 14px;background:linear-gradient(160deg,#e9c46a,#c99a2e);color:#1a1405;font:700 11px var(--f);padding:10px 7px 9px 9px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:20px;box-shadow:-4px 6px 18px rgba(0,0,0,.35);cursor:pointer}
+.sfab span{font-size:10.5px;letter-spacing:.02em}.sfab.back{background:linear-gradient(160deg,#3a4a45,#24302c);color:#fff}
+.finst{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.finst>div{background:var(--soft,rgba(255,255,255,.04));border:1px solid var(--line);border-radius:12px;padding:10px}
+.finst span{display:block;font-size:12px;color:var(--muted)}.finst b{display:block;font-size:17px;margin-top:2px}.finst b.g{color:var(--green)}.finst b.r{color:var(--red)}.finst em{font-style:normal;font-size:11.5px;color:var(--muted)}
+.finrep #taxrep{background:#fff;color:#111;border-radius:12px;padding:12px;font-size:12px;overflow-x:auto}
 header .hpill{height:38px;padding:0 14px;font-size:14px;border-radius:10px;display:inline-flex;align-items:center;gap:6px;flex:none}
 .pw{position:relative}.pw input{padding-right:50px}
 .pw .eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:42px;height:38px;border:0;border-radius:8px;background:none;font-size:18px;cursor:pointer;opacity:.7}
@@ -499,7 +504,15 @@ const I18N_RX = [
   [/Sewa (.+?) (RM [\d,.]+) belum dibayar\./g, 'Rent for $1 ($2) is unpaid.']
 ];
 Object.assign(I18N, {
-  'LAPORAN KUTIPAN SEWA': 'RENT COLLECTION REPORT', 'DIBAYAR': 'PAID', 'BELUM BAYAR': 'UNPAID', 'SEMAK': 'REVIEW', '✓ DIBAYAR': '✓ PAID', 'Tekan nama penyewa untuk butiran, link & tindakan.': 'Tap a tenant for details, link & actions.', 'Sejarah 6 bulan': '6-month history', 'Kongsi': 'Share', 'Tamatkan sewa': 'End tenancy',
+  'LAPORAN KUTIPAN SEWA': 'RENT COLLECTION REPORT', '💰 Laporan kewangan': '💰 Financial report', 'Tempoh': 'Period', 'Masuk (langganan)': 'Income (subscriptions)', 'Caj ToyyibPay': 'ToyyibPay fees', 'Bersih diterima': 'Net received', 'Belanja sistem': 'System expenses', 'Untung bersih': 'Net profit', 'bayaran': 'payments', 'rekod': 'records', 'auto': 'auto',
+  'Tukar kadar': 'Change rate', 'setiap transaksi berjaya.': 'per successful transaction.', '📊 Lihat laporan penuh': '📊 View full report', '+ Rekod belanja sistem': '+ Record system expense', 'LAPORAN KEWANGAN LANGGANAN': 'SUBSCRIPTION FINANCIAL REPORT', 'Senarai bayaran langganan': 'Subscription payments', 'Owner': 'Owner', 'Pakej': 'Plan', 'Rujukan': 'Reference', 'Caj': 'Fee', 'Bersih': 'Net', 'Belanja': 'Expenses', 'Bil.': 'No.',
+  'Lanjutan percuma (RM0, tiada caj)': 'Free extensions (RM0, no fee)', 'Jenis': 'Type', 'Kategori': 'Category', 'Keterangan': 'Description', 'Kod promo': 'Promo code', 'Manual (Super Admin)': 'Manual (Super Admin)',
+  'Caj ToyyibPay ialah anggaran berdasarkan kadar yang ditetapkan. Semak penyata ToyyibPay untuk angka sebenar.': 'ToyyibPay fees are estimates based on the set rate. Check your ToyyibPay statement for actual figures.',
+  'Kadar caj ToyyibPay': 'ToyyibPay fee rate', 'Caj tetap setiap transaksi (RM)': 'Fixed fee per transaction (RM)', 'Tambahan peratus (%)': 'Extra percentage (%)',
+  'Caj FPX ToyyibPay biasanya RM1.00 setiap transaksi (ditanggung anda kerana bil ditetapkan caj kepada pemilik bil). Ikut kadar dalam akaun ToyyibPay anda.': 'ToyyibPay FPX fee is usually RM1.00 per transaction (borne by you, as bills charge the bill owner). Match the rate in your ToyyibPay account.',
+  'Rekod belanja sistem': 'Record system expense', 'Firebase / Google Cloud': 'Firebase / Google Cloud', 'Domain & hosting': 'Domain & hosting', 'Iklan & promosi': 'Ads & promotion', 'Google Play / developer': 'Google Play / developer', 'Perisian & langganan': 'Software & subscriptions', 'Lain-lain': 'Others',
+  'Untuk kos menjalankan ProSewa (bukan bil owner). Masuk dalam laporan kewangan anda.': 'For costs of running ProSewa (not owner bills). Included in your financial report.', 'Urus belanja sistem': 'Manage system expenses', 'Padam rekod belanja ini?': 'Delete this expense record?',
+  'Kadar caj disimpan ✅': 'Fee rate saved ✅', 'Belanja direkod ✅': 'Expense recorded ✅', 'Masukkan jumlah.': 'Enter an amount.', 'Laporan Kewangan': 'Financial Report', 'Laporan-Kewangan': 'Financial-Report', 'Laporan Kewangan Langganan': 'Subscription Financial Report', 'Ringkasan': 'Summary', 'Emel': 'Email', 'Panel Super Admin': 'Super Admin panel', 'Kembali ke app': 'Back to app', 'DIBAYAR': 'PAID', 'BELUM BAYAR': 'UNPAID', 'SEMAK': 'REVIEW', '✓ DIBAYAR': '✓ PAID', 'Tekan nama penyewa untuk butiran, link & tindakan.': 'Tap a tenant for details, link & actions.', 'Sejarah 6 bulan': '6-month history', 'Kongsi': 'Share', 'Tamatkan sewa': 'End tenancy',
   'Kredit bulan lepas': 'Credit from last month', 'Lebihan ke bulan depan': 'Carried to next month', 'Tunggakan': 'Arrears', 'Lihat paparan penyewa': 'View tenant page', 'Semak bayaran': 'Review payment', 'Semak Bayaran': 'Review Payment', 'Tiada gambar bukti.': 'No proof image.',
   'Bulan sewa': 'Rent month', 'Jumlah dibayar': 'Amount paid', 'Perlu dibayar': 'Amount due', 'Lebihan (ditolak bulan depan)': 'Overpaid (deducted next month)', 'Kurang': 'Short', 'Kaedah': 'Method', 'No. rujukan': 'Reference no.', 'Dihantar': 'Submitted',
   'Saya telah semak bukti ini dan wang sudah masuk ke akaun saya': "I've checked this proof and the money is in my account", 'Bayaran manual': 'Manual payment', 'Kaedah bayaran': 'Payment method', 'Kaedah bayaran penyewa': 'Payment method by tenant',
@@ -856,6 +869,10 @@ const LocalAPI = {
   async addError(d) { (L.sysErrors = L.sysErrors || []).push({...clone(d), id: genId()}); L.sysErrors = L.sysErrors.slice(-60); lsave(); },
   async listErrors() { return clone([...(L.sysErrors || [])].reverse().slice(0, 40)); },
   async clearErrors() { L.sysErrors = []; lsave(); },
+  async listAllSubPayments() { return clone(L.subPayments || []); },
+  async listSysExp() { return clone(L.sysExp || []); },
+  async addSysExp(d) { L.sysExp = L.sysExp || []; L.sysExp.push({...clone(d), id: genId()}); lsave(); },
+  async delSysExp(id) { L.sysExp = (L.sysExp || []).filter(x => x.id !== id); lsave(); },
   async nextReceiptSeq(uid) { const o = L.owners[uid] = L.owners[uid] || {}; o.receiptSeq = (+o.receiptSeq || 0) + 1; lsave(); return o.receiptSeq; }
 };
 addEventListener('storage', e => { if (!ONLINE && e.key === LKEY) { L = lsGet(LKEY) || L; refresh(); } });
@@ -978,6 +995,10 @@ const FireAPI = {
   async addError(d) { await fbInit(); await fb.F.addDoc(fcol('sysErrors'), d); },
   async listErrors() { await fbInit(); const s = await fb.F.getDocs(fb.F.query(fcol('sysErrors'), fb.F.orderBy('at', 'desc'), fb.F.limit(40))); return s.docs.map(d => ({...d.data(), id: d.id})); },
   async clearErrors(list) { await fbInit(); for (const e of list) await fb.F.deleteDoc(fdoc('sysErrors', e.id)).catch(() => {}); },
+  async listAllSubPayments() { await fbInit(); const s = await fb.F.getDocs(fcol('subPayments')); return s.docs.map(d => ({...d.data(), id: d.id})); },
+  async listSysExp() { await fbInit(); const s = await fb.F.getDocs(fcol('sysExpenses')); return s.docs.map(d => ({...d.data(), id: d.id})); },
+  async addSysExp(d) { await fbInit(); await fb.F.addDoc(fcol('sysExpenses'), d); },
+  async delSysExp(id) { await fbInit(); await fb.F.deleteDoc(fdoc('sysExpenses', id)); },
   async saveDevice(token, d) { await fbInit(); await fb.F.setDoc(fdoc('devices', token), {...d, at: nowStr()}); },
   async listSubPayments(uid) { await fbInit(); const s = await fb.F.getDocs(fb.F.query(fcol('subPayments'), fb.F.where('ownerId', '==', uid))); return s.docs.map(d => ({...d.data(), id: d.id})); },
   async addSubPayment(d) { await fbInit(); await fb.F.addDoc(fcol('subPayments'), d); },
@@ -1209,15 +1230,16 @@ async function renderSuper() {
     return;
   }
   S.mode = 'super'; renderLoading();
-  const [config, owners, promos, health, errs, st] = await Promise.all([API.getConfig(), API.listOwners(), API.listPromos().catch(() => []), API.getHealth().catch(() => null), API.listErrors().catch(() => []), API.getStatus().catch(() => ({}))]);
-  S.config = config || {}; S.owners = owners; S.promos = promos; S.health = health; S.sysErrs = errs; SYS = st || {};
+  const [config, owners, promos, health, errs, st, subPays, sysExp] = await Promise.all([API.getConfig(), API.listOwners(), API.listPromos().catch(() => []), API.getHealth().catch(() => null), API.listErrors().catch(() => []), API.getStatus().catch(() => ({})), API.listAllSubPayments().catch(() => []), API.listSysExp().catch(() => [])]);
+  S.config = config || {}; S.owners = owners; S.allSubPays = subPays; S.sysExp = sysExp; S.promos = promos; S.health = health; S.sysErrs = errs; SYS = st || {};
   const rows = owners.map(o => { const si = subInfo(fsub(o.sub)) || {planName: '-', end: '', active: false, days: 0};
     return `<div class="tc ${si.active ? (si.days <= 5 ? 'warn' : '') : 'hot'}"><div class="t1"><div>${si.active ? `<span class="chip c-paid">Aktif · ${si.days} hari lagi</span>` : '<span class="chip c-overdue">Tamat</span>'}<h4 data-raw>${esc(o.name || o.email || o.uid)}</h4><div class="muted" data-raw>${esc(o.email || '')}</div></div></div>
       <div class="kvs"><div class="kv"><span>Pelan</span><b>${esc(si.planName)}</b></div><div class="kv"><span>Tamat</span><b>${si.end ? dateLabel(si.end) : '-'}</b></div><div class="kv"><span>Daftar</span><b>${o.createdAt ? dtLabel(o.createdAt) : '-'}</b></div></div>
       <div class="acts"><button class="btn sm" data-act="superAdd" data-id="${o.uid}|30">+30 hari</button><button class="btn sm ghost" data-act="superAdd" data-id="${o.uid}|365">+1 tahun</button></div>
       <div class="acts"><button class="btn sm ghost" data-act="superTrial" data-id="${o.uid}">Set semula percubaan</button><button class="btn sm red" data-act="superExpire" data-id="${o.uid}">Tamatkan sekarang</button></div></div>`; }).join('');
-  $('#app').innerHTML = header('Super Admin', 'Kawalan sistem.', 'Tetapan percubaan & langganan owner', {btns: '<span style="margin-left:auto"></span><button class="btn hpill" data-act="promoKit">📣 Promosi</button>' + langSeg(), stats: [[owners.length, 'Owner'], [owners.filter(o => subInfo(fsub(o.sub))?.active).length, 'Aktif', 'g']]}) + `<div class="wrap">
+  $('#app').innerHTML = header('Super Admin', 'Kawalan sistem.', 'Tetapan percubaan & langganan owner', {btns: '<span style="margin-left:auto"></span>' + langSeg(), stats: [[owners.length, 'Owner'], [owners.filter(o => subInfo(fsub(o.sub))?.active).length, 'Aktif', 'g']]}) + `<div class="wrap">
     ${healthSection()}
+    ${finSection()}
     <div class="sec-h">Harga pakej</div><form class="card" data-form="prices">${plans().map(p => `<div class="grid2">${fld(p.name + ' (RM)', 'price_' + p.id, p.price.toFixed(2), 'number', 'step="0.01" min="1" required inputmode="decimal"')}${fld('Label', 'tag_' + p.id, p.tag, 'text', 'placeholder="cth: Jimat 17%"')}</div>`).join('')}
       <p class="muted">Harga ini dipaparkan kepada owner dan digunakan semasa cipta bil ToyyibPay.</p><button class="btn wide">Simpan harga</button></form>
     <div class="sec-h">Tempoh percubaan</div><form class="card" data-form="trial">${fld('Hari percubaan percuma', 'days', trialDays(), 'number', 'min="0" max="365" required')}
@@ -1227,6 +1249,89 @@ async function renderSuper() {
     ${promoSection(promos)}
     <div class="sec-h">Owner (${owners.length})</div>${owners.length ? `<div class="tcgrid">${rows}</div>` : '<div class="empty">Belum ada owner.</div>'}
     <button class="btn wide ghost" style="margin-top:12px" data-act="exitSuper">‹ Kembali ke app</button></div>`;
+  superFab();
+}
+/* ---------- Laporan kewangan Super Admin (langganan masuk, caj ToyyibPay, belanja sistem) ---------- */
+const feeCfg = () => ({flat: S.config?.feeFlat != null ? +S.config.feeFlat : 1, pct: S.config?.feePct != null ? +S.config.feePct : 0});
+const tpFee = amt => { if (!(+amt > 0)) return 0; const f = feeCfg(); return Math.round((f.flat + amt * f.pct / 100) * 100) / 100; };
+const SYS_EXP_CATS = ['Firebase / Google Cloud', 'Domain & hosting', 'Iklan & promosi', 'Google Play / developer', 'Perisian & langganan', 'Lain-lain'];
+function finData() {
+  const per = S.finPer || String(new Date().getFullYear()), own = Object.fromEntries((S.owners || []).map(o => [o.uid, o]));
+  const inPer = d => String(d || '').startsWith(per);
+  const pn = id => (plans().find(p => p.id === id) || {}).name || ({promo: 'Kod promo', manual: 'Manual (Super Admin)'})[id] || id || '-';
+  const all = (S.allSubPays || []).filter(x => inPer(x.date)).sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  const paid = all.filter(x => +x.amount > 0).map(x => { const o = own[x.ownerId] || {}, fee = tpFee(+x.amount); return {...x, name: o.name || o.email || x.ownerId, email: o.email || '', planName: pn(x.plan), fee, net: Math.round((+x.amount - fee) * 100) / 100}; });
+  const free = all.filter(x => !(+x.amount > 0)).map(x => { const o = own[x.ownerId] || {}; return {...x, name: o.name || o.email || x.ownerId, planName: pn(x.plan)}; });
+  const exp = (S.sysExp || []).filter(e => inPer(e.date)).sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  const sum = (a, k) => Math.round(a.reduce((t, x) => t + (+x[k] || 0), 0) * 100) / 100;
+  const gross = sum(paid, 'amount'), fee = sum(paid, 'fee'), net = sum(paid, 'net'), other = sum(exp, 'amount');
+  const months = per.length === 4 ? monthsRange(per + '-01', per + '-12') : [per];
+  const byM = months.map(m => { const p = paid.filter(x => String(x.date).startsWith(m)), e = exp.filter(x => String(x.date).startsWith(m)); return {m, n: p.length, gross: sum(p, 'amount'), fee: sum(p, 'fee'), net: sum(p, 'net'), exp: sum(e, 'amount')}; });
+  return {per, paid, free, exp, gross, fee, net, other, profit: Math.round((net - other) * 100) / 100, byM};
+}
+const perLabel = per => per.length === 4 ? 'Tahun ' + per : monthLabel(per);
+function finPeriods() {
+  const ys = [...new Set([new Date().getFullYear(), ...(S.allSubPays || []).map(x => +String(x.date).slice(0, 4)), ...(S.sysExp || []).map(x => +String(x.date).slice(0, 4))])].filter(Boolean).sort().reverse();
+  const out = []; ys.forEach(y => { out.push([String(y), 'Tahun ' + y]); for (let m = 12; m >= 1; m--) { const ym = y + '-' + String(m).padStart(2, '0'); if (ym <= curMonth()) out.push([ym, '· ' + monthLabel(ym)]); } });
+  return out;
+}
+function finSection() {
+  const d = finData(), f = feeCfg();
+  return `<div class="sec-h">💰 Laporan kewangan</div><div class="card">
+    ${sel('Tempoh', 'per', finPeriods(), d.per, 'data-chg="finPer"')}
+    <div class="finst"><div><span>Masuk (langganan)</span><b class="g">${RM(d.gross)}</b><em>${d.paid.length} bayaran</em></div><div><span>Caj ToyyibPay</span><b class="r">− ${RM(d.fee)}</b><em>auto</em></div>
+    <div><span>Bersih diterima</span><b>${RM(d.net)}</b></div><div><span>Belanja sistem</span><b class="r">− ${RM(d.other)}</b><em>${d.exp.length} rekod</em></div></div>
+    <div class="kv" style="font-size:16px"><span><b>Untung bersih</b></span><b style="color:${d.profit >= 0 ? 'var(--green)' : 'var(--red)'}">${RM(d.profit)}</b></div>
+    <p class="muted" style="font-size:12px;margin:6px 0 0"><span>Kadar caj ToyyibPay</span>: <b>RM${f.flat.toFixed(2)}${f.pct ? ` + ${f.pct}%` : ''}</b> <span>setiap transaksi berjaya.</span> <a href="#" data-act="feeForm">Tukar kadar</a></p>
+    <div class="acts"><button class="btn" style="flex:1" data-act="finView">📊 Lihat laporan penuh</button><button class="btn ghost" data-act="finPdf">🖨️ PDF</button><button class="btn ghost" data-act="finCsv">⬇ CSV</button></div>
+    <div class="acts"><button class="btn ghost" style="flex:1" data-act="sysExpForm">+ Rekod belanja sistem</button></div></div>`;
+}
+function finReportHTML() {
+  const d = finData(), f = feeCfg();
+  return `<div id="taxrep"><div class="rco"><img class="rlogo" src="icon-192.png" alt=""><div><b>ProSewa</b><div class="muted">KUKUSAN LEGACY</div></div></div>
+    <div class="rh"><b>LAPORAN KEWANGAN LANGGANAN</b><div class="muted">${perLabel(d.per)} · Dijana ${dtLabel(nowStr())}</div></div>
+    <table class="rep"><tr><td>Masuk (langganan)</td><td><b>${RM(d.gross)}</b></td></tr><tr><td>Caj ToyyibPay (${d.paid.length} transaksi × RM${f.flat.toFixed(2)}${f.pct ? ` + ${f.pct}%` : ''})</td><td><b>− ${RM(d.fee)}</b></td></tr>
+    <tr><td>Bersih diterima</td><td><b>${RM(d.net)}</b></td></tr><tr><td>Belanja sistem</td><td><b>− ${RM(d.other)}</b></td></tr><tr class="tot"><td>Untung bersih</td><td>${RM(d.profit)}</td></tr></table>
+    ${d.byM.length > 1 ? `<div class="sec-h">Bulanan</div><table class="rep"><tr><th>Bulan</th><th>Bil.</th><th>Masuk</th><th>Caj</th><th>Bersih</th><th>Belanja</th></tr>${d.byM.filter(x => x.n || x.exp).map(x => `<tr><td>${monthLabel(x.m)}</td><td>${x.n}</td><td>${RM(x.gross)}</td><td>${RM(x.fee)}</td><td>${RM(x.net)}</td><td>${RM(x.exp)}</td></tr>`).join('')}<tr class="tot"><td>Jumlah</td><td>${d.paid.length}</td><td>${RM(d.gross)}</td><td>${RM(d.fee)}</td><td>${RM(d.net)}</td><td>${RM(d.other)}</td></tr></table>` : ''}
+    <div class="sec-h">Senarai bayaran langganan</div><table class="rep small"><tr><th>Tarikh</th><th>Owner</th><th>Pakej</th><th>Rujukan</th><th>Jumlah</th><th>Caj</th><th>Bersih</th></tr>${d.paid.map(x => `<tr><td>${dateLabel(String(x.date).slice(0, 10))}</td><td><span data-raw>${esc(x.name)}</span>${x.email && x.email !== x.name ? `<br><span class="muted" data-raw>${esc(x.email)}</span>` : ''}</td><td>${esc(x.planName)}</td><td data-raw>${esc(x.ref || '')}</td><td>${RM(x.amount)}</td><td>${RM(x.fee)}</td><td>${RM(x.net)}</td></tr>`).join('') || '<tr><td colspan="7">-</td></tr>'}</table>
+    ${d.exp.length ? `<div class="sec-h">Belanja sistem</div><table class="rep small"><tr><th>Tarikh</th><th>Kategori</th><th>Keterangan</th><th>Jumlah</th></tr>${d.exp.map(e => `<tr><td>${dateLabel(e.date)}</td><td>${esc(e.cat)}</td><td data-raw>${esc(e.desc || '')}</td><td>${RM(e.amount)}</td></tr>`).join('')}</table>` : ''}
+    ${d.free.length ? `<div class="sec-h">Lanjutan percuma (RM0, tiada caj)</div><table class="rep small"><tr><th>Tarikh</th><th>Owner</th><th>Jenis</th><th>Rujukan</th></tr>${d.free.map(x => `<tr><td>${dateLabel(String(x.date).slice(0, 10))}</td><td data-raw>${esc(x.name)}</td><td>${esc(x.planName)}</td><td data-raw>${esc(x.ref || '')}</td></tr>`).join('')}</table>` : ''}
+    <p class="muted" style="margin-top:14px">Caj ToyyibPay ialah anggaran berdasarkan kadar yang ditetapkan. Semak penyata ToyyibPay untuk angka sebenar.</p></div>`;
+}
+function finView() {
+  const d = finData();
+  openModal('💰 ' + perLabel(d.per), `<div class="finrep">${finReportHTML()}</div>
+    ${d.exp.length ? `<div class="sec-h">Urus belanja sistem</div>${d.exp.map(e => `<div class="kv"><span>${dateLabel(e.date)} · ${esc(e.cat)} · <span data-raw>${esc(e.desc || '')}</span></span><b>${RM(e.amount)} <button class="btn sm red" data-act="sysExpDel" data-id="${e.id}">✕</button></b></div>`).join('')}` : ''}
+    <div class="acts" style="margin-top:12px"><button class="btn" style="flex:1" data-act="finPdf">🖨️ PDF</button><button class="btn ghost" style="flex:1" data-act="finCsv">⬇ CSV</button></div>`);
+}
+function finCsv() {
+  const d = finData(), f = feeCfg(), q = c => `"${String(c ?? '').replace(/"/g, '""')}"`, L = a => a.map(tr);
+  const rows = [[tr('Laporan Kewangan Langganan') + ' ' + tr(perLabel(d.per))], [tr('Kadar caj ToyyibPay'), `RM${f.flat.toFixed(2)}` + (f.pct ? ` + ${f.pct}%` : '')], [],
+    L(['Ringkasan', 'RM']), [tr('Masuk (langganan)'), d.gross.toFixed(2)], [tr('Caj ToyyibPay'), d.fee.toFixed(2)], [tr('Bersih diterima'), d.net.toFixed(2)], [tr('Belanja sistem'), d.other.toFixed(2)], [tr('Untung bersih'), d.profit.toFixed(2)], [],
+    L(['Bulan', 'Bil.', 'Masuk', 'Caj', 'Bersih', 'Belanja']), ...d.byM.map(x => [x.m, x.n, x.gross.toFixed(2), x.fee.toFixed(2), x.net.toFixed(2), x.exp.toFixed(2)]), [],
+    [tr('Senarai bayaran langganan')], L(['Tarikh', 'Owner', 'Emel', 'Pakej', 'Rujukan', 'Jumlah', 'Caj', 'Bersih']), ...d.paid.map(x => [x.date, x.name, x.email, tr(x.planName), x.ref, (+x.amount).toFixed(2), x.fee.toFixed(2), x.net.toFixed(2)]), [],
+    [tr('Belanja sistem')], L(['Tarikh', 'Kategori', 'Keterangan', 'Jumlah']), ...d.exp.map(e => [e.date, tr(e.cat), e.desc, (+e.amount).toFixed(2)])];
+  if (d.free.length) rows.push([], [tr('Lanjutan percuma (RM0, tiada caj)')], L(['Tarikh', 'Owner', 'Jenis', 'Rujukan']), ...d.free.map(x => [x.date, x.name, tr(x.planName), x.ref]));
+  saveFile(`ProSewa-${tr('Laporan-Kewangan')}-${d.per}.csv`, '﻿' + rows.map(r => r.map(q).join(',')).join('\n'), 'text/csv');
+}
+function feeForm() {
+  const f = feeCfg();
+  openModal('Kadar caj ToyyibPay', `<form data-form="fee"><div class="grid2">${fld('Caj tetap setiap transaksi (RM)', 'flat', f.flat.toFixed(2), 'number', 'step="0.01" min="0" required inputmode="decimal"')}${fld('Tambahan peratus (%)', 'pct', f.pct, 'number', 'step="0.01" min="0" max="10" inputmode="decimal"')}</div>
+    <p class="muted">Caj FPX ToyyibPay biasanya RM1.00 setiap transaksi (ditanggung anda kerana bil ditetapkan caj kepada pemilik bil). Ikut kadar dalam akaun ToyyibPay anda.</p><button class="btn wide">Simpan</button></form>`);
+}
+function sysExpForm() {
+  openModal('Rekod belanja sistem', `<form data-form="sysExp">${fld('Tarikh', 'date', localISO(), 'date', 'required')}${sel('Kategori', 'cat', SYS_EXP_CATS.map(c => [c, c]), SYS_EXP_CATS[0])}
+    ${fld('Keterangan', 'desc', '', 'text', 'maxlength="100" placeholder="cth: Bil Firebase Oktober"')}${fld('Jumlah (RM)', 'amount', '', 'number', 'step="0.01" min="0.01" required inputmode="decimal"')}
+    <p class="muted">Untuk kos menjalankan ProSewa (bukan bil owner). Masuk dalam laporan kewangan anda.</p><button class="btn wide">Simpan</button></form>`);
+}
+function superFab() {   // butang terapung kanan: tukar antara app owner & panel Super Admin
+  let b = document.getElementById('superFab');
+  if (!isSuper() || !['owner', 'super'].includes(S.mode)) { if (b) b.remove(); return; }
+  if (!b) { b = document.createElement('button'); b.id = 'superFab'; document.body.appendChild(b); }
+  const inSuper = S.mode === 'super';
+  b.dataset.act = inSuper ? 'exitSuper' : 'goSuper'; b.className = 'sfab' + (inSuper ? ' back' : '');
+  b.innerHTML = inSuper ? '🏠<span>App</span>' : '🛡️<span>Super</span>'; b.title = inSuper ? tr('Kembali ke app') : tr('Panel Super Admin');
+  if (LANG === 'en') trNode(b);
 }
 function healthSection() {
   const h = S.health || {}, lv = {ok: ['🟢', 'Normal'], warn: ['🟠', 'Amaran / perlahan'], down: ['🔴', 'Gangguan']}[h.level || 'ok'] || ['⚪', '-'], c = h.checks || {}, en = LANG === 'en';
@@ -1316,6 +1421,7 @@ function renderOwner() {
   const isNew = (S.issues || []).filter(i => i.status === 'new').length;
   const si = subInfo(), warn = si && si.days <= 5;
   $('#app').innerHTML = v() + nav([['status', '💳', 'Status', pend], ['tenants', '👥', 'Penyewa'], ['report', '📊', 'Laporan'], ['issues', '🛠️', 'Aduan', isNew], ['sub', '💎', 'Langganan', warn ? '!' : 0], ['settings', '⚙️', 'Tetapan']], S.tab);
+  superFab();
   if (si && S.tab !== 'sub' && warn) { const w = $('.wrap'); if (w) w.insertAdjacentHTML('afterbegin', `<div class="al ${si.active ? '' : 'hot'}" data-act="tab" data-id="sub" style="cursor:pointer"><b>${si.active ? `💎 Langganan tamat dalam ${si.days} hari` : '⛔ Langganan ProSewa telah tamat'}</b>${si.active ? 'Perbaharui sekarang supaya tiada gangguan.' : 'Anda tidak boleh tambah penyewa baru. Tekan untuk perbaharui.'}</div>`); }
 }
 const activeT = () => S.tenants.filter(t => t.active !== false);
@@ -1588,7 +1694,7 @@ function oSettings() {
       ${pwFld(S.auth && !S.auth.hasPassword ? 'Tetapkan kata laluan' : 'Kata laluan baru', 'pass', 'new-password')}${pwFld('Ulang kata laluan', 'pass2', 'new-password')}
       <button class="btn wide ink" style="margin-top:12px">${S.auth && !S.auth.hasPassword ? 'Simpan kata laluan' : 'Tukar kata laluan'}</button></form></div>
     <div class="blk"><div class="sec-h" style="color:var(--red)">⚠️ Zon bahaya</div><div class="card"><p class="muted" style="margin-top:0">Padam semua penyewa, bayaran & resit, aduan, perbelanjaan, bil dan rumah untuk mula semula dengan laporan kosong. Akaun, langganan, profil & tetapan kekal.</p><button class="btn wide red" data-act="wipeForm">🗑 Padam semua data</button></div></div></div>
-    ${isSuper() ? '<button class="btn wide ink lo" style="margin-bottom:10px" data-act="goSuper">🛡️ Panel Super Admin</button>' : ''}<button class="btn wide red lo" data-act="logout">Log Keluar</button></div>`;
+    <button class="btn wide red lo" data-act="logout">Log Keluar</button></div>`;
 }
 
 const notifBlock = perm => `${perm === 'granted' ? '<div class="kv"><span>Notifikasi phone</span><b style="color:var(--green)">✅ Aktif</b></div>' : '<button class="btn wide ghost" data-act="enableNotif">🔔 Aktifkan notifikasi phone</button>'}
@@ -2195,6 +2301,9 @@ const ACTIONS = {
   depPdf: id => { const t = S.tenants.find(x => x.id === id) || S.t; printHTML(depStatementHTML(t), tr('Penyata Deposit') + ' ' + t.name); },
   promoFilter: id => { S.promoFilter = id; renderSuper(); },
   promoKit: () => promoKit(),
+  finView: () => finView(), finCsv: () => finCsv(), feeForm: () => feeForm(), sysExpForm: () => sysExpForm(),
+  finPdf: () => printHTML(finReportHTML(), tr('Laporan Kewangan') + ' ' + finData().per),
+  sysExpDel: async id => { if (!confirm(tr('Padam rekod belanja ini?'))) return; await API.delSysExp(id); S.sysExp = S.sysExp.filter(e => e.id !== id); closeModal(); toast(tr('Dipadam.')); renderSuper(); },
   healthNow: async (id, el) => { el.disabled = true; el.textContent = '⏳ …'; try { S.health = await API.healthNow(); toast('Semakan selesai.'); } finally { renderSuper(); } },
   healthTest: async () => { const r = await API.healthNow({test: true}); toast(r.sent ? `Amaran ujian dihantar ke ${r.sent} peranti ✅` : 'Tiada peranti Super Admin berdaftar. Log masuk di APK / web, aktifkan notifikasi, kemudian cuba lagi.', r.sent ? '' : 'err'); },
   clearErrs: async () => { if (!confirm('Padam semua rekod ralat?')) return; await API.clearErrors(S.sysErrs || []); toast('Dipadam.'); renderSuper(); },
@@ -2316,6 +2425,7 @@ const CHANGES = {
   revOk: el => { const b = $('#revApprove'); if (b) b.disabled = !el.checked; },
   propType: el => { const f = el.closest('form'), w = f.elements.type.value === 'whole'; $('#wholeBox').hidden = !w; $('#roomBox').hidden = w; const r = f.elements.rent; if (r) w ? r.setAttribute('required', '') : r.removeAttribute('required'); },
   unitPick: el => { const [pid, uid] = el.value.split('|'), p = (S.props || []).find(x => x.id === pid), u = p && unitsOf(p).find(x => x.id === uid), f = el.closest('form'); if (!u) return; f.elements.address.value = unitLabel(p, u); if (+u.rent) f.elements.rent.value = u.rent; },
+  finPer: el => { S.finPer = el.value; renderSuper(); },
   kitLang: el => { S.kitLang = el.value; promoKit(); }, kitCode: el => { S.kitCode = el.value; promoKit(); },
   endCalc: el => { const f = el.closest('form'), t = S.tenants.find(x => x.id === f.elements.id.value), c = depCalc(t, Object.fromEntries(new FormData(f))); const b = $('#endRefund'); if (b) { b.textContent = c.due > 0 ? `${tr('Baki perlu dibayar penyewa')}: ${RM(c.due)}` : RM(c.refund); b.style.color = c.due > 0 ? 'var(--red)' : 'var(--green)'; } },
   remindWhen: el => { $('#whenBox').style.display = el.value === 'later' ? '' : 'none'; },
@@ -2430,6 +2540,8 @@ const FORMS = {
     toast(`🎉 Kod promo berjaya! +${r.days} hari, aktif sehingga ${dateLabel(r.end)}.`);
     await enterOwner(S.uid, {tab: 'sub'});
   },
+  async fee(d) { const flat = Math.max(0, Math.round((+d.flat || 0) * 100) / 100), pct = Math.max(0, Math.min(10, +d.pct || 0)); await API.setConfig({feeFlat: flat, feePct: pct}); S.config.feeFlat = flat; S.config.feePct = pct; closeModal(); toast(tr('Kadar caj disimpan ✅')); renderSuper(); },
+  async sysExp(d) { const amt = Math.round((+d.amount || 0) * 100) / 100; if (!(amt > 0)) return toast(tr('Masukkan jumlah.'), 'err'); const e = {date: d.date, cat: d.cat, desc: (d.desc || '').trim(), amount: amt, at: nowStr()}; await API.addSysExp(e); S.sysExp = await API.listSysExp(); closeModal(); toast(tr('Belanja direkod ✅')); renderSuper(); },
   async trial(d) { await API.setConfig({trialDays: Math.max(0, Math.min(365, +d.days || 0))}); S.config.trialDays = +d.days; toast('Tempoh percubaan: ' + trialDays() + ' hari.'); renderSuper(); },
   async password(d) {
     if (d.pass !== d.pass2) throw new Error('Kata laluan tidak sama.');
