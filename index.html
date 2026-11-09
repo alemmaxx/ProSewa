@@ -199,6 +199,8 @@ table.rep tr.tot td{font-weight:800;border-bottom:0;color:var(--gold)}
 .lang button.on{background:var(--ink);color:var(--bg)}
 header .lang{margin-bottom:0}
 .sfab{position:fixed;right:0;top:46%;z-index:5;border:0;border-radius:14px 0 0 14px;background:linear-gradient(160deg,#e9c46a,#c99a2e);color:#1a1405;font:700 11px var(--f);padding:10px 7px 9px 9px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:20px;box-shadow:-4px 6px 18px rgba(0,0,0,.35);cursor:pointer}
+.sfab .sfb{position:absolute;top:-8px;left:-8px;min-width:24px;height:24px;padding:0 6px;border-radius:12px;background:var(--red,#e5484d);color:#fff;font:800 13px/24px var(--f);font-style:normal;box-shadow:0 0 0 3px var(--bg,#0a1210);animation:sfpulse 1.6s infinite}
+@keyframes sfpulse{50%{transform:scale(1.15)}}
 .sfab span{font-size:10.5px;letter-spacing:.02em}.sfab.back{background:linear-gradient(160deg,#3a4a45,#24302c);color:#fff}
 .finst{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.finst>div{background:var(--soft,rgba(255,255,255,.04));border:1px solid var(--line);border-radius:12px;padding:10px}
 .finst span{display:block;font-size:12px;color:var(--muted)}.finst b{display:block;font-size:17px;margin-top:2px}.finst b.g{color:var(--green)}.finst b.r{color:var(--red)}.finst em{font-style:normal;font-size:11.5px;color:var(--muted)}
@@ -1110,6 +1112,7 @@ async function loadOwner() {
   S.props = await API.listProps(S.uid).catch(() => []);
   S.recurring = await API.listRecurring(S.uid).catch(() => []);
   await genRecurring().catch(e => console.warn('recurring', e));
+  if (isSuper()) await countReports();
 }
 async function loadTenant(tok) {
   S.t = await API.getTenant(tok).catch(() => null); S.payments = []; S.reminders = [];
@@ -1243,6 +1246,7 @@ async function renderSuper() {
   }
   S.mode = 'super'; renderLoading();
   const [config, owners, promos, health, errs, st, subPays, sysExp] = await Promise.all([API.getConfig(), API.listOwners(), API.listPromos().catch(() => []), API.getHealth().catch(() => null), API.listErrors().catch(() => []), API.getStatus().catch(() => ({})), API.listAllSubPayments().catch(() => []), API.listSysExp().catch(() => [])]);
+  S.repPrev = repSeen(); { const mx = (errs || []).filter(e => e.src === 'report').map(e => String(e.at)).sort().pop() || ''; if (mx > S.repPrev) try { localStorage.setItem('prosewa_repSeen', mx); } catch (e) {} } S.repNew = 0;
   S.config = config || {}; S.owners = owners; S.allSubPays = subPays; S.sysExp = sysExp; S.promos = promos; S.health = health; S.sysErrs = errs; SYS = st || {};
   const rows = owners.map(o => { const si = subInfo(fsub(o.sub)) || {planName: '-', end: '', active: false, days: 0};
     return `<div class="tc ${si.active ? (si.days <= 5 ? 'warn' : '') : 'hot'}"><div class="t1"><div>${si.active ? `<span class="chip c-paid">Aktif · ${si.days} hari lagi</span>` : '<span class="chip c-overdue">Tamat</span>'}<h4 data-raw>${esc(o.name || o.email || o.uid)}</h4><div class="muted" data-raw>${esc(o.email || '')}</div></div></div>
@@ -1340,13 +1344,16 @@ function sysExpForm() {
     ${fld('Keterangan', 'desc', '', 'text', 'maxlength="100" placeholder="cth: Bil Firebase Oktober"')}${fld('Jumlah (RM)', 'amount', '', 'number', 'step="0.01" min="0.01" required inputmode="decimal"')}
     <p class="muted">Untuk kos menjalankan ProSewa (bukan bil owner). Masuk dalam laporan kewangan anda.</p><button class="btn wide">Simpan</button></form>`);
 }
+// Laporan masalah baru (Super Admin): dikira berbanding kali terakhir panel dibuka di peranti ini
+const repSeen = () => { try { return localStorage.getItem('prosewa_repSeen') || ''; } catch (e) { return ''; } };
+async function countReports() { const l = await API.listErrors().catch(() => []); S.repNew = l.filter(e => e.src === 'report' && String(e.at) > repSeen()).length; }
 function superFab() {   // butang terapung kanan: tukar antara app owner & panel Super Admin
   let b = document.getElementById('superFab');
   if (!isSuper() || !['owner', 'super'].includes(S.mode)) { if (b) b.remove(); return; }
   if (!b) { b = document.createElement('button'); b.id = 'superFab'; document.body.appendChild(b); }
   const inSuper = S.mode === 'super';
   b.dataset.act = inSuper ? 'exitSuper' : 'goSuper'; b.className = 'sfab' + (inSuper ? ' back' : '');
-  b.innerHTML = inSuper ? '🏠<span>App</span>' : '🛡️<span>Super</span>'; b.title = inSuper ? tr('Kembali ke app') : tr('Panel Super Admin');
+  b.innerHTML = inSuper ? '🏠<span>App</span>' : `🛡️<span>Super</span>${S.repNew ? `<em class="sfb">${S.repNew}</em>` : ''}`; b.title = inSuper ? tr('Kembali ke app') : tr('Panel Super Admin');
   if (LANG === 'en') trNode(b);
 }
 function healthSection() {
@@ -1371,7 +1378,7 @@ function healthSection() {
     ${area('Mesej (kosongkan untuk buang notis)', 'notice', SYS.notice || '', 'maxlength="200" placeholder="cth: Penyelenggaraan sistem malam ini 11 malam – 12 tengah malam."')}
     <div class="grid2">${sel('Jenis', 'noticeLevel', [['info', 'ℹ️ Makluman'], ['warn', '🛠️ Penyelenggaraan'], ['down', '⚠️ Gangguan']], SYS.noticeLevel || 'info')}${fld('Papar sehingga (pilihan)', 'noticeUntil', (SYS.noticeUntil || '').slice(0, 16), 'datetime-local')}</div>
     <p class="muted">Dipaparkan sebagai jalur di atas skrin semua owner & penyewa. ${noticeOn ? '<b style="color:var(--green)">Sedang dipaparkan.</b>' : ''}</p><button class="btn wide">Simpan notis</button></form>
-  <div class="sec-h">🐞 Ralat & laporan pengguna (${errs.length})</div><div class="card">${errs.length ? errs.map(e => `<div class="iss"><b>${e.src === 'report' ? '📮 Laporan pengguna' : e.src === 'fn' ? '⚙️ Function' : e.src === 'apk' ? '🤖 APK' : '🌐 Web'}</b> · ${dtLabel(e.at)}${e.where ? ` · <span data-raw>${esc(e.where)}</span>` : ''}${e.who ? ` · <span data-raw>${esc(e.who)}</span>` : ''}${e.contact ? ` · <span data-raw>${esc(e.contact)}</span>` : ''}<div class="muted" data-raw style="font-size:12.5px;word-break:break-word;white-space:pre-line">${esc(String(e.msg).slice(0, 300))}</div></div>`).join('') + '<div class="acts"><button class="btn sm red" data-act="clearErrs">🗑 Padam semua</button></div>' : '<p class="muted" style="margin:0">Tiada ralat. 👍</p>'}</div>`;
+  <div class="sec-h">🐞 Ralat & laporan pengguna (${errs.length})</div><div class="card">${errs.length ? errs.map(e => `<div class="iss">${e.src === 'report' && String(e.at) > (S.repPrev || '') ? '<em class="newdot" style="margin:0 6px 0 0">BARU</em>' : ''}<b>${e.src === 'report' ? '📮 Laporan pengguna' : e.src === 'fn' ? '⚙️ Function' : e.src === 'apk' ? '🤖 APK' : '🌐 Web'}</b> · ${dtLabel(e.at)}${e.where ? ` · <span data-raw>${esc(e.where)}</span>` : ''}${e.who ? ` · <span data-raw>${esc(e.who)}</span>` : ''}${e.contact ? ` · <span data-raw>${esc(e.contact)}</span>` : ''}<div class="muted" data-raw style="font-size:12.5px;word-break:break-word;white-space:pre-line">${esc(String(e.msg).slice(0, 300))}</div></div>`).join('') + '<div class="acts"><button class="btn sm red" data-act="clearErrs">🗑 Padam semua</button></div>' : '<p class="muted" style="margin:0">Tiada ralat. 👍</p>'}</div>`;
 }
 const LANDING = WEB_BASE + 'promo.html';
 const promoCaps = (l, code, days) => {
@@ -1433,7 +1440,8 @@ function renderOwner() {
   if (S.mode !== 'owner') return;
   const pend = S.payments.filter(p => p.status === 'pending').length;
   const newIss = (S.issues || []).filter(i => i.status === 'new').length;
-  setBadge(pend + newIss, newIss ? `${pend + newIss} perkara perlu tindakan (bukti bayaran & aduan)` : `${pend} bukti bayaran menunggu semakan`);
+  const rn = isSuper() ? (S.repNew || 0) : 0;
+  setBadge(pend + newIss + rn, rn ? `${rn} laporan masalah baru daripada pengguna` : newIss ? `${pend + newIss} perkara perlu tindakan (bukti bayaran & aduan)` : `${pend} bukti bayaran menunggu semakan`);
   const v = {tenants: oTenants, status: oStatus, issues: oIssues, report: oReport, sub: oSub, settings: oSettings}[S.tab] || oStatus;
   const isNew = (S.issues || []).filter(i => i.status === 'new').length;
   const si = subInfo(), warn = si && si.days <= 5;
@@ -2417,7 +2425,7 @@ const ACTIONS = {
   qrRemove: (id, el) => { const f = el.closest('form'); f.dataset.qr = ''; $('#qrPrev').innerHTML = '<span class="muted">Tiada QR</span>'; el.remove(); S.dirty = true; toast('Tekan Simpan profil untuk buang QR.'); },
   qrView: () => { const q = S.owner?.qr; if (!q) return; openModal('QR Bayaran', `<img src="${q}" alt="QR" style="width:100%;border-radius:12px;background:#fff"><button class="btn wide" style="margin-top:10px" data-act="saveQR">⬇ Simpan QR ke phone</button>${isNative() ? '' : '<p class="muted" style="text-align:center">iPhone: tekan lama pada gambar QR → Simpan ke Foto.</p>'}`); },
   logoRemove: (id, el) => { const f = el.closest('form'); f.dataset.logo = ''; $('#logoPrev').innerHTML = '<span class="muted">Tiada logo</span>'; el.remove(); S.dirty = true; toast('Tekan Simpan untuk buang logo.'); },
-  goSuper: () => { location.hash = '#super'; renderSuper(); },
+  goSuper: () => { if (location.hash !== '#super') location.hash = '#super'; else renderSuper(); },
   closeModal, tenantForm, shareLink, payForm, cashForm, remindForm, rejectForm, viewProof, receipt,
   tab: id => { closeModal(); S.dirty = false; S.tab = id; renderOwner(); scrollTo(0, 0); },
   ttab: id => { S.tTab = id; renderTenant(); scrollTo(0, 0); },

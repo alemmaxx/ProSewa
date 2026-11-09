@@ -376,5 +376,5 @@ exports.prosewaHealthNow = onRequest({region: REGION}, async (req, res) => {
 
 exports.prosewaOnReport = onDocumentCreated({document: 'sysErrors/{id}', database: 'prosewa', region: DB_REGION}, async ev => {
   const r = ev.data.data(); if (!r || r.src !== 'report') return;
-  await toOwner(SUPER_UID, l => ({title: l === 'en' ? '📮 Problem report from user' : '📮 Laporan masalah daripada pengguna', body: `${r.who || ''}: ${String(r.msg || '').slice(0, 200)}`}));
+  await pushTo('uid', SUPER_UID, l => ({title: l === 'en' ? '📮 Problem report from user' : '📮 Laporan masalah daripada pengguna', body: `${r.who || ''}${r.where ? ' · ' + r.where : ''}: ${String(r.msg || '').slice(0, 200)}`}), 'https://prosewa.web.app/index.html#super');
 });
