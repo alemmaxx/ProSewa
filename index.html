@@ -2118,7 +2118,7 @@ function tHistory(notifs, unread) {
   const ok = list.filter(p => p.status === 'confirmed'), tot = ok.reduce((a, p) => a + (+p.amount || 0), 0);
   return header('Sejarah', 'Sejarah bayaran.', 'Tekan bayaran yang diluluskan untuk lihat resit.', {btns: tenantBtns(unread), stats: [[RM(tot), 'Jumlah dibayar', 'g'], [ok.length, 'Resit']]}) + `<div class="wrap">${list.length ? '<div class="tcgrid">' + list.map(p => `<div class="tc ${p.status === 'pending' ? 'warn' : p.status === 'rejected' ? 'hot' : p.status === 'void' ? 'past' : ''}" ${['confirmed', 'void'].includes(p.status) ? `data-act="receipt" data-id="${p.id}" style="cursor:pointer"` : ''}><div class="t1"><div>${payChip(p)}<h4>${monthLabel(p.month)}</h4>
       <div class="muted">${esc(p.method)} · dibayar ${dateLabel(p.paidDate)}</div>${p.status === 'confirmed' ? `<div class="muted">Resit ${esc(p.receiptNo)} ›</div>` : ''}${p.status === 'rejected' ? `<div class="muted" style="color:var(--red)">${esc(p.rejectReason || '')}</div>` : ''}</div>
-      <div class="cd"><b style="font-size:15px">${RM(p.amount).replace('RM ', '')}</b><small>RM</small></div></div></div>`).join('') + '</div>' : '<div class="empty">Belum ada bayaran.</div>'}</div>`;
+      <b class="pb ${p.status === 'confirmed' ? 'paid' : p.status === 'rejected' ? 'unpaid' : 'pend'}" style="white-space:nowrap;font-size:15px">${RM(p.amount)}</b></div></div>`).join('') + '</div>' : '<div class="empty">Belum ada bayaran.</div>'}</div>`;
 }
 
 /* ===================== MODAL ===================== */
