@@ -160,7 +160,7 @@ exports.prosewaCallback = onRequest({region: REGION, secrets: [TOYYIBPAY_SECRET_
 });
 
 
-// ---------- 3) Kod promo (sekali guna) ----------
+// ---------- 3) Kod promo (had pengguna ikut maxUses; seorang owner sekali sahaja) ----------
 exports.prosewaRedeemPromo = onRequest({region: REGION}, async (req, res) => {
   if (cors(req, res)) return;
   try {
@@ -174,7 +174,9 @@ exports.prosewaRedeemPromo = onRequest({region: REGION}, async (req, res) => {
     const out = await db.runTransaction(async t => {
       const pRef = db.doc(`promos/${code}`), p = (await t.get(pRef)).data();
       if (!p) return {error: 'Kod promo tidak sah.'};
-      if (p.used) return {error: 'Kod promo ini sudah digunakan.'};
+      const max = Math.max(1, parseInt(p.maxUses, 10) || 1), uses = parseInt(p.uses, 10) || (p.used && max === 1 ? 1 : 0), by = p.redeemers || {};
+      if (by[user.uid] || p.usedBy === user.uid) return {error: 'Anda sudah menggunakan kod promo ini.'};
+      if (p.used || uses >= max) return {error: max > 1 ? 'Kod promo ini sudah mencapai had pengguna.' : 'Kod promo ini sudah digunakan.'};
       if (p.expires && p.expires < myISO()) return {error: 'Kod promo ini sudah tamat tempoh.'};
       const days = Math.max(1, Math.min(3650, parseInt(p.days, 10) || 0));
       const subRef = db.doc(`subs/${user.uid}`), sub = (await t.get(subRef)).data();
@@ -182,7 +184,8 @@ exports.prosewaRedeemPromo = onRequest({region: REGION}, async (req, res) => {
       const from = curEnd && curEnd >= today ? curEnd : today, end = addDays(from, days);
       const plan = sub && sub.plan && sub.plan !== 'trial' ? sub.plan : 'promo';
       t.set(subRef, {plan, start: (sub && sub.start) || today, end});
-      t.update(pRef, {used: true, usedBy: user.uid, usedEmail: user.email || '', usedAt: myNow()});
+      const n = uses + 1, at = myNow();
+      t.update(pRef, {uses: n, used: n >= max, [`redeemers.${user.uid}`]: {email: user.email || '', at}, ...(n === 1 ? {usedBy: user.uid, usedEmail: user.email || ''} : {}), usedAt: at});
       t.set(db.collection('subPayments').doc(), {ownerId: user.uid, date: myNow(), plan: 'promo', months: 0, days, amount: 0, ref: code, until: end});
       return {ok: true, days, end};
     });
