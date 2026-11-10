@@ -652,11 +652,11 @@ Object.assign(I18N, {
   'atau': 'or', 'Teruskan dengan Google': 'Continue with Google', 'Emel log masuk': 'Sign-in email', 'Disambung': 'Connected', 'Tetapkan kata laluan': 'Set password', 'Simpan kata laluan': 'Save password',
   'Anda log masuk dengan Google. Tetapkan kata laluan supaya boleh juga log masuk guna emel & kata laluan.': 'You signed in with Google. Set a password so you can also sign in with email & password.',
   'Kata laluan disimpan': 'Password saved', 'Akaun ini sudah wujud dengan cara log masuk lain. Log masuk guna emel & kata laluan dahulu.': 'This account exists with another sign-in method. Sign in with email & password first.',
-  'Domain ini belum dibenarkan dalam Firebase (Authorized domains).': 'This domain is not authorized in Firebase (Authorized domains).', 'Log masuk Google belum diaktifkan dalam Firebase.': 'Google sign-in is not enabled in Firebase.',
+  'Log masuk dari laman ini belum dibenarkan. Sila guna prosewa.web.app atau app ProSewa.': 'Sign-in from this site is not allowed yet. Please use prosewa.web.app or the ProSewa app.', 'Log masuk Google belum tersedia buat masa ini. Sila guna emel & kata laluan.': 'Google sign-in is not available right now. Please use email & password.',
   'Daftar baru': 'Sign up', 'Lupa kata laluan?': 'Forgot password?', 'Daftar': 'Sign Up', 'Ulang kata laluan': 'Repeat password', 'Daftar akaun owner baru': 'Create a new owner account',
   'Log masuk untuk teruskan': 'Sign in to continue', 'Masukkan emel anda. Kami akan hantar pautan untuk tetapkan kata laluan baru.': "Enter your email. We'll send a link to set a new password.",
   'Hantar pautan': 'Send link', 'Kembali ke log masuk': 'Back to sign in', 'Sudah ada akaun?': 'Already have an account?', 'Log masuk': 'Sign in', 'Tunjuk kata laluan': 'Show password',
-  'Mod peranti (ujian): Firebase belum disambung, data disimpan dalam browser ini sahaja.': 'Device mode (testing): Firebase not connected, data is stored in this browser only.',
+  'Mod peranti (ujian): belum disambung ke pelayan, data disimpan dalam browser ini sahaja.': 'Device mode (testing): not connected to the server, data is stored in this browser only.',
   'Memuatkan…': 'Loading…', 'Tiada akses': 'No access', 'Panel ini hanya untuk akaun Super Admin. Sila log masuk dengan akaun tersebut.': 'This panel is only for the Super Admin account. Please sign in with that account.',
   'Owner': 'Owners', 'Belum ada owner.': 'No owners yet.', 'Panel Super Admin': 'Super Admin Panel', 'Lengkapkan maklumat anda': 'Complete your details',
   'Akaun dicipta': 'Account created', 'Sila lengkapkan maklumat anda di Tetapan.': 'Please complete your details in Settings.',
@@ -674,7 +674,7 @@ Object.assign(I18N, {
   'Cipta akaun admin (owner)': 'Create admin (owner) account', 'Log masuk admin untuk teruskan': 'Admin sign in to continue',
   'Nama': 'Name', 'No. telefon': 'Phone no.', 'Emel': 'Email', 'Kata laluan': 'Password', 'Cipta Akaun Admin': 'Create Admin Account', 'Log Masuk': 'Sign In', 'Masuk': 'Enter',
   'Cuba dengan data contoh': 'Try with sample data', 'Data contoh': 'Sample data', 'Set semula': 'Reset',
-  'Versi percubaan: data disimpan dalam peranti ini. Selepas sambung Firebase, link penyewa boleh dibuka di phone penyewa.': "Trial version: data is stored on this device. After Firebase is connected, tenant links will open on tenants' phones.",
+  'Versi percubaan: data disimpan dalam peranti ini. Selepas disambung ke pelayan, link penyewa boleh dibuka di phone penyewa.': "Trial version: data is stored on this device. After connecting to the server, tenant links will open on tenants' phones.",
   'Nama anda': 'Your name', 'Min 4 aksara': 'Min 4 characters', 'cth:': 'e.g.', 'nama@email.com': 'name@email.com', 'Kata laluan anda': 'Your password',
   'Penyewa': 'Tenants', 'Senarai penyewa.': 'Tenant list.', 'tekan + di atas untuk tambah penyewa.': 'tap + above to add a tenant.', 'Tekan + di atas untuk tambah penyewa baru.': 'Tap + above to add a new tenant.',
   'Belum ada penyewa.': 'No tenants yet.', 'Tekan': 'Tap', 'di kanan atas untuk tambah.': 'at the top right to add.',
@@ -1095,7 +1095,7 @@ function authMsg(e) {
     'auth/invalid-email': 'Format emel tidak sah.', 'auth/email-already-in-use': 'Emel ini sudah didaftarkan. Sila log masuk.', 'auth/weak-password': 'Kata laluan terlalu lemah (sekurang-kurangnya 6 aksara).',
     'auth/too-many-requests': 'Terlalu banyak cubaan. Cuba lagi sebentar.', 'auth/network-request-failed': 'Tiada sambungan internet.', 'auth/requires-recent-login': 'Sila log keluar & log masuk semula, kemudian cuba lagi.',
     'permission-denied': isSuper() ? 'Tiada kebenaran: Firebase rules terkini belum dipasang. Paste firestore.rules terbaru ke database prosewa.' : 'Tiada kebenaran untuk tindakan ini. Cuba muat semula app, atau log masuk semula.', 'auth/account-exists-with-different-credential': 'Akaun ini sudah wujud dengan cara log masuk lain. Log masuk guna emel & kata laluan dahulu.',
-    'auth/unauthorized-domain': 'Domain ini belum dibenarkan dalam Firebase (Authorized domains).', 'auth/operation-not-allowed': 'Log masuk Google belum diaktifkan dalam Firebase.', 'auth/provider-already-linked': 'Kata laluan sudah ditetapkan.', 'auth/user-mismatch': 'Sila pilih akaun Google yang sama dengan akaun ProSewa anda.', 'auth/credential-already-in-use': 'Emel ini sudah didaftarkan. Sila log masuk.', 'unavailable': 'Tiada sambungan internet.'};
+    'auth/unauthorized-domain': 'Log masuk dari laman ini belum dibenarkan. Sila guna prosewa.web.app atau app ProSewa.', 'auth/operation-not-allowed': 'Log masuk Google belum tersedia buat masa ini. Sila guna emel & kata laluan.', 'auth/provider-already-linked': 'Kata laluan sudah ditetapkan.', 'auth/user-mismatch': 'Sila pilih akaun Google yang sama dengan akaun ProSewa anda.', 'auth/credential-already-in-use': 'Emel ini sudah didaftarkan. Sila log masuk.', 'unavailable': 'Tiada sambungan internet.'};
   return m[e?.code] || e?.message || 'Ralat berlaku.';
 }
 
@@ -1291,7 +1291,7 @@ function renderLogin() {
       <div class="authlinks"><button class="link" data-act="authView" data-id="register">Daftar baru</button><button class="link" data-act="authView" data-id="forgot">Lupa kata laluan?</button></div>`;
   $('#app').innerHTML = `<div class="login"><div class="lbox">${langSeg()}${themeSeg()}<br>${inst}<img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa</h2>${body}
     ${isNative() && v !== 'forgot' ? '<div class="hint">Akaun Google? Dalam APK, log masuk guna emel & kata laluan. Tetapkan kata laluan dahulu di prosewa.web.app → Tetapan → Keselamatan.</div>' : ''}
-    ${ONLINE ? '' : '<div class="hint">Mod peranti (ujian): Firebase belum disambung, data disimpan dalam browser ini sahaja.</div>'}</div></div>`;
+    ${ONLINE ? '' : '<div class="hint">Mod peranti (ujian): belum disambung ke pelayan, data disimpan dalam browser ini sahaja.</div>'}</div></div>`;
 }
 
 /* ===================== LANGGANAN TAMAT (owner dikunci) ===================== */
