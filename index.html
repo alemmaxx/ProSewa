@@ -2260,7 +2260,7 @@ function tenantForm(id, preset) {
   if (!id && S.mode === 'owner' && subInfo() && !subInfo().active) { S.tab = 'sub'; renderOwner(); return toast('Langganan tamat. Sila perbaharui untuk tambah penyewa.', 'err'); }
   if (typeof preset !== 'string') preset = '';
   const t = S.tenants.find(x => x.id === id) || {dueDay: 5, startDate: localISO().slice(0, 8) + '01', deposit: 0};
-  if (!id && preset) { const [pid, uid] = preset.split('|'), p = S.props.find(x => x.id === pid), u = p && unitsOf(p).find(x => x.id === uid); if (u) { t.address = unitLabel(p, u); t.rent = u.rent || ''; t.deposit = (+u.rent || 0) * 2 || 0; } }
+  if (!id && preset) { const [pid, uid] = preset.split('|'), p = S.props.find(x => x.id === pid), u = p && unitsOf(p).find(x => x.id === uid); if (u) { t.address = unitLabel(p, u); t.rent = u.rent || ''; t.deposit = +u.rent || 0; } }
   openModal(id ? 'Edit Penyewa' : 'Tambah Penyewa', `<form data-form="tenant">${hid('id', id)}
     ${fld('Nama penyewa', 'name', t.name, 'text', 'required')}${fld('No. telefon (WhatsApp)', 'phone', t.phone, 'tel', 'required placeholder="012-3456789"')}
     ${(S.props || []).length ? sel('Rumah / bilik', 'unit', unitOpts(id), t.propertyId ? `${t.propertyId}|${t.roomId || 'whole'}` : (preset || ''), 'data-chg="unitPick"') : ''}
@@ -2357,7 +2357,9 @@ function agreeHTML(t) {
   <h3>4. Sewa <i>/ Rent</i></h3><table><tr><td>${B('Sewa bulanan', 'Monthly rent')}</td><td><b>${RM(t.rent)}</b></td></tr><tr><td>${B('Tarikh bayar', 'Due date')}</td><td>${B(`Sebelum hari ke-${t.dueDay} setiap bulan`, `On or before day ${t.dueDay} of each month`)}</td></tr>
    <tr><td>${B('Cara bayaran', 'Payment method')}</td><td>${pay || ln}${o.qr ? '<br>DuitNow QR' : ''}<br>${B('Bukti bayaran dimuat naik melalui link ProSewa penyewa; resit dikeluarkan selepas disahkan.', 'Payment proof is uploaded via the tenant\'s ProSewa link; a receipt is issued once confirmed.')}</td></tr></table>
   <p>${B('Bayaran lebih akan dikira sebagai kredit untuk bayaran seterusnya; bayaran kurang akan ditambah pada bayaran seterusnya.', 'Any overpayment is credited to the next payment; any shortfall is added to the next payment.')}</p>
-  <h3>5. Deposit <i>/ Deposit</i></h3><table><tr><td>${B('Deposit sekuriti', 'Security deposit')}</td><td><b>${RM(t.deposit || 0)}</b></td></tr></table>
+  <h3>5. Bayaran masuk & deposit <i>/ Move-in payment & deposit</i></h3>${(() => { const r = +t.rent || 0, dp = +t.deposit || 0, mo = r ? Math.round(dp / r * 10) / 10 : 0;
+   return `<table><tr><td>${B('Sewa bulan pertama', 'First month rent')}</td><td>${RM(r)}</td></tr><tr><td>${B('Deposit sekuriti', 'Security deposit')}</td><td>${RM(dp)}${mo ? `<span class="en">bersamaan ${mo} bulan sewa · equivalent to ${mo} month(s) rent</span>` : ''}</td></tr>
+   <tr><td><b>${B('Jumlah bayaran semasa masuk', 'Total payable on move-in')}</b></td><td><b>${RM(r + dp)}</b><br>${B(`(${mo === 1 ? '1 + 1' : '1 + ' + mo}: sewa bulan pertama + deposit)`, `(first month rent + deposit)`)}</td></tr></table>`; })()}
   <ol><li>${B('Deposit tidak boleh digunakan sebagai bayaran sewa.', 'The deposit shall not be used as rental payment.')}</li>
    <li>${B(`Deposit akan dipulangkan dalam tempoh ${a.refundDays} hari selepas tamat sewa dan kunci diserahkan, setelah ditolak tunggakan sewa, bil tertunggak dan kos membaiki kerosakan (selain haus dan lusuh biasa).`, `The deposit will be refunded within ${a.refundDays} days after the tenancy ends and keys are returned, less any rent arrears, unpaid bills and the cost of repairing damage (other than fair wear and tear).`)}</li>
    <li>${B('Penyata deposit akan diberikan kepada penyewa.', 'A deposit statement will be provided to the tenant.')}</li></ol>
@@ -3016,7 +3018,7 @@ const ACTIONS = {
 const CHANGES = {
   revOk: el => { const b = $('#revApprove'); if (b) b.disabled = !el.checked; },
   propType: el => { const f = el.closest('form'), w = f.elements.type.value === 'whole'; $('#wholeBox').hidden = !w; $('#roomBox').hidden = w; const r = f.elements.rent; if (r) w ? r.setAttribute('required', '') : r.removeAttribute('required'); },
-  unitPick: el => { const [pid, uid] = el.value.split('|'), p = (S.props || []).find(x => x.id === pid), u = p && unitsOf(p).find(x => x.id === uid), f = el.closest('form'); if (!u) return; f.elements.address.value = unitLabel(p, u); if (+u.rent) f.elements.rent.value = u.rent; },
+  unitPick: el => { const [pid, uid] = el.value.split('|'), p = (S.props || []).find(x => x.id === pid), u = p && unitsOf(p).find(x => x.id === uid), f = el.closest('form'); if (!u) return; f.elements.address.value = unitLabel(p, u); if (+u.rent) { f.elements.rent.value = u.rent; if (!+f.elements.deposit.value) f.elements.deposit.value = u.rent; } },
   wnToggle: async el => { const on = el.checked, d = on ? {wnOn: true, wnSince: APP_VER, wnSinceAt: nowStr()} : {wnOn: false}; await API.setConfig(d); Object.assign(S.config, d); toast(on ? tr('"Apa yang baru" dihidupkan. Senarai bermula baru.') : tr('"Apa yang baru" dimatikan.')); renderSuper(); },
   finPer: el => { S.finPer = el.value; renderSuper(); },
   kitLang: el => { S.kitLang = el.value; promoKit(); }, kitCode: el => { S.kitCode = el.value; promoKit(); },
