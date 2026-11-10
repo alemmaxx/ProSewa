@@ -81,5 +81,11 @@
         "*.log"
       ]
     }
+  ],
+  "firestore": [
+    {
+      "database": "prosewa",
+      "rules": "firestore.rules"
+    }
   ]
 }
