@@ -474,6 +474,7 @@ const I18N = {};   // diisi di bawah (BM → EN)
 let _i18nRe = null;
 /* Kamus BM → EN (tambah baris di sini jika ada teks baru) */
 const I18N_RX = [
+  [/^Semua (\d+) laporan sudah selesai\.$/, 'All $1 reports are resolved.'],
   [/^Baki (\d+) orang$/, 'Remaining $1'], [/^Sudah digunakan oleh (\d+) owner\.$/, 'Already used by $1 owner(s).'], [/^👥 Pengguna \((\d+)\)$/, '👥 Users ($1)'],
   [/⬆ Versi baru ada: ([\d.]+)/g, '⬆ New version available: $1'], [/Anda guna ([\d.]+)\./g, "You're using $1."], [/⬆ Versi baru ([\d.]+) ada\. Tekan Muat turun versi baru\./g, '⬆ New version $1 available. Tap Download new version.'], [/✅ Anda menggunakan versi terkini \(([\d.]+)\)\./g, "✅ You're on the latest version ($1)."],
   [/Padam (.+) dan SEMUA data\? Tindakan ini tidak boleh dibatalkan\./g, 'Delete $1 and ALL data? This cannot be undone.'], [/Owner dipadam ✅ \((\d+) rekod\)/g, 'Owner deleted ✅ ($1 records)'],
@@ -1474,9 +1475,9 @@ function superFab() {   // butang terapung kanan: tukar antara app owner & panel
 /* ---------- Diagnostik terperinci (Super Admin): semakan berantai + diagnosis laporan pengguna ---------- */
 function diagBox() {
   const d = S.diag;
-  const reps = (S.sysErrs || []).filter(e => e.src === 'report');
+  const reps = (S.sysErrs || []).filter(e => e.src === 'report' && e.status !== 'done'), doneN = (S.sysErrs || []).filter(e => e.src === 'report' && e.status === 'done').length;
   if (!d && reps.length) return `<div id="diagbox" class="dgbox warn"><b>📮 ${reps.length} laporan pengguna</b><span class="muted">Tekan "🔬 Diagnosis" pada laporan di bawah untuk semak punca & cara baiki.</span></div>`;
-  if (!d) return `<div id="diagbox" class="dgbox ok"><b>✅ Tiada isu dilaporkan</b><span class="muted">Tekan "Jalankan diagnostik" untuk semakan berantai penuh, atau "🔬 Diagnosis" pada laporan pengguna di bawah.</span></div>`;
+  if (!d) return `<div id="diagbox" class="dgbox ok"><b>✅ Tiada isu dilaporkan</b>${doneN ? `<span class="muted">Semua ${doneN} laporan sudah selesai.</span>` : ''}<span class="muted">Tekan "Jalankan diagnostik" untuk semakan berantai penuh, atau "🔬 Diagnosis" pada laporan pengguna di bawah.</span></div>`;
   const bad = d.steps.filter(x => x.st === 'bad'), warn = d.steps.filter(x => x.st === 'warn');
   const cls = d.running ? 'run' : bad.length ? 'bad' : warn.length ? 'warn' : 'ok';
   const head = d.running ? `⏳ ${esc(d.title)}… (${d.steps.length})` : bad.length ? `❌ ${bad.length} isu perlu dibaiki` : warn.length ? `⚠️ ${warn.length} amaran` : '✅ Tiada isu dikesan';
