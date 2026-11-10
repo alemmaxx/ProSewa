@@ -1107,7 +1107,6 @@ async function nextRcpt() {
   const pre = (S.owner?.rcptPrefix || 'PS').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) || 'PS';
   return `${pre}-${String(n).padStart(6, '0')}`;
 }
-const rcptNo = ym => `PS-${ym.replace('-', '')}-${genToken().slice(0, 4).toUpperCase()}`;
 function dueDate(t, ym) { const [y, m] = ym.split('-').map(Number); const last = new Date(y, m, 0).getDate(); return `${ym}-${pad(Math.min(+t.dueDay || 1, last))}`; }
 const paidIn = (t, ym, payments) => payments.filter(p => p.tenantId === t.id && p.month === ym && p.status === 'confirmed').reduce((a, p) => a + (+p.amount || 0), 0);
 const confPaid = (t, payments, upto) => payments.filter(p => p.tenantId === t.id && p.status === 'confirmed' && (!upto || p.month <= upto)).reduce((a, p) => a + (+p.amount || 0), 0);
@@ -1812,7 +1811,6 @@ async function genRecurring() {
   if (n) S.expenses = await API.listExpenses(S.uid).catch(() => S.expenses);
   return n;
 }
-const EXP_CATS_OLD = null;
 const normU = a => String(a || '').trim().replace(/\s+/g, ' ');
 const propOfT = t => t && t.propertyId ? (S.props || []).find(p => p.id === t.propertyId) : null;
 function unitList() { const m = new Map(), put = k => { k = normU(k); if (k && !m.has(k.toLowerCase())) m.set(k.toLowerCase(), k); }; (S.props || []).forEach(p => put(p.name)); S.tenants.forEach(t => { if (!propOfT(t)) put(t.address); }); return [...m.values()]; }
@@ -2748,10 +2746,6 @@ const ACTIONS = {
   depPdf: id => { const t = S.tenants.find(x => x.id === id) || S.t; printHTML(depStatementHTML(t), tr('Penyata Deposit') + ' ' + t.name); },
   promoFilter: id => { S.promoFilter = id; renderSuper(); },
   askYes: () => { const r = ask._r; ask._r = null; closeModal(); if (r) r(true); },
-  repReply: id => { const e = (S.sysErrs || []).find(x => x.id === id); if (!e) return;
-    openModal('Maklum kepada owner', `<form data-form="repUpd">${hid('id', id)}<p class="muted" style="margin-top:0" data-raw>${esc(e.who || '')} · ${esc(String(e.msg).slice(0, 200))}</p>
-      ${sel('Status', 'status', [['review', '👀 Sedang disemak'], ['done', '✅ Selesai']], e.status === 'review' ? 'done' : 'review')}${area('Mesej kepada owner (pilihan)', 'reply', e.reply || '', 'maxlength="300" placeholder="cth: Sudah dibaiki, sila muat semula app."')}
-      <p class="muted">Owner terus dapat notifikasi di phone & nampak status ini dalam Tetapan → Laporan saya.</p><button class="btn wide">Simpan & maklum</button></form>`); },
   apkCheck: (id, el) => { if (el) { el.disabled = true; el.textContent = '⏳ …'; } checkApk(true); },
   noticeOff: async () => { if (!await ask('Buang notis daripada skrin semua pengguna?', 'Ya, buang')) return; await API.setStatus({notice: '', noticeUntil: ''}); SYS = {...SYS, notice: '', noticeUntil: ''}; toast('Notis dibuang.'); showSysBan?.(); renderSuper(); },
   appExit: () => { closeModal(); S._exitAsk = false; const A = CP('App'); A?.exitApp ? A.exitApp() : A?.minimizeApp?.(); },
@@ -2807,14 +2801,6 @@ const ACTIONS = {
   tab: id => { closeModal(); S.dirty = false; S.tab = id; renderOwner(); scrollTo(0, 0); },
   ttab: id => { S.tTab = id; renderTenant(); scrollTo(0, 0); },
   print: () => { const r = $('#receipt'); if (!r) return window.print(); printHTML(r.outerHTML, 'Resit ' + (r.querySelector('.rh .muted')?.textContent || '')); },
-  printOld: () => {   // (lama)
-    const r = $('#receipt'); if (!r) return window.print();
-    let pa = $('#printArea'); if (!pa) { pa = document.createElement('div'); pa.id = 'printArea'; document.body.appendChild(pa); }
-    pa.innerHTML = ''; pa.appendChild(r.cloneNode(true));
-    const prevTitle = document.title, no = r.querySelector('.rh .muted')?.textContent || ''; document.title = 'Resit ' + no;
-    const done = () => { document.title = prevTitle; pa.innerHTML = ''; removeEventListener('afterprint', done); };
-    addEventListener('afterprint', done); setTimeout(() => window.print(), 50);
-  },
   copyLink: async id => { const t = S.tenants.find(x => x.id === id); const u = tenantUrl(t); try { await navigator.clipboard.writeText(u); toast(`Link ${t.name.split(' ')[0]} disalin ✅`); } catch (e) { shareLink(id); } },
   copy: async v => { try { await navigator.clipboard.writeText(v); toast('Disalin.'); } catch (e) { prompt('Salin:', v); } },
   logout: () => openModal('Log Keluar', `<p style="margin-top:0">Anda pasti mahu log keluar dari ProSewa?</p><div class="acts"><button class="btn red" style="flex:1" data-act="logoutYes">Ya, log keluar</button><button class="btn ghost" style="flex:1" data-act="closeModal">Batal</button></div>`),
@@ -2856,7 +2842,6 @@ const ACTIONS = {
     const csv = '\ufeff' + rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
     saveFile(`ProSewa-${tr('Laporan-Cukai')}-${y}.csv`, csv, 'text/csv');
   },
-  delPay: async id => { if (!await ask('Padam rekod bayaran ini?')) return; await API.delSub(tokOfPay(id), 'payments', id); closeModal(); toast('Dipadam.'); await refresh(); },
   delReminder: async id => { const r = S.reminders.find(x => x.id === id); await API.delSub(r.tenantId, 'reminders', id); toast('Peringatan dibatalkan.'); await refresh(); },
   enableNotif: async () => {
     let r;
@@ -3024,7 +3009,6 @@ const FORMS = {
   },
   async fee(d) { const flat = Math.max(0, Math.round((+d.flat || 0) * 100) / 100), pct = Math.max(0, Math.min(10, +d.pct || 0)); await API.setConfig({feeFlat: flat, feePct: pct}); S.config.feeFlat = flat; S.config.feePct = pct; closeModal(); toast(tr('Kadar caj disimpan ✅')); renderSuper(); },
   async sysExp(d) { const amt = Math.round((+d.amount || 0) * 100) / 100; if (!(amt > 0)) return toast(tr('Masukkan jumlah.'), 'err'); const e = {date: d.date, cat: d.cat, desc: (d.desc || '').trim(), amount: amt, at: nowStr()}; await API.addSysExp(e); S.sysExp = await API.listSysExp(); closeModal(); toast(tr('Belanja direkod ✅')); renderSuper(); },
-  async repUpd(d) { const upd = {status: d.status, reply: (d.reply || '').trim().slice(0, 300), repliedAt: nowStr()}; await API.updateReport(d.id, upd); const e = (S.sysErrs || []).find(x => x.id === d.id); if (e) Object.assign(e, upd); closeModal(); toast('Owner dimaklumkan ✅'); superPaint(); },
   async repMsg(d) { const text = (d.text || '').trim().slice(0, 1000); if (!text) return; const from = isSuper() && S.mode === 'super' ? 'super' : 'owner', at = chatNow();
     await API.addRepMsg(d.id, {from, text, at}); const list = from === 'super' ? S.sysErrs : S.myReps, r = (list || []).find(x => x.id === d.id); if (r) Object.assign(r, {lastMsgAt: at, lastFrom: from});
     openChat(d.id); },
