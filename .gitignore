@@ -4,3 +4,4 @@ node_modules/
 www/
 android/
 deploy.bat
+*firebase-adminsdk*.json
