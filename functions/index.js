@@ -417,3 +417,13 @@ exports.prosewaOnReportUpdate = onDocumentUpdated({document: 'sysErrors/{id}', d
     ? {title: done ? '✅ Your problem has been resolved' : '👀 Your report is being reviewed', body: a.reply || 'Open ProSewa → Settings → My reports.'}
     : {title: done ? '✅ Masalah anda telah diselesaikan' : '👀 Laporan anda sedang disemak', body: a.reply || 'Buka ProSewa → Tetapan → Laporan saya.'});
 });
+
+// Chat laporan (Super Admin ↔ owner): kemas kini penanda mesej terakhir & push kepada pihak satu lagi
+exports.prosewaOnRepMsg = onDocumentCreated({document: 'sysErrors/{id}/msgs/{m}', database: 'prosewa', region: DB_REGION}, async ev => {
+  const m = ev.data && ev.data.data(); if (!m) return;
+  const ref = db.doc(`sysErrors/${ev.params.id}`), r = (await ref.get()).data() || {};
+  await ref.set({lastMsgAt: m.at || myNow(), lastFrom: m.from}, {merge: true}).catch(() => {});
+  const txt = String(m.text || '').slice(0, 180);
+  if (m.from === 'super' && r.uid) await toOwner(r.uid, l => l === 'en' ? {title: '💬 New reply from ProSewa', body: txt} : {title: '💬 Balasan baru daripada ProSewa', body: txt});
+  if (m.from === 'owner') await pushTo('uid', SUPER_UID, l => ({title: l === 'en' ? '💬 Owner replied' : '💬 Balasan owner', body: `${String(r.who || '').replace(/ · \S+$/, '')}: ${txt}`}), 'https://prosewa.web.app/index.html#super');
+});
