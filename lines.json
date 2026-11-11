@@ -1,17 +1,9 @@
 [
- {
-  "id": "tk09p_0",
-  "text": "Harga dia berapa? Bawah empat puluh sen sehari je.",
-  "voice": "ms-MY-YasminNeural"
- },
- {
-  "id": "tk09p_1",
-  "text": "RM dua belas sebulan. Unlimited tenants.",
-  "voice": "ms-MY-YasminNeural"
- },
- {
-  "id": "tk09p_2",
-  "text": "Ambil setahun, RM seratus lima belas je. Bersamaan sembilan ringgit lima puluh lapan sen sebulan.",
-  "voice": "ms-MY-YasminNeural"
- }
+ {"id":"kt_0","text":"Hai tuan rumah! Penat kejar sewa setiap bulan?","voice":"ms-MY-YasminNeural"},
+ {"id":"kt_1","text":"Kenalkan, ProSewa. App untuk urus rumah dan bilik sewa, terus dari phone.","voice":"ms-MY-YasminNeural"},
+ {"id":"kt_2","text":"Penyewa upload bukti bayaran. Awak tekan lulus, resit keluar sendiri.","voice":"ms-MY-YasminNeural"},
+ {"id":"kt_3","text":"Peringatan sewa pun sampai sendiri ke phone penyewa. Tak payah WhatsApp satu-satu.","voice":"ms-MY-YasminNeural"},
+ {"id":"kt_4","text":"Hujung tahun? Laporan cukai dah siap, terus boleh isi e-Filing.","voice":"ms-MY-YasminNeural"},
+ {"id":"kt_5","text":"Perjanjian sewa pun boleh tandatangan terus dekat skrin phone.","voice":"ms-MY-YasminNeural"},
+ {"id":"kt_6","text":"Cuba percuma empat belas hari. Pergi prosewa dot web dot app sekarang!","voice":"ms-MY-YasminNeural"}
 ]
