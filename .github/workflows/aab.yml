@@ -1,0 +1,162 @@
+name: Build ProSewa untuk Google Play (AAB)
+# Jalankan secara manual: GitHub → Actions → "Build ProSewa untuk Google Play (AAB)" → Run workflow.
+# Hasil: ProSewa-Admin.aab & ProSewa-Penyewa.aab (muat naik ke Play Console) + APK ujian bertandatangan sama.
+# Perlu 2 GitHub Secrets (Settings → Secrets and variables → Actions):
+#   PLAY_UPLOAD_KEYSTORE_B64 : fail prosewa-upload.jks dalam base64
+#   PLAY_UPLOAD_PASSWORD     : kata laluan keystore/kunci (alias: upload)
+on:
+  workflow_dispatch:
+    inputs:
+      ujian:
+        description: 'Binaan ujian sahaja (kunci sementara, JANGAN muat naik ke Play)'
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: aab
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - kind: admin
+            appId: com.prokuiz.prosewa
+            appName: ProSewa
+            page: index.html
+            out: ProSewa-Admin
+          - kind: tenant
+            appId: com.prokuiz.prosewa.penyewa
+            appName: ProSewa Penyewa
+            page: penyewa.html
+            out: ProSewa-Penyewa
+    steps:
+      - uses: actions/checkout@v4
+      - name: Semak kunci muat naik (upload key)
+        env:
+          KS: ${{ secrets.PLAY_UPLOAD_KEYSTORE_B64 }}
+          PW: ${{ secrets.PLAY_UPLOAD_PASSWORD }}
+        run: |
+          if [ "${{ inputs.ujian }}" = "true" ]; then
+            echo "::warning::BINAAN UJIAN: kunci sementara. Jangan muat naik fail ini ke Google Play."
+            PW=ujian-sementara; keytool -genkeypair -keystore $RUNNER_TEMP/upload.jks -alias upload -keyalg RSA -keysize 2048 -validity 30 -storepass $PW -keypass $PW -dname "CN=Ujian" >/dev/null
+          else
+            if [ -z "$KS" ] || [ -z "$PW" ]; then echo "::error::Secret PLAY_UPLOAD_KEYSTORE_B64 / PLAY_UPLOAD_PASSWORD belum ditambah dalam GitHub → Settings → Secrets and variables → Actions."; exit 1; fi
+            echo "$KS" | base64 -d > $RUNNER_TEMP/upload.jks
+          fi
+          echo "PW=$PW" >> $GITHUB_ENV
+          keytool -list -keystore $RUNNER_TEMP/upload.jks -storepass "$PW" | grep -i upload
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Pasang Capacitor 8 (Android 16 / API 36)
+        run: |
+          npm install --no-audit --no-fund
+          npm install --no-audit --no-fund @capacitor/core@^8.0.0 @capacitor/cli@^8.0.0 @capacitor/android@^8.0.0 \
+            @capacitor/local-notifications@^8.0.0 @capacitor/app@^8.0.0 @capacitor/status-bar@^8.0.0 \
+            @capacitor/filesystem@^8.0.0 @capacitor/share@^8.0.0 @capawesome/capacitor-badge@^8.0.0
+          npx cap --version
+      - name: Push notification (FCM)
+        id: fcm
+        run: |
+          if [ -f google-services.json ] && grep -q '"${{ matrix.appId }}"' google-services.json; then
+            npm install --no-audit --no-fund @capacitor/push-notifications@^8.0.0
+            echo "on=1" >> $GITHUB_OUTPUT
+          else
+            echo "on=0" >> $GITHUB_OUTPUT; echo "::warning::google-services.json tiada untuk ${{ matrix.appId }} — tanpa push FCM."
+          fi
+      - name: Sediakan fail app (www)
+        run: |
+          sh build.sh
+          mkdir -p www/lib
+          cp _site/${{ matrix.page }} www/index.html
+          cp icon-192.png icon-512.png icon-t-192.png icon-t-512.png www/
+          cp node_modules/html2pdf.js/dist/html2pdf.bundle.min.js www/lib/
+          cp node_modules/pdfjs-dist/build/pdf.min.js node_modules/pdfjs-dist/build/pdf.worker.min.js www/lib/
+          FBV=$(grep -o "FB_VER = '[^']*'" index.html | cut -d"'" -f2); mkdir -p www/lib/fb
+          for m in app auth firestore messaging; do curl -sSLf "https://www.gstatic.com/firebasejs/$FBV/firebase-$m.js" -o www/lib/fb/firebase-$m.js; done
+          sed -i "s#https://www.gstatic.com/firebasejs/$FBV/#./#g" www/lib/fb/*.js
+          FCMJS=""; [ "${{ steps.fcm.outputs.on }}" = "1" ] && FCMJS="window.PROSEWA_FCM=true;"
+          sed -i "s#<head>#<head><script>window.PROSEWA_APP=\"${{ matrix.kind }}\";window.PROSEWA_BUILD=$((100000 + ${{ github.run_number }}));window.PROSEWA_PLAY=1;window.PROSEWA_FBLOCAL=1;$FCMJS</script>#" www/index.html
+          cat > capacitor.config.json <<JSON
+          {
+            "appId": "${{ matrix.appId }}",
+            "appName": "${{ matrix.appName }}",
+            "webDir": "www",
+            "backgroundColor": "#0a1210",
+            "plugins": {
+              "SystemBars": { "insetsHandling": "css" },
+              "LocalNotifications": { "smallIcon": "ic_stat_ps", "iconColor": "#d9b44a" },
+              "PushNotifications": { "presentationOptions": ["badge", "sound", "alert"] }
+            }
+          }
+          JSON
+      - run: npx cap add android
+      - name: Ikon app & ikon notifikasi
+        run: |
+          RES=android/app/src/main/res
+          rm -rf $RES/mipmap-anydpi-v26
+          if [ "${{ matrix.kind }}" = "tenant" ]; then SRC=android-icons/penyewa/res; else SRC=android-icons/admin/res; fi
+          cp -r $SRC/* $RES/
+          printf '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">#0a1210</color>\n    <color name="ps_gold">#d9b44a</color>\n</resources>\n' > $RES/values/ic_launcher_background.xml
+      - name: Permission (ikut polisi Google Play — tiada USE_EXACT_ALARM)
+        run: |
+          M=android/app/src/main/AndroidManifest.xml
+          sed -i 's#<application#<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>\n    <uses-permission android:name="android.permission.VIBRATE"/>\n    <application#' $M
+          if [ "${{ matrix.kind }}" = "tenant" ]; then
+            sed -i 's#</activity>#    <intent-filter android:autoVerify="true">\n                <action android:name="android.intent.action.VIEW" />\n                <category android:name="android.intent.category.DEFAULT" />\n                <category android:name="android.intent.category.BROWSABLE" />\n                <data android:scheme="https" android:host="prosewa.web.app" android:pathPrefix="/penyewa" />\n            </intent-filter>\n        </activity>#' $M
+          fi
+          if [ "${{ steps.fcm.outputs.on }}" = "1" ]; then
+            cp google-services.json android/app/google-services.json
+            sed -i 's#<activity#<meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_stat_ps" />\n        <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/ps_gold" />\n        <activity#' $M
+          fi
+          grep -n "uses-permission\|configChanges" $M
+          grep -n "SdkVersion" android/variables.gradle
+      - name: Tandatangan release (upload key) & versi
+        run: |
+          VC=$((100000 + ${{ github.run_number }}))
+          cat >> android/app/build.gradle <<GRADLE
+
+          android {
+              defaultConfig {
+                  versionCode $VC
+                  versionName "2.0.${{ github.run_number }}"
+              }
+              signingConfigs {
+                  upload {
+                      storeFile file(System.getenv("RUNNER_TEMP") + "/upload.jks")
+                      storePassword System.getenv("PW")
+                      keyAlias 'upload'
+                      keyPassword System.getenv("PW")
+                  }
+              }
+              buildTypes {
+                  release { signingConfig signingConfigs.upload; minifyEnabled false }
+              }
+          }
+          GRADLE
+          tail -18 android/app/build.gradle
+      - run: npx cap sync android
+      - name: Bina AAB (Play) & APK ujian
+        run: cd android && chmod +x gradlew && ./gradlew bundleRelease assembleRelease
+      - name: Semak hasil
+        run: |
+          mkdir -p out
+          cp android/app/build/outputs/bundle/release/app-release.aab out/${{ matrix.out }}.aab
+          cp android/app/build/outputs/apk/release/app-release.apk out/${{ matrix.out }}-play-test.apk
+          AAPT=$(ls -d $ANDROID_HOME/build-tools/*/ | sort -V | tail -1)aapt2
+          $AAPT dump badging out/${{ matrix.out }}-play-test.apk | grep -E "^package|sdkVersion|targetSdk|application-label|uses-permission" || true
+          $AAPT dump badging out/${{ matrix.out }}-play-test.apk | grep -q "targetSdkVersion:'36'" && echo "✅ targetSdk 36"
+          jarsigner -verify out/${{ matrix.out }}.aab | tail -1
+          ls -la out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.out }}-play${{ inputs.ujian && '-UJIAN' || '' }}
+          path: out/*

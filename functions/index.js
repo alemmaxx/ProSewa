@@ -12,6 +12,7 @@
  * prosewaHealth      : setiap 30 minit → pemantau sistem (laman, database, notifikasi, ToyyibPay, ralat) + amaran kepada Super Admin
  * prosewaHealthNow   : Super Admin tekan "Semak sekarang" / "Uji amaran"
  * prosewaOnReport    : laporan masalah daripada owner → push kepada Super Admin
+ * prosewaDeleteMe    : owner padam akaun sendiri + semua data (syarat Google Play)
  *
  * Secret key ToyyibPay TIDAK ditulis dalam kod. Simpan sekali melalui CMD:
  *   firebase functions:secrets:set TOYYIBPAY_SECRET_KEY --project kukusanmy
@@ -364,6 +365,46 @@ async function runHealth(src) {
 }
 exports.prosewaHealth = onSchedule({schedule: 'every 30 minutes', region: REGION, timeZone: 'Asia/Kuala_Lumpur'}, async () => { try { await runHealth('auto'); } catch (e) { console.error(e); await logErr('prosewaHealth', e); } });
 
+// Padam owner & SEMUA datanya (penyewa + bayaran/aduan/peringatan, rumah, perbelanjaan, bil, peranti, laporan, profil, akaun log masuk).
+// subPayments (rekod bayaran langganan) dikekalkan untuk rekod kewangan/cukai.
+async function purgeOwner(uid) {
+  let n = 0;
+  const ten = await db.collection('tenants').where('ownerId', '==', uid).get();
+  for (const t of ten.docs) {
+    const tdev = await db.collection('devices').where('tok', '==', t.id).get();
+    for (const d of tdev.docs) { await d.ref.delete(); n++; }
+    await db.recursiveDelete(t.ref); n++;
+  }
+  for (const col of ['expenses', 'properties', 'recurring']) { const q = await db.collection(col).where('ownerId', '==', uid).get(); for (const d of q.docs) { await d.ref.delete(); n++; } }
+  for (const [col, f] of [['devices', 'uid'], ['subOrders', 'uid']]) { const q = await db.collection(col).where(f, '==', uid).get(); for (const d of q.docs) { await d.ref.delete(); n++; } }
+  const reps = await db.collection('sysErrors').where('uid', '==', uid).get();
+  for (const d of reps.docs) { await db.recursiveDelete(d.ref); n++; }
+  for (const path of [`owners/${uid}`, `ownerPriv/${uid}`, `subs/${uid}`]) { await db.doc(path).delete().catch(() => {}); n++; }
+  await getAuth().deleteUser(uid).catch(e => console.warn('deleteUser', e.message));
+  return n;
+}
+
+// ---------- Owner padam akaun sendiri (dalam app / halaman padam-akaun.html) ----------
+// Wajib log masuk semula dalam 10 minit terakhir (token auth_time) supaya akaun tidak dipadam oleh orang lain.
+exports.prosewaDeleteMe = onRequest({region: REGION, timeoutSeconds: 300}, async (req, res) => {
+  if (cors(req, res)) return;
+  try {
+    if (req.method !== 'POST') return res.status(405).json({error: 'POST sahaja'});
+    const token = (req.get('Authorization') || '').replace(/^Bearer\s+/i, '');
+    if (!token) return res.status(401).json({error: 'Sila log masuk semula.'});
+    const user = await getAuth().verifyIdToken(token, true);
+    if (user.uid === SUPER_UID) return res.status(400).json({error: 'Akaun Super Admin tidak boleh dipadam di sini.'});
+    if (String((req.body || {}).confirm || '').toUpperCase() !== 'PADAM') return res.status(400).json({error: 'Taip PADAM untuk sahkan.'});
+    if (!user.auth_time || Date.now() / 1000 - user.auth_time > 600) return res.status(401).json({error: 'Sila sahkan kata laluan sekali lagi.', code: 'recent-login'});
+    const n = await purgeOwner(user.uid);
+    console.log('prosewaDeleteMe', user.uid, n);
+    return res.json({ok: true, docs: n});
+  } catch (e) {
+    console.error(e); await logErr('prosewaDeleteMe', e);
+    return res.status(e.code && String(e.code).startsWith('auth/') ? 401 : 500).json({error: 'Ralat pelayan. Cuba lagi.'});
+  }
+});
+
 exports.prosewaHealthNow = onRequest({region: REGION}, async (req, res) => {
   if (cors(req, res)) return;
   try {
@@ -382,14 +423,7 @@ exports.prosewaHealthNow = onRequest({region: REGION}, async (req, res) => {
       if (sub && sub.plan === 'trial') sub.start = sub.start || (sub.startTs && sub.startTs.toDate ? sub.startTs.toDate().toISOString().slice(0, 10) : '');
       if (sub && !endD && sub.start) { const td = +(((await db.doc('config/app').get()).data() || {}).trialDays ?? 14); const d = new Date(sub.start + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + td); endD = d.toISOString().slice(0, 10); }
       if (endD && endD >= myNow().slice(0, 10)) return res.status(400).json({error: 'Owner masih aktif. Tamatkan langganan dahulu.'});
-      let n = 0;
-      const ten = await db.collection('tenants').where('ownerId', '==', uid).get();
-      for (const t of ten.docs) { await db.recursiveDelete(t.ref); n++; }
-      for (const col of ['expenses', 'properties', 'recurring']) { const q = await db.collection(col).where('ownerId', '==', uid).get(); for (const d of q.docs) { await d.ref.delete(); n++; } }
-      for (const [col, f] of [['devices', 'uid'], ['subOrders', 'uid']]) { const q = await db.collection(col).where(f, '==', uid).get(); for (const d of q.docs) { await d.ref.delete(); n++; } }
-      for (const path of [`owners/${uid}`, `ownerPriv/${uid}`, `subs/${uid}`]) { await db.doc(path).delete().catch(() => {}); n++; }
-      await getAuth().deleteUser(uid).catch(e => console.warn('deleteUser', e.message));
-      return res.json({ok: true, docs: n});
+      return res.json({ok: true, docs: await purgeOwner(uid)});
     }
     const dg = (req.body || {}).diag;
     if (dg) {   // diagnostik owner tertentu (Super Admin): peranti push & pesanan ToyyibPay

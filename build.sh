@@ -2,7 +2,7 @@
 # Bina folder _site: website owner (index.html) + website penyewa (penyewa.html) + halaman muat turun APK
 set -e
 rm -rf _site && mkdir -p _site
-cp index.html download.html promo.html manifest.webmanifest manifest-penyewa.webmanifest sw.js icon-192.png icon-512.png icon-t-192.png icon-t-512.png _site/
+cp index.html download.html promo.html privasi.html padam-akaun.html manifest.webmanifest manifest-penyewa.webmanifest sw.js icon-192.png icon-512.png icon-t-192.png icon-t-512.png _site/
 cp -r .well-known shots _site/
 sed -e 's#href="manifest.webmanifest"#href="manifest-penyewa.webmanifest"#' \
     -e 's#<title>ProSewa</title>#<title>ProSewa Penyewa</title>#' \
