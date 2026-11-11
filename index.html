@@ -488,6 +488,10 @@ const I18N = {};   // diisi di bawah (BM → EN)
 let _i18nRe = null;
 /* Kamus BM → EN (tambah baris di sini jika ada teks baru) */
 const I18N_RX = [
+  [/^📴 Tiada internet · Data anda selamat\. Paparan terakhir (.+), akan dikemas kini sendiri bila sambungan pulih\.$/, '📴 No internet · Your data is safe. Last updated $1, will refresh automatically when the connection is back.'],
+  [/^📴 Sambungan ke pelayan terganggu · Data anda selamat\. Paparan terakhir (.+), akan dikemas kini sendiri bila sambungan pulih\.$/, '📴 Server connection interrupted · Your data is safe. Last updated $1, will refresh automatically when the connection is back.'],
+  [/^📴 Tiada internet · Data anda selamat\. Akan dikemas kini sendiri bila sambungan pulih\.$/, '📴 No internet · Your data is safe. Will refresh automatically when the connection is back.'],
+  [/^📴 Sambungan ke pelayan terganggu · Data anda selamat\. Akan dikemas kini sendiri bila sambungan pulih\.$/, '📴 Server connection interrupted · Your data is safe. Will refresh automatically when the connection is back.'],
   [/^Semua (\d+) laporan sudah selesai\.$/, 'All $1 reports are resolved.'],
   [/^Baki (\d+) orang$/, 'Remaining $1'], [/^Sudah digunakan oleh (\d+) owner\.$/, 'Already used by $1 owner(s).'], [/^👥 Pengguna \((\d+)\)$/, '👥 Users ($1)'],
   [/⬆ Versi baru ada: ([\d.]+)/g, '⬆ New version available: $1'], [/Anda guna ([\d.]+)\./g, "You're using $1."], [/⬆ Versi baru ([\d.]+) ada\. Tekan Muat turun versi baru\./g, '⬆ New version $1 available. Tap Download new version.'], [/✅ Anda menggunakan versi terkini \(([\d.]+)\)\./g, "✅ You're on the latest version ($1)."],
@@ -978,7 +982,8 @@ async function fbInit() {
   const app = A.initializeApp(FIREBASE_CONFIG);
   let db; try { db = F0.initializeFirestore(app, {localCache: F0.persistentLocalCache({tabManager: F0.persistentMultipleTabManager()})}, FIRESTORE_DB); } catch (e) { db = F0.getFirestore(app, FIRESTORE_DB); }
   // CACHE_READ: baca salinan dalam phone dahulu (papar serta-merta), kemudian ambil data baru dari pelayan
-  const F = {...F0, getDocs: q => CACHE_READ ? F0.getDocsFromCache(q) : F0.getDocs(q), getDoc: r => CACHE_READ ? F0.getDocFromCache(r) : F0.getDoc(r)};
+  const synced = x => { if (!x?.metadata?.fromCache) markSync(); return x; };
+  const F = {...F0, getDocs: q => CACHE_READ ? F0.getDocsFromCache(q) : F0.getDocs(q).then(synced), getDoc: r => CACHE_READ ? F0.getDocFromCache(r) : F0.getDoc(r).then(synced)};
   return fb = {app, U, F, auth: U.getAuth(app), db};
 }
 const fdoc = (...p) => fb.F.doc(fb.db, ...p);
@@ -2630,12 +2635,16 @@ function phoneNotify(title, body, at) {
 }
 /* ---------- Status sistem: jalur amaran untuk semua pengguna (macam ProSyariah) ---------- */
 let SYS = {}, _sysAt = 0, _connErr = false;
+let _lastSync = (() => { try { return +localStorage.getItem('prosewa_lastSync') || 0; } catch (e) { return 0; } })();
+function markSync() { const n = Date.now(); if (n - _lastSync < 20000) { _lastSync = n; return; } _lastSync = n; try { localStorage.setItem('prosewa_lastSync', n); } catch (e) {} }
+function lastSyncLabel() { if (!_lastSync) return ''; const d = new Date(_lastSync), t = d.toTimeString().slice(0, 5); return localISO(d) === localISO() ? t : dateLabel(localISO(d)) + ', ' + t; }
 function showSysBan() {
   const b = $('#sysban'); if (!b) return;
   const now = nowStr(), n = SYS.notice && (!SYS.noticeUntil || SYS.noticeUntil > now) ? SYS : null;
   let lv = '', msg = '';
-  if (!navigator.onLine) { lv = 'warn'; msg = '📡 Tiada sambungan internet. Data mungkin tidak terkini.'; }
-  else if (_connErr) { lv = 'warn'; msg = '⚠️ Tidak dapat sambung ke pelayan. Kami akan cuba lagi secara automatik.'; }
+  const ls = lastSyncLabel(), when = ls ? ` Paparan terakhir ${ls}, akan dikemas kini sendiri bila sambungan pulih.` : ' Akan dikemas kini sendiri bila sambungan pulih.';
+  if (!navigator.onLine) { lv = 'warn'; msg = '📴 Tiada internet · Data anda selamat.' + when; }
+  else if (_connErr) { lv = 'warn'; msg = '📴 Sambungan ke pelayan terganggu · Data anda selamat.' + when; }
   else if (SYS.level === 'down') { lv = 'down'; msg = '⚠️ Sistem sedang mengalami gangguan. Data atau notifikasi mungkin lewat. Kami sedang membaikinya.'; }
   else if (n) { lv = n.noticeLevel || 'info'; msg = (lv === 'down' ? '⚠️ ' : lv === 'warn' ? '🛠️ ' : 'ℹ️ ') + n.notice; }
   else if (SYS.level === 'warn') { lv = 'warn'; msg = 'ℹ️ Sistem agak perlahan sekarang. Data atau notifikasi mungkin lewat sedikit.'; }
