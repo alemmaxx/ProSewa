@@ -222,7 +222,7 @@ function setL(l){document.body.classList.toggle('en',l==='en');document.getEleme
 try{var q=new URLSearchParams(location.search).get('lang');if(q==='en'||q==='bm')setL(q);else if(JSON.parse(localStorage.getItem('prosewa_lang'))==='en')setL('en')}catch(e){}
 document.getElementById('yr').textContent=new Date().getFullYear();
 // harga & hari percubaan terkini dari sistem (Super Admin boleh ubah)
-var PLANS=[{id:'monthly',bm:'Bulanan',en:'Monthly',m:1,price:19.90,tag:''},{id:'half',bm:'6 Bulan',en:'6 Months',m:6,price:99,tag:'Jimat 17%'},{id:'yearly',bm:'Setahun',en:'Yearly',m:12,price:179,tag:'Paling jimat'}];
+var PLANS=[{id:'monthly',bm:'Bulanan',en:'Monthly',m:1,price:12,tag:''},{id:'half',bm:'6 Bulan',en:'6 Months',m:6,price:60,tag:'Jimat & Berbaloi'},{id:'yearly',bm:'Setahun',en:'Yearly',m:12,price:115,tag:'Paling jimat & Berbaloi'}];
 var TAG_EN={'Jimat 17%':'Save 17%','Paling jimat':'Best value','Popular':'Popular'};
 function rm(n){return 'RM'+Number(n).toFixed(2).replace(/\.00$/,'')}
 function render(trial){
