@@ -140,6 +140,7 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.85}
 #modal .mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
 #modal .mh b{font-size:19px;font-weight:800}
 #modal .x{width:36px;height:36px;border-radius:10px;border:0;background:var(--soft);color:var(--ink);font-size:16px;cursor:pointer}
+a.plink{color:var(--muted);text-decoration:underline;text-underline-offset:2px}a.plink:hover{color:var(--gold)}
 #toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:30;opacity:0;pointer-events:none;transition:.25s;max-width:90%;text-align:center;font-weight:600}
 #toast.on{opacity:1}#toast.err{background:var(--red);color:#fff}
 .al{border-radius:10px;padding:10px 12px;margin:0 0 12px;font-size:13px;background:var(--amber2);border-left:3px solid var(--amber)}
@@ -1359,7 +1360,7 @@ function renderLogin() {
   $('#app').innerHTML = `<div class="login"><div class="lbox">${langSeg()}${themeSeg()}<br>${inst}<img src="icon-192.png" alt="" class="llogo"><h2 class="lh">ProSewa</h2>${body}
     ${isNative() && v !== 'forgot' ? '<div class="hint">Akaun Google? Dalam APK, log masuk guna emel & kata laluan. Tetapkan kata laluan dahulu di prosewa.web.app → Tetapan → Keselamatan.</div>' : ''}
     ${ONLINE ? '' : '<div class="hint">Mod peranti (ujian): belum disambung ke pelayan, data disimpan dalam browser ini sahaja.</div>'}
-    <p class="muted" style="font-size:12.5px;margin:14px 0 0"><a href="${WEB_BASE}privasi.html${isNative() ? '?app=1' : ''}" target="_blank" rel="noopener">Dasar Privasi</a></p></div></div>`;
+    <p class="muted" style="font-size:12.5px;margin:14px 0 0"><a class="plink" href="${WEB_BASE}privasi.html${isNative() ? '?app=1' : ''}" target="_blank" rel="noopener">Dasar Privasi</a></p></div></div>`;
 }
 
 /* ===================== LANGGANAN TAMAT (owner dikunci) ===================== */
@@ -1371,7 +1372,7 @@ function renderLocked() {
     <div style="text-align:left">${IS_PLAY ? '' : plans().map(p => `<div class="instbig" style="margin-bottom:8px"><div><b>${p.name}${p.tag ? ` · <span style="font-weight:600">${p.tag}</span>` : ''}</b><span class="muted">${p.months} bulan · ${RM(p.price)}</span></div><button class="btn sm" data-act="buyPlan" data-id="${p.id}">Bayar</button></div>`).join('')}</div>
     <div style="text-align:left">${promoForm()}</div>
     <button class="btn wide ghost" style="margin-top:6px" data-act="logout">Log Keluar</button>
-    <p class="muted" style="font-size:12.5px;margin-top:14px"><a href="#" data-act="delAccForm">Padam akaun</a> · <a href="${WEB_BASE}privasi.html${isNative() ? '?app=1' : ''}" target="_blank" rel="noopener">Dasar Privasi</a></p></div></div>`;
+    <p class="muted" style="font-size:12.5px;margin-top:14px"><a class="plink" href="#" data-act="delAccForm">Padam akaun</a> · <a class="plink" href="${WEB_BASE}privasi.html${isNative() ? '?app=1' : ''}" target="_blank" rel="noopener">Dasar Privasi</a></p></div></div>`;
 }
 
 /* ===================== SUPER ADMIN (#super) — pemilik sistem sahaja ===================== */
@@ -2029,7 +2030,7 @@ function oSettings() {
       <button class="btn wide ink" style="margin-top:12px">${S.auth && !S.auth.hasPassword ? 'Simpan kata laluan' : 'Tukar kata laluan'}</button></form></div>
     <div class="blk"><div class="sec-h" style="color:var(--red)">⚠️ Zon bahaya</div><div class="card"><p class="muted" style="margin-top:0">Padam semua penyewa, bayaran & resit, aduan, perbelanjaan, bil dan rumah untuk mula semula dengan laporan kosong. Akaun, langganan, profil & tetapan kekal.</p><button class="btn wide red" data-act="wipeForm">🗑 Padam semua data</button>
       <p class="muted" style="margin:14px 0 0">Tutup akaun ProSewa sepenuhnya. Akaun log masuk & semua data dipadam kekal.</p><button class="btn wide ghost" style="margin-top:8px;color:var(--red)" data-act="delAccForm">Padam akaun saya</button></div></div>
-    <p class="muted" style="text-align:center;font-size:12.5px"><a href="${WEB_BASE}privasi.html${isNative() ? '?app=1' : ''}" target="_blank" rel="noopener">Dasar Privasi</a> · <a href="${WEB_BASE}padam-akaun.html${isNative() ? '?app=1' : ''}" target="_blank" rel="noopener">Padam akaun</a></p></div>
+    <p class="muted" style="text-align:center;font-size:12.5px"><a class="plink" href="${WEB_BASE}privasi.html${isNative() ? '?app=1' : ''}" target="_blank" rel="noopener">Dasar Privasi</a> · <a class="plink" href="${WEB_BASE}padam-akaun.html${isNative() ? '?app=1' : ''}" target="_blank" rel="noopener">Padam akaun</a></p></div>
     <button class="btn wide red lo" data-act="logout">Log Keluar</button></div>`;
 }
 
