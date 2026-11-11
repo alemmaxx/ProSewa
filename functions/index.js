@@ -348,14 +348,19 @@ async function runHealth(src) {
   const failed = (await db.collection('subOrders').where('status', '==', 'failed').get().catch(() => null))?.docs.filter(d => (d.data().updatedAt?.toDate?.() || 0) >= d24).length || 0; checks.subFailed = failed;
   if (failed) add('sub_fail', false, 'warn', `${failed} bayaran langganan ToyyibPay tidak berjaya disahkan dalam 24 jam lepas. Semak subOrders.`, `${failed} ToyyibPay subscription payment(s) could not be verified in the last 24 hours. Check subOrders.`);
 
-  const pubLevel = issues.filter(i => i.pub).reduce((m, i) => LV[i.lv] > LV[m] ? i.lv : m, 'ok');
-  const level = issues.reduce((m, i) => LV[i.lv] > LV[m] ? i.lv : m, 'ok');
+  // Laman tidak dapat dibuka: sahkan dua semakan berturut-turut (30 minit) dahulu.
+  // Elak amaran palsu (cth. rangkaian pelayan pemantau sekejap) — tiada jalur amaran kepada pengguna & tiada push pada kali pertama.
+  const siteKeys = ['site', 'site_t'], siteFail = issues.filter(i => siteKeys.includes(i.k));
+  if (siteFail.length && !prev.siteFailPrev) siteFail.forEach(i => { i.pending = true; i.msg += ' (akan disahkan pada semakan seterusnya)'; i.en += ' (will be confirmed on the next check)'; });
+  const live = issues.filter(i => !i.pending);
+  const pubLevel = live.filter(i => i.pub).reduce((m, i) => LV[i.lv] > LV[m] ? i.lv : m, 'ok');
+  const level = live.reduce((m, i) => LV[i.lv] > LV[m] ? i.lv : m, 'ok');
   await db.doc('config/status').set({level: pubLevel, at: now}, {merge: true});
-  const out = {level, pubLevel, at: now, src, issues, checks, push: {sent: 0, fail: 0}};
+  const out = {level, pubLevel, at: now, src, issues, checks, push: {sent: 0, fail: 0}, siteFailPrev: siteFail.length > 0};
   // amaran kepada Super Admin bila tahap berubah (bermula / pulih)
   const was = prev.alertLevel || 'ok';
   if (level !== was) {
-    const sum = issues.map(i => i.msg).join(' · ').slice(0, 200), sumEn = issues.map(i => i.en).join(' · ').slice(0, 200);
+    const sum = live.map(i => i.msg).join(' · ').slice(0, 200), sumEn = live.map(i => i.en).join(' · ').slice(0, 200);
     await toOwner(SUPER_UID, l => level === 'ok' ? (l === 'en' ? {title: '🟢 ProSewa recovered', body: 'All systems are back to normal.'} : {title: '🟢 Sistem ProSewa pulih', body: 'Semua sistem kembali normal.'})
       : (l === 'en' ? {title: level === 'down' ? '🔴 ProSewa disruption' : '🟠 ProSewa warning', body: sumEn} : {title: level === 'down' ? '🔴 Gangguan sistem ProSewa' : '🟠 Amaran sistem ProSewa', body: sum})).catch(() => {});
     out.alertLevel = level; out.lastAlert = now;
