@@ -207,7 +207,10 @@ header .lang{margin-bottom:0}
 .sfab{position:fixed;right:0;top:46%;z-index:5;border:0;border-radius:14px 0 0 14px;background:linear-gradient(160deg,#e9c46a,#c99a2e);color:#1a1405;font:700 11px var(--f);padding:10px 7px 9px 9px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:20px;box-shadow:-4px 6px 18px rgba(0,0,0,.35);cursor:pointer}
 .sfab .sfb{position:absolute;top:-8px;left:-8px;min-width:24px;height:24px;padding:0 6px;border-radius:12px;background:var(--red,#e5484d);color:#fff;font:800 13px/24px var(--f);font-style:normal;box-shadow:0 0 0 3px var(--bg,#0a1210);animation:sfpulse 1.6s infinite}
 @keyframes sfpulse{50%{transform:scale(1.15)}}
-.sfab span{font-size:10.5px;letter-spacing:.02em}.sfab.users{top:calc(46% - 84px);background:linear-gradient(160deg,#3fae7f,#1f7a55);color:#fff}.ustat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}.ustat div{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center}.ustat b{display:block;font-size:22px}.ustat span{font-size:11.5px;color:var(--muted)}.sfab.back{background:linear-gradient(160deg,#3a4a45,#24302c);color:#fff}
+.sfab span{font-size:10.5px;letter-spacing:.02em}.sfab.users{top:calc(46% - 84px);background:linear-gradient(160deg,#3fae7f,#1f7a55);color:#fff}.urev{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 12px;background:var(--card)}.urev summary{cursor:pointer;font-weight:700;margin-bottom:2px}.urev[open] summary{margin-bottom:10px}
+.urevt{font-size:13px}.urh,.urr{display:grid;grid-template-columns:54px 70px 62px 1fr;gap:6px;align-items:start;padding:6px 0;border-bottom:1px solid var(--line)}.urh{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.03em}
+.urr em{font-style:normal;color:var(--muted);font-size:11.5px}.urr span:last-child em{display:block}.urev .ustat b{font-size:17px;white-space:nowrap}.urev .ustat span{font-size:11.5px}.urr span:first-child{font-weight:600}.urr span:last-child{position:relative}.urr i{display:block;height:4px;border-radius:4px;background:var(--gold);margin-top:4px;min-width:2px;opacity:.85}
+.ustat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}.ustat div{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center}.ustat b{display:block;font-size:22px}.ustat span{font-size:11.5px;color:var(--muted)}.sfab.back{background:linear-gradient(160deg,#3a4a45,#24302c);color:#fff}
 .finst{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.finst>div{background:var(--soft,rgba(255,255,255,.04));border:1px solid var(--line);border-radius:12px;padding:10px}
 .finst span{display:block;font-size:12px;color:var(--muted)}.finst b{display:block;font-size:17px;margin-top:2px}.finst b.g{color:var(--green)}.finst b.r{color:var(--red)}.finst em{font-style:normal;font-size:11.5px;color:var(--muted)}
 .finrep #taxrep{background:#fff;color:#111;border-radius:12px;padding:12px;font-size:12px;overflow-x:auto}
@@ -489,6 +492,7 @@ const I18N = {};   // diisi di bawah (BM → EN)
 let _i18nRe = null;
 /* Kamus BM → EN (tambah baris di sini jika ada teks baru) */
 const I18N_RX = [
+  [/(\d+) resit · (\d+) bukti bayaran · (\d+) resit perbelanjaan/g, '$1 receipts · $2 payment proofs · $3 expense receipts'], [/⏳ Resit (\d+)\/(\d+)…/g, '⏳ Receipt $1/$2…'], [/Setahun (\d{4})/g, 'Whole year $1'],
   [/^📴 Tiada internet · Data anda selamat\. Paparan terakhir (.+), akan dikemas kini sendiri bila sambungan pulih\.$/, '📴 No internet · Your data is safe. Last updated $1, will refresh automatically when the connection is back.'],
   [/^📴 Sambungan ke pelayan terganggu · Data anda selamat\. Paparan terakhir (.+), akan dikemas kini sendiri bila sambungan pulih\.$/, '📴 Server connection interrupted · Your data is safe. Last updated $1, will refresh automatically when the connection is back.'],
   [/^📴 Tiada internet · Data anda selamat\. Akan dikemas kini sendiri bila sambungan pulih\.$/, '📴 No internet · Your data is safe. Will refresh automatically when the connection is back.'],
@@ -566,6 +570,11 @@ const I18N_RX = [
 Object.assign(I18N, {
   'LAPORAN KUTIPAN SEWA': 'RENT COLLECTION REPORT',
   'Penyewa anda juga tidak dapat membuka app sehingga langganan aktif semula.': 'Your tenants also cannot open the app until the subscription is active again.', 'Langganan anda telah tamat.': 'Your subscription has ended.', 'Tekan untuk lihat butiran langganan.': 'Tap to see subscription details.',
+  'Muat turun semua dokumen': 'Download all documents', '📦 Muat turun dokumen': '📦 Download documents', '🧾 Resit sewa (PDF)': '🧾 Rent receipts (PDF)', '📷 Bukti bayaran penyewa': '📷 Tenant payment proofs', '💸 Resit perbelanjaan & bil': '💸 Expense & bill receipts',
+  'Satu fail ZIP disusun ikut folder, berserta senarai Excel (CSV). Resit PDF dijana dalam phone, mungkin ambil masa ~1 saat setiap resit.': 'One ZIP file organised in folders, with an Excel (CSV) list. Receipt PDFs are generated on your phone, about ~1 second per receipt.',
+  '⬇ Muat turun ZIP': '⬇ Download ZIP', 'ZIP siap ✅': 'ZIP ready ✅', 'ZIP siap. Beberapa fail gagal: ': 'ZIP ready. Some files failed: ', '⏳ Menyediakan ZIP…': '⏳ Preparing ZIP…', '⏳ Bukti bayaran…': '⏳ Payment proofs…', '⏳ Resit perbelanjaan…': '⏳ Expense receipts…', 'Tiada dokumen untuk tempoh ini.': 'No documents for this period.', 'Tempoh': 'Period',
+  '📈 Pengguna vs duit langganan': '📈 Users vs subscription income', 'Masuk bulan ini': 'In this month', '12 bulan': '12 months', 'Anggaran sebulan (MRR)': 'Monthly estimate (MRR)', 'Pelanggan berbayar': 'Paying customers', 'Purata / pelanggan': 'Avg / customer', 'Berbayar / daftar': 'Paying / signed up', 'Pakej aktif:': 'Active plans:', 'RM masuk': 'RM in', 'Berbayar': 'Paying', 'Daftar': 'Sign-ups',
+  'Daftar = baru bulan itu (jumlah terkumpul). Berbayar = owner dengan langganan berbayar aktif pada hujung bulan. RM masuk = bayaran ToyyibPay sebelum caj. Kod promo & percubaan tidak dikira.': 'Sign-ups = new that month (cumulative total). Paying = owners with an active paid subscription at month end. RM in = ToyyibPay payments before fees. Promo codes & trials are not counted.',
   'Padam Akaun': 'Delete Account', 'Akaun anda akan dipadam kekal': 'Your account will be permanently deleted',
   'Akaun log masuk, profil, maklumat syarikat, semua penyewa, bayaran & resit, aduan, perbelanjaan, rumah, bil dan perjanjian akan dipadam. Link penyewa tidak boleh dibuka lagi. Tindakan ini tidak boleh dibatalkan.': 'Your sign-in account, profile, company details, all tenants, payments & receipts, requests, expenses, properties, bills and agreements will be deleted. Tenant links will stop working. This cannot be undone.',
   'Baki langganan yang belum digunakan tidak dikembalikan. Rekod bayaran langganan disimpan untuk tujuan perakaunan sahaja.': 'Unused subscription time is not refunded. Subscription payment records are kept for accounting purposes only.',
@@ -1528,15 +1537,40 @@ function superFab() {   // butang terapung kanan: tukar antara app owner & panel
   if (!u) { u = document.createElement('button'); u.id = 'usersFab'; u.className = 'sfab users'; u.dataset.act = 'usersPop'; document.body.appendChild(u); }
   u.innerHTML = `👥<span>Users</span>${S.owners ? `<em class="sfb" style="background:#1f7a55;animation:none">${S.owners.length}</em>` : ''}`; u.title = tr('Senarai pengguna berdaftar');
 }
+function usersRev(o) {   // Pengguna vs duit langganan masuk, 12 bulan terakhir, ikut pakej
+  const pays = (S.allSubPays || []).filter(x => +x.amount > 0), today = localISO(), cm = curMonth();
+  const months = monthsRange(addMonths(cm, -11), cm), mEnd = m => { const [y, mm] = m.split('-').map(Number); return localISO(new Date(y, mm, 0)); };
+  const PL = plans(), pk = id => PL.find(p => p.id === id) || {name: id === 'manual' ? 'Manual' : id || '-', months: 1};
+  const r2 = v => Math.round(v * 100) / 100;
+  const rows = months.map(m => {
+    const e = mEnd(m), p = pays.filter(x => String(x.date).startsWith(m));
+    const by = {}; p.forEach(x => { const k = x.plan || '-'; by[k] = by[k] || {n: 0, rm: 0}; by[k].n++; by[k].rm += +x.amount; });
+    const payers = new Set(pays.filter(x => String(x.date).slice(0, 10) <= e && String(x.until || '') >= e).map(x => x.ownerId)).size;
+    return {m, reg: o.filter(x => String(x.createdAt || '').startsWith(m)).length, total: o.filter(x => String(x.createdAt || '').slice(0, 10) <= e).length, payers, rm: r2(p.reduce((a, x) => a + +x.amount, 0)), by};
+  });
+  // MRR: langganan berbayar yang masih aktif hari ini, dinormalkan kepada nilai sebulan
+  const act = {}; pays.filter(x => String(x.date).slice(0, 10) <= today && String(x.until || '') >= today).forEach(x => { if (!act[x.ownerId] || String(x.date) > String(act[x.ownerId].date)) act[x.ownerId] = x; });
+  const actL = Object.values(act), mrr = r2(actL.reduce((a, x) => a + +x.amount / Math.max(1, +x.months || pk(x.plan).months || 1), 0));
+  const actBy = PL.map(p => [p.name, actL.filter(x => x.plan === p.id).length]);
+  const y12 = r2(rows.reduce((a, x) => a + x.rm, 0)), thisM = rows[rows.length - 1].rm, mx = Math.max(1, ...rows.map(x => x.rm));
+  return `<details class="urev" ${S.urevOpen ? 'open' : ''} ontoggle="S.urevOpen = this.open"><summary>📈 Pengguna vs duit langganan</summary>
+    <div class="ustat"><div><b style="color:var(--green)">${RM(thisM)}</b><span>Masuk bulan ini</span></div><div><b>${RM(y12)}</b><span>12 bulan</span></div><div><b style="color:var(--gold)">${RM(mrr)}</b><span>Anggaran sebulan (MRR)</span></div>
+    <div><b>${actL.length}</b><span>Pelanggan berbayar</span></div><div><b>${actL.length ? RM(r2(mrr / actL.length)) : '-'}</b><span>Purata / pelanggan</span></div><div><b>${o.length ? Math.round(actL.length / o.length * 100) : 0}%</b><span>Berbayar / daftar</span></div></div>
+    <div class="muted" style="font-size:12.5px;margin:-2px 0 8px">Pakej aktif: ${actBy.map(([n, c]) => `${esc(n)} <b>${c}</b>`).join(' · ')}</div>
+    <div class="urevt"><div class="urh"><span>Bulan</span><span>Daftar</span><span>Berbayar</span><span>RM masuk</span></div>
+    ${rows.slice().reverse().map(x => `<div class="urr"><span>${MONTHS[+x.m.slice(5) - 1]} ${x.m.slice(2, 4)}</span><span>+${x.reg} <em>(${x.total})</em></span><span>${x.payers}</span>
+      <span><b>${RM(x.rm)}</b>${Object.keys(x.by).length ? `<em>${Object.entries(x.by).map(([k, v]) => `${esc(pk(k).name)} ×${v.n}`).join(' · ')}</em>` : ''}<i style="width:${x.rm / mx * 100}%"></i></span></div>`).join('')}</div>
+    <p class="muted" style="font-size:12px;margin:8px 0 0">Daftar = baru bulan itu (jumlah terkumpul). Berbayar = owner dengan langganan berbayar aktif pada hujung bulan. RM masuk = bayaran ToyyibPay sebelum caj. Kod promo & percubaan tidak dikira.</p></details>`;
+}
 async function usersPop(f) {   // popup Super Admin: jumlah daftar & senarai owner Aktif / Tidak aktif / Semua
   if (f) S.ownFilter = f;
-  if (!S.owners || !f) { if (!S.owners) openModal('👥 Pengguna berdaftar', '<div class="empty">⏳ Memuatkan…</div>'); try { S.owners = await API.listOwners(); } catch (e) { if (!S.owners) return openModal('👥 Pengguna berdaftar', `<div class="al hot">${esc(authMsg(e))}</div>`); } superFab(); }
+  if (!S.owners || !f) { if (!S.owners) openModal('👥 Pengguna berdaftar', '<div class="empty">⏳ Memuatkan…</div>'); try { [S.owners, S.allSubPays] = await Promise.all([API.listOwners(), API.listAllSubPayments().catch(() => S.allSubPays || [])]); } catch (e) { if (!S.owners) return openModal('👥 Pengguna berdaftar', `<div class="al hot">${esc(authMsg(e))}</div>`); } superFab(); }
   const o = S.owners, today = localISO(), d7 = addDays(today, -6), d30 = addDays(today, -29), cd = x => String(x.createdAt || '').slice(0, 10);
   const act = o.filter(x => oInfo(x).active), trial = act.filter(x => fsub(x.sub)?.plan === 'trial').length;
   openModal('👥 Pengguna berdaftar', `<div id="usersPop"><div class="ustat"><div><b>${o.length}</b><span>Jumlah daftar</span></div><div><b style="color:var(--green)">${act.length}</b><span>Aktif</span></div><div><b style="color:var(--red)">${o.length - act.length}</b><span>Tidak aktif</span></div>
     <div><b>${o.filter(x => cd(x) === today).length}</b><span>Baru hari ini</span></div><div><b>${o.filter(x => cd(x) >= d7).length}</b><span>7 hari</span></div><div><b>${o.filter(x => cd(x) >= d30).length}</b><span>30 hari</span></div>
     <div><b>${trial}</b><span>Percubaan</span></div><div><b>${act.length - trial}</b><span>Berbayar / promo</span></div><div><b>${o.length ? Math.round(act.length / o.length * 100) : 0}%</b><span>Kadar aktif</span></div></div>
-    ${ownerRows(o)}<button class="btn wide ghost" style="margin-top:10px" data-act="usersPop" data-id="refresh">🔄 Muat semula</button></div>`);
+    ${usersRev(o)}${ownerRows(o)}<button class="btn wide ghost" style="margin-top:10px" data-act="usersPop" data-id="refresh">🔄 Muat semula</button></div>`);
 }
 /* ---------- Diagnostik terperinci (Super Admin): semakan berantai + diagnosis laporan pengguna ---------- */
 function diagBox() {
@@ -1950,7 +1984,7 @@ function oReport() {
   const ysel = `<div class="grid2">${sel('Tahun', 'y', years.map(v => [v, v]), y, 'data-chg="year"')}<div class="fld"><span>&nbsp;</span>${view === 'tax' ? '<button class="btn wide" data-act="expForm">+ Perbelanjaan</button>' : '<div class="acts" style="margin:0;flex-wrap:nowrap"><button class="btn" data-act="collPdf">🖨️ PDF</button><button class="btn ghost" data-act="csv">⬇ CSV</button></div>'}</div></div>`;
   if (view === 'tax') {
     const d = taxData(y);
-    let h = header('Laporan', `Cukai ${y}.`, 'Pendapatan sewa bersih untuk e-Filing (Borang BE / B)', {btns: ownerBtns(), stats: [[RM(d.gross), 'Sewa kasar', 'g'], [RM(d.totalExp), 'Perbelanjaan', d.totalExp ? 'r' : ''], [RM(d.net), 'Bersih']]}) + `<div class="wrap">${seg}${ysel}
+    let h = header('Laporan', `Cukai ${y}.`, 'Pendapatan sewa bersih untuk e-Filing (Borang BE / B)', {btns: ownerBtns(), stats: [[RM(d.gross), 'Sewa kasar', 'g'], [RM(d.totalExp), 'Perbelanjaan', d.totalExp ? 'r' : ''], [RM(d.net), 'Bersih']]}) + `<div class="wrap">${seg}${ysel}${zipCard(y)}
       <div class="card"><h3>Ringkasan cukai ${y}</h3><table class="rep"><tr><td>Sewa kasar diterima (${d.count} resit)</td><td>${RM(d.gross)}</td></tr><tr><td>Tolak: perbelanjaan</td><td>(${RM(d.totalExp)})</td></tr><tr class="tot"><td>Pendapatan sewa bersih</td><td>${RM(d.net)}</td></tr></table>
         <p class="muted">Angka "Pendapatan sewa bersih" diisi di ruangan <b>pendapatan berkanun daripada sewa</b> dalam e-Filing. Dikira ikut tarikh sewa diterima.</p>
         <div class="acts"><button class="btn" data-act="taxPdf">🖨️ Simpan PDF</button><button class="btn ghost" data-act="taxCsv">⬇ Excel (CSV)</button></div></div>
@@ -1966,7 +2000,7 @@ function oReport() {
   const ti = r.inc.reduce((a, b) => a + b, 0), te = r.exp.reduce((a, b) => a + b, 0), arr = r.per.reduce((a, x) => a + x.arr.sum, 0);
   const max = Math.max(1, ...r.inc, ...r.exp);
   const pct = te ? Math.round(ti / te * 100) : 0;
-  let h = header('Laporan', `Tahun ${y}.`, `Kutipan ${pct}% daripada jangkaan ${RM(te)}`, {btns: ownerBtns(), stats: [[RM(ti), 'Diterima', 'g'], [RM(arr), 'Tunggakan', arr ? 'r' : '']]}) + `<div class="wrap">${seg}${ysel}
+  let h = header('Laporan', `Tahun ${y}.`, `Kutipan ${pct}% daripada jangkaan ${RM(te)}`, {btns: ownerBtns(), stats: [[RM(ti), 'Diterima', 'g'], [RM(arr), 'Tunggakan', arr ? 'r' : '']]}) + `<div class="wrap">${seg}${ysel}${zipCard(y)}
     <div class="sec-h">Kutipan bulanan</div><div class="card"><div class="chart">${r.months.map((m, i) => `<div class="col"><div class="bars"><i class="e" style="height:${r.exp[i] / max * 100}%"></i><i style="height:${r.inc[i] / max * 100}%"></i></div><small>${MONTHS[i]}</small></div>`).join('')}</div>
     <div class="legend"><span><i style="background:var(--line)"></i>Jangkaan</span><span><i style="background:var(--gold)"></i>Diterima</span></div>
     <table class="rep" style="margin-top:10px"><tr><th>Bulan</th><th>Jangkaan</th><th>Diterima</th><th>Baki</th></tr>
@@ -2113,8 +2147,8 @@ const MANUAL = [
   '<ul><li>Penyewa hantar aduan (kategori, penerangan, gambar) dari tab <b>Aduan</b> di app mereka.</li><li>Anda dapat notifikasi. Buka tab <b>Aduan</b> → <b>Kemas kini status</b> (Dalam tindakan / Selesai) dan tulis nota, contohnya tarikh tukang datang.</li><li>Penyewa dimaklumkan setiap kali status berubah.</li></ul>',
   '<ul><li>Tenants send requests (category, description, photo) from the <b>Requests</b> tab in their app.</li><li>You get notified. Open the <b>Requests</b> tab → <b>Update status</b> (In progress / Resolved) and add a note, e.g. when the repairer will come.</li><li>Tenants are notified every time the status changes.</li></ul>'],
  ['📊 Laporan & cukai', '📊 Reports & tax',
-  '<ul><li><b>Kutipan sewa:</b> jangkaan vs diterima setiap bulan, tunggakan ikut penyewa. Simpan sebagai PDF atau CSV (Excel).</li><li><b>Cukai & Perbelanjaan:</b> tekan <b>+ Perbelanjaan</b> untuk rekod cukai pintu, cukai tanah, insurans, pembaikan dan lain-lain (boleh lampir resit).</li><li><b>💡 Bil & utiliti:</b> tekan <b>Rekod bil bulan ini</b> untuk elektrik, air, IWK, internet sekali gus ikut rumah. Bil tetap (IWK, maintenance, internet) tetapkan sekali di <b>Bil berulang</b>, dan sistem rekod setiap bulan secara automatik.</li><li>Angka <b>Pendapatan sewa bersih</b> ialah rujukan untuk e-Filing LHDN. Sahkan perbelanjaan yang dibenarkan dengan LHDN / ejen cukai.</li></ul>',
-  '<ul><li><b>Rent collection:</b> expected vs received each month, arrears by tenant. Save as PDF or CSV (Excel).</li><li><b>Tax & Expenses:</b> tap <b>+ Expense</b> to record assessment tax, quit rent, insurance, repairs and more (you can attach receipts).</li><li><b>💡 Bills & utilities:</b> tap <b>Record this month\'s bills</b> to enter electricity, water, IWK and internet at once, per property. Set fixed bills (IWK, maintenance, internet) once under <b>Recurring bills</b> and the system records them every month automatically.</li><li>The <b>Net rental income</b> figure is a reference for LHDN e-Filing. Confirm allowable expenses with LHDN / your tax agent.</li></ul>'],
+  '<ul><li><b>Kutipan sewa:</b> jangkaan vs diterima setiap bulan, tunggakan ikut penyewa. Simpan sebagai PDF atau CSV (Excel).</li><li><b>Cukai & Perbelanjaan:</b> tekan <b>+ Perbelanjaan</b> untuk rekod cukai pintu, cukai tanah, insurans, pembaikan dan lain-lain (boleh lampir resit).</li><li><b>💡 Bil & utiliti:</b> tekan <b>Rekod bil bulan ini</b> untuk elektrik, air, IWK, internet sekali gus ikut rumah. Bil tetap (IWK, maintenance, internet) tetapkan sekali di <b>Bil berulang</b>, dan sistem rekod setiap bulan secara automatik.</li><li>Angka <b>Pendapatan sewa bersih</b> ialah rujukan untuk e-Filing LHDN. Sahkan perbelanjaan yang dibenarkan dengan LHDN / ejen cukai.</li><li><b>📦 Muat turun semua dokumen:</b> tekan <b>⬇ ZIP</b>, pilih setahun atau satu bulan. Semua resit sewa (PDF), bukti bayaran penyewa dan resit perbelanjaan disimpan dalam satu fail ZIP ikut folder, berserta senarai CSV.</li></ul>',
+  '<ul><li><b>Rent collection:</b> expected vs received each month, arrears by tenant. Save as PDF or CSV (Excel).</li><li><b>Tax & Expenses:</b> tap <b>+ Expense</b> to record assessment tax, quit rent, insurance, repairs and more (you can attach receipts).</li><li><b>💡 Bills & utilities:</b> tap <b>Record this month\'s bills</b> to enter electricity, water, IWK and internet at once, per property. Set fixed bills (IWK, maintenance, internet) once under <b>Recurring bills</b> and the system records them every month automatically.</li><li>The <b>Net rental income</b> figure is a reference for LHDN e-Filing. Confirm allowable expenses with LHDN / your tax agent.</li><li><b>📦 Download all documents:</b> tap <b>⬇ ZIP</b>, choose a whole year or one month. All rent receipts (PDF), tenant payment proofs and expense receipts are saved in one ZIP organised in folders, with a CSV list.</li></ul>'],
  ['💎 Langganan & kod promo', '💎 Subscription & promo codes',
   '<ul><li>Tab <b>Langganan</b> tunjuk baki hari. Pilih pakej dan bayar melalui ToyyibPay (FPX online banking atau imbas DuitNow QR). Hari baru disambung selepas tarikh tamat semasa.</li><li>Ada kod promo? Tampal di <b>🎟️ Ada kod promo?</b> dan tekan <b>Guna</b>. Setiap kod ada had bilangan owner, dan setiap owner hanya boleh guna kod yang sama sekali.</li><li>Jika langganan tamat, anda dan penyewa tidak dapat buka app sehingga bayaran dibuat. Data anda kekal selamat.</li></ul>',
   '<ul><li>The <b>Subscription</b> tab shows the days left. Choose a plan and pay via ToyyibPay (FPX online banking or scan DuitNow QR). New days are added after the current end date.</li><li>Have a promo code? Paste it under <b>🎟️ Have a promo code?</b> and tap <b>Apply</b>. Each code has an owner limit, and each owner can use the same code only once.</li><li>If the subscription ends, you and your tenants cannot open the app until payment is made. Your data stays safe.</li></ul>'],
@@ -2131,10 +2165,12 @@ const MANUAL = [
 /* ===================== APA YANG BARU (changelog) — tambah entri di atas setiap kali update ===================== */
 const CHANGELOG = [
  {v: '2026.11.11', bm: [
+   '<b>📦 Muat turun semua dokumen</b> (tab Laporan): semua resit PDF, bukti bayaran & resit perbelanjaan dalam satu ZIP, ikut tahun atau bulan.',
    '<b>Padam akaun</b>: Tetapan → Zon bahaya → <b>Padam akaun saya</b>. Akaun log masuk & semua data dipadam kekal.',
    '<b>Dasar Privasi</b> kini tersedia di bawah Tetapan dan skrin log masuk.',
    'Paparan lebih kemas pada phone Android terkini (bar status & navigasi).'
  ], en: [
+   '<b>📦 Download all documents</b> (Reports tab): all receipt PDFs, payment proofs & expense receipts in one ZIP, by year or month.',
    '<b>Delete account</b>: Settings → Danger zone → <b>Delete my account</b>. Your sign-in account & all data are permanently deleted.',
    'The <b>Privacy Policy</b> is now available under Settings and on the sign-in screen.',
    'Tidier layout on newer Android phones (status & navigation bars).'
@@ -2606,11 +2642,9 @@ function viewProof(id) {
   openModal('Bukti Bayaran', `<img class="proofbig" src="${p.proof}" alt="bukti"><div class="kv"><span>Penyewa</span><b>${esc(p.tenantName)}</b></div><div class="kv"><span>Bulan</span><b>${monthLabel(p.month)}</b></div><div class="kv"><span>Jumlah</span><b>${RM(p.amount)}</b></div><div class="kv"><span>Rujukan</span><b>${esc(p.ref || '-')}</b></div>
     ${p.status === 'pending' ? `<div class="acts"><button class="btn" style="flex:1" data-act="approve" data-id="${p.id}">✓ Lulus</button><button class="btn red" style="flex:1" data-act="rejectForm" data-id="${p.id}">Tolak</button></div>` : ''}`);
 }
-function receipt(id) {
-  const p = S.payments.find(x => x.id === id); if (!p) return;
-  const o = S.owner || {}, isOwner = S.mode === 'owner', t = S.tenants.find(x => x.id === p.tenantId) || S.t;
-  const msg = `RESIT SEWA ${p.receiptNo}\nDiterima daripada: ${p.tenantName}\nAlamat: ${p.address}\nBulan: ${monthLabel(p.month)}\nJumlah: ${RM(p.amount)}\nTarikh: ${dateLabel(p.paidDate)}\n\nLihat resit: ${t ? tenantUrl(t) : ''}\nTerima kasih — ${o.name || ''}`;
-  openModal('Resit Bayaran', `<div id="receipt"><div class="rco">${o.logo ? `<img class="rlogo" src="${o.logo}" alt="">` : '<img class="rlogo" src="icon-192.png" alt="">'}
+function receiptDoc(p) {   // kandungan resit (modal, PDF & ZIP)
+  const o = S.owner || {};
+  return `<div id="receipt"><div class="rco">${o.logo ? `<img class="rlogo" src="${o.logo}" alt="">` : '<img class="rlogo" src="icon-192.png" alt="">'}
       <div><b data-raw>${esc(o.company || o.name || '')}</b>${o.companyAddr ? `<div class="muted" data-raw style="white-space:pre-line">${esc(o.companyAddr)}</div>` : ''}
       ${o.regNo ? `<div class="muted">No. SSM: <span data-raw>${esc(o.regNo)}</span></div>` : ''}${o.sstNo ? `<div class="muted">No. SST: <span data-raw>${esc(o.sstNo)}</span></div>` : ''}${o.phone ? `<div class="muted">Tel: ${esc(o.phone)}</div>` : ''}</div></div>
       <div class="rh"><b>RESIT SEWA</b><div class="muted">${esc(p.receiptNo)}</div></div>
@@ -2618,7 +2652,13 @@ function receipt(id) {
     <div class="kv"><span>Diterima daripada</span><b>${esc(p.tenantName)}</b></div><div class="kv"><span>Alamat</span><b>${esc(p.address)}</b></div>
     <div class="kv"><span>Sewa bulan</span><b>${monthLabel(p.month)}</b></div><div class="kv"><span>Tarikh dibayar</span><b>${dateLabel(p.paidDate)}</b></div>
     <div class="kv"><span>Kaedah</span><b>${esc(p.method)}${p.ref ? ' (' + esc(p.ref) + ')' : ''}</b></div>${p.claimedAmount != null ? `<div class="kv"><span>Jumlah dinyatakan penyewa</span><b>${RM(p.claimedAmount)}</b></div>` : ''}${p.balAfter ? `<div class="kv"><span>${p.balAfter > 0 ? 'Kredit dibawa ke bayaran seterusnya' : 'Baki ditambah ke bayaran seterusnya'}</span><b style="color:${p.balAfter > 0 ? 'var(--green)' : 'var(--red)'}">${RM(Math.abs(p.balAfter))}</b></div>` : ''}<div class="kv"><span>Diluluskan oleh</span><b>${esc(o.name || '-')}</b></div><div class="kv"><span>Tarikh lulus</span><b>${dtLabel(p.confirmedAt)}</b></div>
-    ${p.status === 'void' ? `<div class="kv"><span>Sebab batal</span><b data-raw>${esc(p.voidReason || '-')}</b></div><div class="kv"><span>Tarikh batal</span><b>${dtLabel(p.voidAt)}</b></div><div class="stamp void"><span>DIBATALKAN</span></div>` : '<div class="stamp"><span>DIBAYAR</span></div>'}<p class="muted" style="text-align:center;margin:12px 0 0">Dijana oleh ProSewa</p></div>
+    ${p.status === 'void' ? `<div class="kv"><span>Sebab batal</span><b data-raw>${esc(p.voidReason || '-')}</b></div><div class="kv"><span>Tarikh batal</span><b>${dtLabel(p.voidAt)}</b></div><div class="stamp void"><span>DIBATALKAN</span></div>` : '<div class="stamp"><span>DIBAYAR</span></div>'}<p class="muted" style="text-align:center;margin:12px 0 0">Dijana oleh ProSewa</p></div>`;
+}
+function receipt(id) {
+  const p = S.payments.find(x => x.id === id); if (!p) return;
+  const o = S.owner || {}, isOwner = S.mode === 'owner', t = S.tenants.find(x => x.id === p.tenantId) || S.t;
+  const msg = `RESIT SEWA ${p.receiptNo}\nDiterima daripada: ${p.tenantName}\nAlamat: ${p.address}\nBulan: ${monthLabel(p.month)}\nJumlah: ${RM(p.amount)}\nTarikh: ${dateLabel(p.paidDate)}\n\nLihat resit: ${t ? tenantUrl(t) : ''}\nTerima kasih — ${o.name || ''}`;
+  openModal('Resit Bayaran', `${receiptDoc(p)}
     <div class="acts" style="margin-top:12px"><button class="btn ghost" style="flex:1" data-act="print">🖨️ Simpan PDF</button>
     ${p.proof ? `<button class="btn ghost" data-act="viewProof" data-id="${p.id}">Bukti</button>` : ''}
     ${isOwner && p.status === 'confirmed' ? `<button class="btn red" data-act="voidForm" data-id="${p.id}">Batal resit</button>` : ''}</div>`);
@@ -2636,12 +2676,65 @@ async function saveFile(name, data, mime) {   // web: muat turun; APK: simpan & 
   }
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
+async function pdfBlob(html) {   // HTML → PDF (Blob) tanpa dialog cetak
+  if (!window.html2pdf) await loadScript('lib/html2pdf.bundle.min.js').catch(() => loadScript('https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js'));
+  const box = document.createElement('div'); box.className = 'pdfdoc'; box.innerHTML = html; if (LANG === 'en') trNode(box);
+  return html2pdf().set({margin: [12, 10, 12, 10], image: {type: 'jpeg', quality: 0.95}, html2canvas: {scale: 2, backgroundColor: '#ffffff', useCORS: true},
+    jsPDF: {unit: 'mm', format: 'a4'}, pagebreak: {mode: ['css', 'legacy'], avoid: ['tr', '#receipt']}}).from(box).outputPdf('blob');
+}
+/* ---------- ZIP ringkas (tanpa mampatan; gambar & PDF memang sudah dimampatkan) ---------- */
+const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+const crc32 = b => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC_T[(c ^ b[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+function makeZip(files) {   // files: [{name, data: Uint8Array}] → Blob
+  const enc = new TextEncoder(), parts = [], cen = []; let off = 0;
+  const d = new Date(), dt = ((d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1)) & 0xFFFF, dd = (((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate()) & 0xFFFF;
+  for (const f of files) {
+    const nm = enc.encode(f.name), data = f.data, crc = crc32(data), h = new DataView(new ArrayBuffer(30));
+    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true); h.setUint16(10, dt, true); h.setUint16(12, dd, true);
+    h.setUint32(14, crc, true); h.setUint32(18, data.length, true); h.setUint32(22, data.length, true); h.setUint16(26, nm.length, true); h.setUint16(28, 0, true);
+    parts.push(h.buffer, nm, data);
+    const c = new DataView(new ArrayBuffer(46));
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(10, 0, true); c.setUint16(12, dt, true); c.setUint16(14, dd, true);
+    c.setUint32(16, crc, true); c.setUint32(20, data.length, true); c.setUint32(24, data.length, true); c.setUint16(28, nm.length, true); c.setUint32(42, off, true);
+    cen.push(c.buffer, nm); off += 30 + nm.length + data.length;
+  }
+  const csz = cen.reduce((a, b) => a + b.byteLength, 0), e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, csz, true); e.setUint32(16, off, true);
+  return new Blob([...parts, ...cen, e.buffer], {type: 'application/zip'});
+}
+const fnSafe = x => String(x || '').replace(/[\\/:*?"<>|\n\r]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
+async function srcBytes(src) {   // data URL / URL → {bytes, ext}
+  if (!src) return null;
+  if (src.startsWith('data:')) { const [h, b] = src.split(','), mime = (h.match(/data:([^;]+)/) || [])[1] || ''; const bin = atob(b), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return {bytes: u, ext: mime.includes('pdf') ? 'pdf' : mime.includes('png') ? 'png' : mime.includes('webp') ? 'webp' : 'jpg'}; }
+  const r = await fetch(src); const ct = r.headers.get('content-type') || ''; return {bytes: new Uint8Array(await r.arrayBuffer()), ext: ct.includes('pdf') ? 'pdf' : ct.includes('png') ? 'png' : 'jpg'};
+}
+function docSet(per) {   // dokumen dalam tempoh: resit (lulus/batal), bukti bayaran, resit perbelanjaan
+  const inP = d => String(d || '').startsWith(per);
+  const pays = S.payments.filter(p => (p.status === 'confirmed' || p.status === 'void') && inP(p.paidDate || p.month)).sort((a, b) => String(a.paidDate || a.month).localeCompare(String(b.paidDate || b.month)));
+  const exps = (S.expenses || []).filter(e => inP(e.date)).sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  return {pays, proofs: pays.filter(p => p.proof), exps, expProofs: exps.filter(e => e.proof)};
+}
+function zipCard(y) {
+  const d = docSet(String(y)), n = d.pays.length + d.proofs.length + d.expProofs.length;
+  return `<div class="card zipcard"><div class="row" style="padding:0;border:0"><div class="av">📦</div><div class="grow"><div class="t">Muat turun semua dokumen</div><div class="s">${d.pays.length} resit · ${d.proofs.length} bukti bayaran · ${d.expProofs.length} resit perbelanjaan (${y})</div></div>
+    <button class="btn" data-act="zipForm" ${n ? '' : 'disabled'}>⬇ ZIP</button></div></div>`;
+}
+function zipForm() {
+  const y = String(S.year), opts = [[y, 'Setahun ' + y], ...MONTHS_FULL.map((m, i) => [y + '-' + pad(i + 1), m + ' ' + y]).filter(([v]) => v <= curMonth() && docSet(v).pays.length + docSet(v).expProofs.length)];
+  openModal('📦 Muat turun dokumen', `<form data-form="zipdocs">${sel('Tempoh', 'per', opts, y, 'data-chg="zipPer"')}
+    <div id="zipsum" class="muted" style="margin:-4px 0 10px">${zipSum(y)}</div>
+    <label class="switch"><span>🧾 Resit sewa (PDF)</span><input type="checkbox" name="rc" checked></label>
+    <label class="switch"><span>📷 Bukti bayaran penyewa</span><input type="checkbox" name="pf" checked></label>
+    <label class="switch"><span>💸 Resit perbelanjaan & bil</span><input type="checkbox" name="ex" checked></label>
+    <p class="muted">Satu fail ZIP disusun ikut folder, berserta senarai Excel (CSV). Resit PDF dijana dalam phone, mungkin ambil masa ~1 saat setiap resit.</p>
+    <div id="zipprog" class="muted" style="display:none;margin:8px 0"></div>
+    <button class="btn wide" style="margin-top:6px">⬇ Muat turun ZIP</button></form>`);
+}
+const zipSum = per => { const d = docSet(per); return `${d.pays.length} resit · ${d.proofs.length} bukti bayaran · ${d.expProofs.length} resit perbelanjaan`; };
 async function nativePdf(html, title) {
   toast('⏳ Menjana PDF…');
   if (!window.html2pdf) await loadScript('lib/html2pdf.bundle.min.js').catch(() => loadScript('https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js'));   // APK: dibundel dalam app
-  const box = document.createElement('div'); box.className = 'pdfdoc'; box.innerHTML = html; if (LANG === 'en') trNode(box);
-  const blob = await html2pdf().set({margin: [12, 10, 12, 10], image: {type: 'jpeg', quality: 0.95}, html2canvas: {scale: 2, backgroundColor: '#ffffff', useCORS: true},
-    jsPDF: {unit: 'mm', format: 'a4'}, pagebreak: {mode: ['css', 'legacy'], avoid: ['tr', '#receipt']}}).from(box).outputPdf('blob');
+  const blob = await pdfBlob(html);
   await saveFile(String(title || 'ProSewa').replace(/[\\/:*?"<>|]+/g, '-').trim() + '.pdf', blob, 'application/pdf');
 }
 function printHTML(html, title) {   // cetak / simpan PDF kandungan tertentu sahaja
@@ -2983,7 +3076,7 @@ const ACTIONS = {
   roomAdd: () => { const box = $('#roomRows'), i = box.querySelectorAll('.room').length; box.insertAdjacentHTML('beforeend', `<div class="grid2 room">${hid('rid' + i, genId().slice(0, 6))}${fld('Nama bilik', 'rn' + i, 'Bilik ' + String.fromCharCode(65 + i), 'text')}<div class="fld"><span>${tr('Sewa (RM)')}</span><div style="display:flex;gap:6px"><input name="rr${i}" type="number" step="0.01" min="0" inputmode="decimal" style="flex:1"><button type="button" class="btn sm red" data-act="roomDel" aria-label="Buang">✕</button></div></div></div>`); },
   roomDel: (id, el) => el.closest('.room').remove(),
   reauthGoogle: async () => { try { await API.reauth({google: true}); } catch (e) { if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return; throw e; } await finishPass(); },
-  tenantView: id => tenantView(id), reviewPay: id => reviewPay(id), wipeForm: () => wipeForm(), delAccForm: () => delAccForm(),
+  tenantView: id => tenantView(id), reviewPay: id => reviewPay(id), wipeForm: () => wipeForm(), delAccForm: () => delAccForm(), zipForm: () => zipForm(),
   renewForm: id => renewForm(id), endForm: id => endForm(id), depStatement: id => depStatement(id),
   agreeSet: () => agreeSet(),
   depX: (n, el) => { const f = el.closest('form'), r = +f.elements.rent.value || 0; if (!r) return toast('Isi harga sewa dahulu.', 'err'); f.elements.deposit.value = r * +n; f.querySelectorAll('[data-act=depX]').forEach(b => b.classList.toggle('on', b === el)); }, agreeView: id => agreeView(id),
@@ -3152,6 +3245,7 @@ const CHANGES = {
   remindWhen: el => { $('#whenBox').style.display = el.value === 'later' ? '' : 'none'; },
   month: el => { S.month = el.value; renderOwner(); },
   year: el => { S.year = +el.value; renderOwner(); },
+  zipPer: el => { const z = $('#zipsum'); if (z) z.textContent = tr(zipSum(el.value)); },
   remindWho: el => { const t = S.tenants.find(x => x.id === el.value); const m = el.form.message;
     m.value = t ? reminderMsg(t, S.month, S.owner) : (LANG === 'en' ? `Hi, a friendly reminder: rent for ${monthLabel(S.month)} is due soon. After paying, please upload your payment proof in the app. Thank you — ${S.owner.name}` : `Salam, peringatan mesra: sewa ${monthLabel(S.month)} perlu dibayar sebelum tarikh akhir. ${bankText(S.owner)} Selepas bayar, sila muat naik resit di link penyewa anda. Terima kasih — ${S.owner.name}`); },
   qrPick: async el => {
@@ -3295,6 +3389,28 @@ const FORMS = {
     const btn = f.querySelector('button.btn.red'); if (btn) btn.textContent = tr('⏳ Memadam…');
     const n = await API.wipeAll(S.uid, !!d.resetSeq, (x, y) => { if (btn) btn.textContent = `⏳ ${x}/${y}`; });
     closeModal(); S.tab = 'status'; toast(tr('Semua data dipadam. Mula semula!') + (n ? ` (${n})` : '')); await enterOwner(S.uid, {tab: 'status'});
+  },
+  async zipdocs(d, f) {
+    const per = d.per || String(S.year), D = docSet(per), files = [], used = new Set(), err = [];
+    const uniq = n => { let x = n, i = 2; while (used.has(x)) x = n.replace(/(\.[a-z]+)$/, ` (${i++})$1`); used.add(x); return x; };
+    const prog = $('#zipprog'), btn = f.querySelector('button.btn.wide'); if (prog) prog.style.display = ''; if (btn) btn.disabled = true;
+    const say = t => { if (prog) prog.textContent = tr(t); };
+    const nm = p => fnSafe(`${p.month} ${p.tenantName} ${p.receiptNo || ''}`) + (p.status === 'void' ? ' (BATAL)' : '');
+    try {
+      if (d.rc) for (let i = 0; i < D.pays.length; i++) { const p = D.pays[i]; say(`⏳ Resit ${i + 1}/${D.pays.length}…`);
+        try { const b = await pdfBlob(receiptDoc(p)); files.push({name: uniq(`Resit/${nm(p)}.pdf`), data: new Uint8Array(await b.arrayBuffer())}); } catch (e) { err.push(p.receiptNo); } }
+      if (d.pf) for (const p of D.proofs) { say('⏳ Bukti bayaran…'); try { const x = await srcBytes(p.proof); files.push({name: uniq(`Bukti-Bayaran/${nm(p)}.${x.ext}`), data: x.bytes}); } catch (e) { err.push(p.receiptNo); } }
+      if (d.ex) for (const e of D.expProofs) { say('⏳ Resit perbelanjaan…'); try { const x = await srcBytes(e.proof); files.push({name: uniq(`Perbelanjaan/${fnSafe(`${e.date} ${e.category} RM${(+e.amount || 0).toFixed(2)}`)}.${x.ext}`), data: x.bytes}); } catch (er) { err.push(e.date); } }
+      const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+      const csv = ['Jenis,Tarikh,Bulan sewa,Nama,Alamat / Unit,Jumlah (RM),Kaedah,No. resit,Status',
+        ...D.pays.map(p => ['Sewa diterima', p.paidDate, p.month, p.tenantName, p.address, (+p.amount || 0).toFixed(2), p.method, p.receiptNo, p.status === 'void' ? 'Dibatalkan' : 'Lulus'].map(q).join(',')),
+        ...D.exps.map(e => ['Perbelanjaan', e.date, '', e.category, e.unit || 'Umum', (+e.amount || 0).toFixed(2), '', '', e.proof ? 'Ada resit' : ''].map(q).join(','))].join('\r\n');
+      files.push({name: `Senarai-${per}.csv`, data: new TextEncoder().encode('\ufeff' + csv)});
+      if (files.length <= 1) throw new Error('Tiada dokumen untuk tempoh ini.');
+      say('⏳ Menyediakan ZIP…');
+      await saveFile(`ProSewa-Dokumen-${per}.zip`, makeZip(files), 'application/zip');
+      closeModal(); toast(err.length ? tr('ZIP siap. Beberapa fail gagal: ') + err.join(', ') : tr('ZIP siap ✅'), err.length ? 'err' : '');
+    } finally { if (btn) btn.disabled = false; }
   },
   async delacc(d, f) {
     if (String(d.confirm || '').trim().toUpperCase() !== 'PADAM') throw new Error('Taip PADAM untuk sahkan.');
